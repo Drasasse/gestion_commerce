@@ -29,6 +29,11 @@ enum PaymentStatus {
   PARTIEL
 }
 
+enum MouvementType {
+  ENTREE
+  SORTIE
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String
@@ -118,15 +123,18 @@ model Stock {
 }
 
 model MouvementStock {
-  id          String    @id @default(cuid())
+  id          String        @id @default(cuid())
   stockId     String
-  stock       Stock     @relation(fields: [stockId], references: [id], onDelete: Cascade)
-  type        String    // "ENTREE" ou "SORTIE"
+  stock       Stock         @relation(fields: [stockId], references: [id], onDelete: Cascade)
+  type        MouvementType
   quantite    Int
   motif       String?
-  createdAt   DateTime  @default(now())
+  venteId     String?
+  vente       Vente?        @relation(fields: [venteId], references: [id])
+  createdAt   DateTime      @default(now())
 
   @@index([stockId])
+  @@index([venteId])
 }
 
 model Client {
@@ -164,6 +172,7 @@ model Vente {
   updatedAt       DateTime      @updatedAt
 
   lignes          LigneVente[]
+  mouvements      MouvementStock[]
 
   @@index([boutiqueId])
   @@index([clientId])

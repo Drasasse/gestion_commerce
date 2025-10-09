@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
-import { Package, ShoppingCart, Users, TrendingUp, AlertCircle } from "lucide-react"
+import { Package, ShoppingCart, Users, TrendingUp, AlertCircle, FolderOpen } from "lucide-react"
+import Link from "next/link"
 
 async function getBoutiqueStats(boutiqueId: string) {
   const [produitsCount, ventesCount, clientsCount, totalVentes, stocks] = await Promise.all([
@@ -142,6 +143,37 @@ export default async function BoutiquePage() {
             </div>
           )
         })}
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Link href="/boutique/produits" className="group">
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-4">
+              <div className="bg-blue-500 p-3 rounded-lg group-hover:bg-blue-600 transition-colors">
+                <Package className="text-white" size={24} />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Gérer les produits</h3>
+                <p className="text-gray-600 text-sm">Ajouter, modifier et supprimer des produits</p>
+              </div>
+            </div>
+          </div>
+        </Link>
+
+        <Link href="/boutique/categories" className="group">
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-4">
+              <div className="bg-purple-500 p-3 rounded-lg group-hover:bg-purple-600 transition-colors">
+                <FolderOpen className="text-white" size={24} />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Gérer les catégories</h3>
+                <p className="text-gray-600 text-sm">Organiser vos produits par catégories</p>
+              </div>
+            </div>
+          </div>
+        </Link>
       </div>
 
       {stats.impayesTotal > 0 && (
