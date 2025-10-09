@@ -21,6 +21,7 @@ enum TransactionType {
   DEPENSE
   INJECTION_CAPITAL
   RETRAIT
+  RECETTE
 }
 
 enum PaymentStatus {
@@ -168,11 +169,13 @@ model Vente {
   montantRestant  Float
   statut          PaymentStatus @default(PAYE)
   dateVente       DateTime      @default(now())
+  dateEcheance    DateTime?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
   lignes          LigneVente[]
   mouvements      MouvementStock[]
+  paiements       Paiement[]
 
   @@index([boutiqueId])
   @@index([clientId])
@@ -208,4 +211,17 @@ model Transaction {
 
   @@index([boutiqueId])
   @@index([userId])
+}
+
+model Paiement {
+  id              String    @id @default(cuid())
+  venteId         String
+  vente           Vente     @relation(fields: [venteId], references: [id], onDelete: Cascade)
+  montant         Float
+  methodePaiement String
+  reference       String?
+  notes           String?
+  dateCreation    DateTime  @default(now())
+
+  @@index([venteId])
 }

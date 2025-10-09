@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
-import { Package, ShoppingCart, Users, TrendingUp, AlertCircle, FolderOpen } from "lucide-react"
+import { Package, ShoppingCart, Users, TrendingUp, AlertCircle, FolderOpen, DollarSign, CreditCard } from "lucide-react"
 import Link from "next/link"
 
 async function getBoutiqueStats(boutiqueId: string) {
@@ -146,7 +146,7 @@ export default async function BoutiquePage() {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-8 gap-6">
         <Link href="/boutique/produits" className="group">
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
             <div className="flex items-center gap-4">
@@ -170,6 +170,90 @@ export default async function BoutiquePage() {
               <div>
                 <h3 className="text-lg font-semibold text-gray-900">Gérer les catégories</h3>
                 <p className="text-gray-600 text-sm">Organiser vos produits par catégories</p>
+              </div>
+            </div>
+          </div>
+        </Link>
+
+        <Link href="/boutique/clients" className="group">
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-4">
+              <div className="bg-green-500 p-3 rounded-lg group-hover:bg-green-600 transition-colors">
+                <Users className="text-white" size={24} />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Gérer les clients</h3>
+                <p className="text-gray-600 text-sm">Ajouter et gérer votre base clients</p>
+              </div>
+            </div>
+          </div>
+        </Link>
+
+        <Link href="/boutique/ventes" className="group">
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-4">
+              <div className="bg-orange-500 p-3 rounded-lg group-hover:bg-orange-600 transition-colors">
+                <ShoppingCart className="text-white" size={24} />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Gérer les ventes</h3>
+                <p className="text-gray-600 text-sm">Créer et suivre vos ventes</p>
+              </div>
+            </div>
+          </div>
+        </Link>
+
+        <Link href="/boutique/stocks" className="group">
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-4">
+              <div className="bg-red-500 p-3 rounded-lg group-hover:bg-red-600 transition-colors">
+                <Package className="text-white" size={24} />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Gérer les stocks</h3>
+                <p className="text-gray-600 text-sm">Suivre les inventaires et mouvements</p>
+              </div>
+            </div>
+          </div>
+        </Link>
+
+        <Link href="/boutique/transactions" className="group">
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-4">
+              <div className="bg-yellow-500 p-3 rounded-lg group-hover:bg-yellow-600 transition-colors">
+                <DollarSign className="text-white" size={24} />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Transactions</h3>
+                <p className="text-gray-600 text-sm">Gérer recettes et dépenses</p>
+              </div>
+            </div>
+          </div>
+        </Link>
+
+        <Link href="/boutique/rapports" className="group">
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-4">
+              <div className="bg-indigo-500 p-3 rounded-lg group-hover:bg-indigo-600 transition-colors">
+                <TrendingUp className="text-white" size={24} />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Rapports</h3>
+                <p className="text-gray-600 text-sm">Analyses et tableaux de bord</p>
+              </div>
+            </div>
+          </div>
+        </Link>
+
+        <Link href="/boutique/paiements" className="group">
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-4">
+              <div className="bg-orange-500 p-3 rounded-lg group-hover:bg-orange-600 transition-colors">
+                <CreditCard className="text-white" size={24} />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Paiements</h3>
+                <p className="text-gray-600 text-sm">Gérer créances et paiements</p>
               </div>
             </div>
           </div>
