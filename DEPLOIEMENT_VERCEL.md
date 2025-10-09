@@ -5,9 +5,13 @@
 - ✅ Code pushé sur GitHub: https://github.com/Drasasse/gestion_commerce
 - ✅ Vercel CLI installé
 - ✅ Compte Vercel créé et connecté
-- ✅ Base de données Vercel créée
+- ✅ **Base de données Prisma Postgres créée** ✨
+- ✅ **Schéma de base de données déployé** ✨
+- ✅ **Données de test ajoutées** ✨
 
-## 🚀 Étapes de déploiement
+**Votre base de données est prête avec les comptes de test !**
+
+## 🚀 Étapes de déploiement (SIMPLIFIÉ)
 
 ### 1. Importer le projet sur Vercel
 
@@ -19,30 +23,15 @@
 4. Chercher et sélectionner `Drasasse/gestion_commerce`
 5. Cliquer sur **"Import"**
 
-### 2. Configurer la base de données Postgres
+### 2. Configurer les variables d'environnement
 
-1. Dans votre projet Vercel, aller dans **Storage** (onglet en haut)
-2. Cliquer sur **"Create Database"**
-3. Sélectionner **"Postgres"**
-4. Donner un nom (ex: `gestion-commerce-db`)
-5. Sélectionner la région (choisir la plus proche)
-6. Cliquer sur **"Create"**
-
-### 3. Connecter la base de données au projet
-
-1. Une fois la base créée, aller dans l'onglet **".env.local"**
-2. Copier la variable `POSTGRES_PRISMA_URL` ou `DATABASE_URL`
-3. Elle ressemble à: `postgres://...@...vercel-storage.com/...`
-
-### 4. Configurer les variables d'environnement
-
-Dans votre projet Vercel → **Settings** → **Environment Variables**, ajouter:
+Dans votre projet Vercel → **Settings** → **Environment Variables**, ajouter ces 3 variables:
 
 #### Variables requises:
 
 1. **DATABASE_URL**
    ```
-   Coller l'URL Postgres copiée à l'étape 3
+   prisma+postgres://accelerate.prisma-data.net/?api_key=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqd3RfaWQiOjEsInNlY3VyZV9rZXkiOiJza19TanBpcUNmUThJcFpCZHB1MU5BMzciLCJhcGlfa2V5IjoiMDFLNzRTVjIyV00wM0FDMDAyWlpWV0E3Q0oiLCJ0ZW5hbnRfaWQiOiIwYzgzMmU1Mjk2MzJiYjU2M2JiODFhNDJjYTg5MDMyMTJmYTIyYTY0NmU5MTk0NjUxNTIzYjRmNTZhNWNiMmZlIiwiaW50ZXJuYWxfc2VjcmV0IjoiOWQ1YWU2ZTctOGZjMS00ZmMxLTlkN2ItYzM5ZGRlYjQ1MDQ4In0.dzdH0125c4jf04k0JqONOndbc1YL7hXUOyIfbvYbbPM
    ```
 
 2. **NEXTAUTH_URL**
@@ -56,49 +45,19 @@ Dans votre projet Vercel → **Settings** → **Environment Variables**, ajouter
    ```
    lJ7F1WS2VjiwYzbgYzPlvyxiENX+fxv2+Ecr90BDJDo=
    ```
-   ⚠️ Ce secret a été généré pour vous. Gardez-le confidentiel !
 
 **Important**: Pour chaque variable, sélectionner les 3 environnements:
 - ✅ Production
 - ✅ Preview
 - ✅ Development
 
-### 5. Déployer
+### 3. Déployer
 
-1. Retourner dans l'onglet **"Deployments"**
-2. Cliquer sur **"Deploy"** ou attendre le déploiement automatique
-3. Le déploiement prend environ 2-3 minutes
+1. Cliquer sur **"Deploy"**
+2. Le déploiement prend environ 2-3 minutes
+3. ✅ **C'EST TOUT !** Votre application est en ligne !
 
-### 6. Initialiser la base de données
-
-Une fois déployé, il faut créer les tables et ajouter les données de test.
-
-**Option A: Via Vercel CLI** (recommandé)
-
-```bash
-# Se connecter à Vercel
-vercel login
-
-# Lier le projet local
-vercel link
-
-# Télécharger les variables d'environnement
-vercel env pull .env.production
-
-# Pousser le schéma vers la base de données
-npx prisma db push
-
-# Ajouter les données de test (optionnel mais recommandé)
-npx prisma db seed
-```
-
-**Option B: Via l'interface Vercel**
-
-1. Aller dans **Storage** → Votre base de données Postgres
-2. Cliquer sur **"Query"** ou **"Data"**
-3. Exécuter manuellement les migrations (plus complexe, option A recommandée)
-
-### 7. Tester l'application
+### 4. Tester l'application
 
 1. Aller sur votre URL: `https://votre-projet.vercel.app`
 2. Vous devriez être redirigé vers `/login`
