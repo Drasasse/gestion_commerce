@@ -22,6 +22,7 @@ interface FormData {
   adresse: string;
   telephone: string;
   description: string;
+  capitalInitial: string;
 }
 
 export default function BoutiquesPage() {
@@ -35,6 +36,7 @@ export default function BoutiquesPage() {
     adresse: '',
     telephone: '',
     description: '',
+    capitalInitial: '0',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -72,10 +74,15 @@ export default function BoutiquesPage() {
       const url = editingBoutique ? `/api/boutiques/${editingBoutique.id}` : '/api/boutiques';
       const method = editingBoutique ? 'PUT' : 'POST';
 
+      const payload = {
+        ...formData,
+        capitalInitial: parseFloat(formData.capitalInitial) || 0,
+      };
+
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       if (response.ok) {
@@ -98,6 +105,7 @@ export default function BoutiquesPage() {
       adresse: boutique.adresse || '',
       telephone: boutique.telephone || '',
       description: boutique.description || '',
+      capitalInitial: boutique.capitalInitial?.toString() || '0',
     });
     setShowModal(true);
   };
@@ -119,7 +127,7 @@ export default function BoutiquesPage() {
   };
 
   const resetForm = () => {
-    setFormData({ nom: '', adresse: '', telephone: '', description: '' });
+    setFormData({ nom: '', adresse: '', telephone: '', description: '', capitalInitial: '0' });
     setEditingBoutique(null);
     setErrors({});
   };
@@ -278,6 +286,20 @@ export default function BoutiquesPage() {
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Capital Initial (FCFA)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={formData.capitalInitial}
+                  onChange={(e) => setFormData({ ...formData, capitalInitial: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  placeholder="0.00"
                 />
               </div>
 

@@ -17,6 +17,7 @@ export interface Boutique {
   adresse?: string;
   telephone?: string;
   description?: string;
+  capitalInitial?: number;
   createdAt: string;
   updatedAt: string;
 }

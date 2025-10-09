@@ -9,6 +9,7 @@ const boutiqueSchema = z.object({
   adresse: z.string().optional(),
   telephone: z.string().optional(),
   description: z.string().optional(),
+  capitalInitial: z.number().min(0, 'Le capital initial doit être positif').optional(),
 });
 
 // GET - Récupérer une boutique par ID
