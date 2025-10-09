@@ -61,7 +61,22 @@ async function getRecentVentes(boutiqueId: string) {
 
 export default async function BoutiquePage() {
   const session = await getServerSession(authOptions)
-  const boutiqueId = session?.user?.boutiqueId!
+  const boutiqueId = session?.user?.boutiqueId
+
+  if (!boutiqueId) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            Aucune boutique assignée
+          </h1>
+          <p className="text-gray-600">
+            Contactez l&apos;administrateur pour vous assigner une boutique.
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   const stats = await getBoutiqueStats(boutiqueId)
   const recentVentes = await getRecentVentes(boutiqueId)

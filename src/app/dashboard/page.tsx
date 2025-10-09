@@ -41,18 +41,18 @@ async function getRecentBoutiques() {
 }
 
 async function getLowStock() {
-  return await prisma.stock.findMany({
-    where: {
-      quantite: {
-        lte: prisma.produit.fields.seuilAlerte,
-      },
-    },
+  // Récupérer tous les stocks avec leurs produits
+  const stocks = await prisma.stock.findMany({
     include: {
       produit: true,
       boutique: true,
     },
-    take: 5,
   })
+
+  // Filtrer ceux où la quantité est inférieure ou égale au seuil d'alerte
+  return stocks
+    .filter(stock => stock.quantite <= stock.produit.seuilAlerte)
+    .slice(0, 5)
 }
 
 export default async function DashboardPage() {
@@ -95,7 +95,7 @@ export default async function DashboardPage() {
           Bienvenue, {session?.user?.name}
         </h1>
         <p className="text-gray-600 mt-1">
-          Vue d'ensemble de votre activité commerciale
+          Vue d&apos;ensemble de votre activité commerciale
         </p>
       </div>
 

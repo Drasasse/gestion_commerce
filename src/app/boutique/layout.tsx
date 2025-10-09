@@ -26,7 +26,7 @@ export default async function BoutiqueLayout({
             Aucune boutique assignée
           </h1>
           <p className="text-gray-600">
-            Contactez l'administrateur pour vous assigner une boutique.
+            Contactez l&apos;administrateur pour vous assigner une boutique.
           </p>
         </div>
       </div>
