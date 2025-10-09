@@ -13,26 +13,35 @@ import {
   BarChart3,
   LogOut,
   Menu,
-  X
+  X,
+  UserCog,
+  TrendingUp,
+  Archive,
+  DollarSign,
+  Tags,
+  FileText,
+  CreditCard
 } from "lucide-react"
 import { useState } from "react"
 
 const adminLinks = [
   { href: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard },
   { href: "/dashboard/boutiques", label: "Boutiques", icon: Store },
-  { href: "/dashboard/produits", label: "Produits", icon: Package },
-  { href: "/dashboard/ventes", label: "Ventes", icon: ShoppingCart },
-  { href: "/dashboard/clients", label: "Clients", icon: Users },
-  { href: "/dashboard/tresorerie", label: "Trésorerie", icon: Wallet },
+  { href: "/dashboard/utilisateurs", label: "Utilisateurs", icon: UserCog },
+  { href: "/dashboard/capital", label: "Capital", icon: DollarSign },
   { href: "/dashboard/rapports", label: "Rapports", icon: BarChart3 },
 ]
 
 const gestionnaireLinks = [
   { href: "/boutique", label: "Tableau de bord", icon: LayoutDashboard },
+  { href: "/boutique/categories", label: "Catégories", icon: Tags },
   { href: "/boutique/produits", label: "Produits", icon: Package },
+  { href: "/boutique/stocks", label: "Stocks", icon: Archive },
   { href: "/boutique/ventes", label: "Ventes", icon: ShoppingCart },
   { href: "/boutique/clients", label: "Clients", icon: Users },
-  { href: "/boutique/caisse", label: "Caisse", icon: Wallet },
+  { href: "/boutique/paiements", label: "Paiements", icon: CreditCard },
+  { href: "/boutique/transactions", label: "Transactions", icon: TrendingUp },
+  { href: "/boutique/rapports", label: "Rapports", icon: FileText },
 ]
 
 export function Sidebar() {
