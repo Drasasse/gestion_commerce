@@ -1,0 +1,202 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  GESTIONNAIRE
+}
+
+enum TransactionType {
+  VENTE
+  ACHAT
+  DEPENSE
+  INJECTION_CAPITAL
+  RETRAIT
+}
+
+enum PaymentStatus {
+  PAYE
+  IMPAYE
+  PARTIEL
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  password      String
+  role          Role      @default(GESTIONNAIRE)
+  boutiqueId    String?
+  boutique      Boutique? @relation(fields: [boutiqueId], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  transactions  Transaction[]
+  ventes        Vente[]
+
+  @@index([boutiqueId])
+}
+
+model Boutique {
+  id              String    @id @default(cuid())
+  nom             String
+  adresse         String?
+  telephone       String?
+  description     String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  users           User[]
+  produits        Produit[]
+  categories      Categorie[]
+  stocks          Stock[]
+  transactions    Transaction[]
+  ventes          Vente[]
+  clients         Client[]
+}
+
+model Categorie {
+  id          String    @id @default(cuid())
+  nom         String
+  description String?
+  boutiqueId  String
+  boutique    Boutique  @relation(fields: [boutiqueId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  produits    Produit[]
+
+  @@index([boutiqueId])
+}
+
+model Produit {
+  id              String    @id @default(cuid())
+  nom             String
+  description     String?
+  prixAchat       Float
+  prixVente       Float
+  seuilAlerte     Int       @default(5)
+  categorieId     String
+  categorie       Categorie @relation(fields: [categorieId], references: [id])
+  boutiqueId      String
+  boutique        Boutique  @relation(fields: [boutiqueId], references: [id], onDelete: Cascade)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  stocks          Stock[]
+  lignesVente     LigneVente[]
+
+  @@index([boutiqueId])
+  @@index([categorieId])
+}
+
+model Stock {
+  id              String    @id @default(cuid())
+  produitId       String
+  produit         Produit   @relation(fields: [produitId], references: [id], onDelete: Cascade)
+  boutiqueId      String
+  boutique        Boutique  @relation(fields: [boutiqueId], references: [id], onDelete: Cascade)
+  quantite        Int       @default(0)
+  derniereEntree  DateTime?
+  derniereSortie  DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  mouvements      MouvementStock[]
+
+  @@unique([produitId, boutiqueId])
+  @@index([boutiqueId])
+}
+
+model MouvementStock {
+  id          String    @id @default(cuid())
+  stockId     String
+  stock       Stock     @relation(fields: [stockId], references: [id], onDelete: Cascade)
+  type        String    // "ENTREE" ou "SORTIE"
+  quantite    Int
+  motif       String?
+  createdAt   DateTime  @default(now())
+
+  @@index([stockId])
+}
+
+model Client {
+  id          String    @id @default(cuid())
+  nom         String
+  prenom      String?
+  telephone   String?
+  adresse     String?
+  email       String?
+  boutiqueId  String
+  boutique    Boutique  @relation(fields: [boutiqueId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  ventes      Vente[]
+
+  @@index([boutiqueId])
+}
+
+model Vente {
+  id              String        @id @default(cuid())
+  numeroVente     String        @unique
+  clientId        String?
+  client          Client?       @relation(fields: [clientId], references: [id])
+  boutiqueId      String
+  boutique        Boutique      @relation(fields: [boutiqueId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User          @relation(fields: [userId], references: [id])
+  montantTotal    Float
+  montantPaye     Float         @default(0)
+  montantRestant  Float
+  statut          PaymentStatus @default(PAYE)
+  dateVente       DateTime      @default(now())
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  lignes          LigneVente[]
+
+  @@index([boutiqueId])
+  @@index([clientId])
+  @@index([userId])
+}
+
+model LigneVente {
+  id          String   @id @default(cuid())
+  venteId     String
+  vente       Vente    @relation(fields: [venteId], references: [id], onDelete: Cascade)
+  produitId   String
+  produit     Produit  @relation(fields: [produitId], references: [id])
+  quantite    Int
+  prixUnitaire Float
+  sousTotal   Float
+  createdAt   DateTime @default(now())
+
+  @@index([venteId])
+  @@index([produitId])
+}
+
+model Transaction {
+  id              String          @id @default(cuid())
+  type            TransactionType
+  montant         Float
+  description     String
+  boutiqueId      String
+  boutique        Boutique        @relation(fields: [boutiqueId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User            @relation(fields: [userId], references: [id])
+  dateTransaction DateTime        @default(now())
+  createdAt       DateTime        @default(now())
+
+  @@index([boutiqueId])
+  @@index([userId])
+}
