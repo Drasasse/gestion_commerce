@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
 import toast from 'react-hot-toast';
@@ -47,36 +47,7 @@ export default function CapitalPage() {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  if (status === 'loading') return <div>Chargement...</div>;
-  if (!session || session.user.role !== 'ADMIN') redirect('/');
-
-  const loadData = async () => {
-    try {
-      const [boutiquesRes, transactionsRes] = await Promise.all([
-        fetch('/api/boutiques'),
-        fetch('/api/capital'),
-      ]);
-
-      if (boutiquesRes.ok && transactionsRes.ok) {
-        const boutiquesData = await boutiquesRes.json();
-        const transactionsData = await transactionsRes.json();
-
-        setBoutiques(boutiquesData);
-        setTransactions(transactionsData);
-        calculateCapitalStats(boutiquesData, transactionsData);
-      }
-    } catch (error) {
-      toast.error('Erreur lors du chargement');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const calculateCapitalStats = (boutiquesData: Boutique[], transactionsData: Transaction[]) => {
+  const calculateCapitalStats = useCallback((boutiquesData: Boutique[], transactionsData: Transaction[]) => {
     const stats = boutiquesData.map(boutique => {
       const injections = transactionsData.filter(
         t => t.boutique.id === boutique.id && t.type === 'INJECTION_CAPITAL'
@@ -95,7 +66,36 @@ export default function CapitalPage() {
     });
 
     setCapitalStats(stats);
-  };
+  }, []);
+
+  const loadData = useCallback(async () => {
+    try {
+      const [boutiquesRes, transactionsRes] = await Promise.all([
+        fetch('/api/boutiques'),
+        fetch('/api/capital'),
+      ]);
+
+      if (boutiquesRes.ok && transactionsRes.ok) {
+        const boutiquesData = await boutiquesRes.json();
+        const transactionsData = await transactionsRes.json();
+
+        setBoutiques(boutiquesData);
+        setTransactions(transactionsData);
+        calculateCapitalStats(boutiquesData, transactionsData);
+      }
+    } catch {
+      toast.error('Erreur lors du chargement');
+    } finally {
+      setLoading(false);
+    }
+  }, [calculateCapitalStats]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  if (status === 'loading') return <div>Chargement...</div>;
+  if (!session || session.user.role !== 'ADMIN') redirect('/');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,7 +133,7 @@ export default function CapitalPage() {
         const errorData = await response.json();
         toast.error(errorData.error || 'Erreur');
       }
-    } catch (error) {
+    } catch {
       toast.error('Erreur lors de l\'enregistrement');
     }
   };

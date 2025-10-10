@@ -33,7 +33,15 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     // Construction des filtres
-    const where: any = {
+    interface WhereConditions {
+      boutiqueId: string;
+      type?: string;
+      categorie?: { contains: string; mode: 'insensitive' };
+      dateTransaction?: { gte?: Date; lte?: Date };
+      description?: { contains: string; mode: 'insensitive' };
+    }
+
+    const where: WhereConditions = {
       boutiqueId: session.user.boutiqueId,
     };
 
@@ -109,51 +117,18 @@ export async function GET(request: NextRequest) {
     const depensesMois = stats.find(s => s.type === 'DEPENSE')?._sum.montant || 0;
     const beneficeMois = recettesMois - depensesMois;
 
-    // Calcul du solde total
-    const soldeTotal = await prisma.transaction.aggregate({
-      where: {
-        boutiqueId: session.user.boutiqueId,
-      },
-      _sum: {
-        montant: true,
-      },
-    });
-
-    const recettesTotal = await prisma.transaction.aggregate({
-      where: {
-        boutiqueId: session.user.boutiqueId,
-        type: 'RECETTE',
-      },
-      _sum: {
-        montant: true,
-      },
-    });
-
-    const depensesTotal = await prisma.transaction.aggregate({
-      where: {
-        boutiqueId: session.user.boutiqueId,
-        type: 'DEPENSE',
-      },
-      _sum: {
-        montant: true,
-      },
-    });
-
-    const solde = (recettesTotal._sum.montant || 0) - (depensesTotal._sum.montant || 0);
-
     return NextResponse.json({
       transactions,
       pagination: {
+        total,
         page,
         limit,
-        total,
-        pages: Math.ceil(total / limit),
+        totalPages: Math.ceil(total / limit),
       },
       stats: {
         recettesMois,
         depensesMois,
         beneficeMois,
-        solde,
       },
     });
   } catch (error) {
@@ -193,7 +168,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Ajustement du montant selon le type
-    const montantAjuste = validatedData.type === 'DEPENSE' 
+    const montantAjuste = validatedData.type === 'DEPENSE'
       ? -Math.abs(validatedData.montant)
       : Math.abs(validatedData.montant);
 
@@ -204,10 +179,11 @@ export async function POST(request: NextRequest) {
         description: validatedData.description,
         categorie: validatedData.categorie,
         venteId: validatedData.venteId,
-        dateTransaction: validatedData.dateTransaction 
+        dateTransaction: validatedData.dateTransaction
           ? new Date(validatedData.dateTransaction)
           : new Date(),
         boutiqueId: session.user.boutiqueId,
+        userId: session.user.id,
       },
       include: {
         vente: {

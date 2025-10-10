@@ -15,7 +15,7 @@ const boutiqueSchema = z.object({
 // GET - Récupérer une boutique par ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -27,8 +27,10 @@ export async function GET(
       );
     }
 
+    const { id } = await params;
+
     const boutique = await prisma.boutique.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         users: {
           select: {
@@ -68,7 +70,7 @@ export async function GET(
 // PUT - Mettre à jour une boutique
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -80,11 +82,12 @@ export async function PUT(
       );
     }
 
+    const { id } = await params;
     const body = await request.json();
     const validatedData = boutiqueSchema.parse(body);
 
     const boutique = await prisma.boutique.update({
-      where: { id: params.id },
+      where: { id },
       data: validatedData,
     });
 
@@ -108,7 +111,7 @@ export async function PUT(
 // DELETE - Supprimer une boutique
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -120,9 +123,11 @@ export async function DELETE(
       );
     }
 
+    const { id } = await params;
+
     // Vérifier qu'il n'y a pas d'utilisateurs assignés
     const users = await prisma.user.count({
-      where: { boutiqueId: params.id },
+      where: { boutiqueId: id },
     });
 
     if (users > 0) {
@@ -133,7 +138,7 @@ export async function DELETE(
     }
 
     await prisma.boutique.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ success: true });

@@ -13,7 +13,7 @@ const paiementUpdateSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -22,7 +22,7 @@ export async function GET(
     }
 
     const boutiqueId = session.user.boutiqueId
-    const paiementId = params.id
+    const { id: paiementId } = await params
 
     const paiement = await prisma.paiement.findFirst({
       where: {
@@ -66,7 +66,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -77,7 +77,7 @@ export async function PUT(
     const body = await request.json()
     const data = paiementUpdateSchema.parse(body)
     const boutiqueId = session.user.boutiqueId
-    const paiementId = params.id
+    const { id: paiementId } = await params
 
     // Vérifier que le paiement existe et appartient à la boutique
     const paiementExistant = await prisma.paiement.findFirst({
@@ -179,7 +179,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -188,7 +188,7 @@ export async function DELETE(
     }
 
     const boutiqueId = session.user.boutiqueId
-    const paiementId = params.id
+    const { id: paiementId } = await params
 
     // Vérifier que le paiement existe et appartient à la boutique
     const paiement = await prisma.paiement.findFirst({

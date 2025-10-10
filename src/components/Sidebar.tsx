@@ -8,7 +8,6 @@ import {
   Package,
   Users,
   ShoppingCart,
-  Wallet,
   Store,
   BarChart3,
   LogOut,

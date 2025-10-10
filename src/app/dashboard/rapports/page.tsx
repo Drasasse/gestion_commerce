@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
-import { formatMontant, formatDate } from '@/lib/utils';
+import { formatMontant } from '@/lib/utils';
 
 interface BoutiqueStats {
   id: string;
@@ -38,18 +38,14 @@ export default function RapportsAdminPage() {
 
   const loadData = async () => {
     try {
-      const [boutiquesRes, ventesRes, transactionsRes] = await Promise.all([
-        fetch('/api/boutiques?includeStats=true'),
-        fetch('/api/ventes'),
-        fetch('/api/capital'),
-      ]);
+      const boutiquesRes = await fetch('/api/boutiques?includeStats=true');
 
       if (boutiquesRes.ok) {
         const boutiquesData = await boutiquesRes.json();
 
         // Process stats for each boutique
         const stats: BoutiqueStats[] = await Promise.all(
-          boutiquesData.map(async (boutique: any) => {
+          boutiquesData.map(async (boutique: { id: string; nom: string; capitalInitial?: number; stats?: { totalVentes: number; nombreVentes: number; totalImpayes: number; nombreProduits: number; nombreClients: number } }) => {
             return {
               id: boutique.id,
               nom: boutique.nom,
@@ -65,8 +61,8 @@ export default function RapportsAdminPage() {
 
         setBoutiquesStats(stats);
       }
-    } catch (error) {
-      console.error('Erreur lors du chargement:', error);
+    } catch {
+      // Silent error handling
     } finally {
       setLoading(false);
     }
@@ -96,7 +92,7 @@ export default function RapportsAdminPage() {
     <div className="p-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Rapports Consolidés</h1>
-        <p className="text-gray-600 mt-1">Vue d'ensemble de toutes les boutiques</p>
+        <p className="text-gray-600 mt-1">Vue d&apos;ensemble de toutes les boutiques</p>
       </div>
 
       {/* Filtres de date */}

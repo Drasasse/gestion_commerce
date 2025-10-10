@@ -15,7 +15,7 @@ const transactionUpdateSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -78,7 +78,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -113,7 +113,11 @@ export async function PUT(
     }
 
     // Préparer les données de mise à jour
-    const updateData: any = {};
+    const updateData: {
+      type?: string;
+      montant?: number;
+      description?: string;
+    } = {};
 
     if (validatedData.type !== undefined) {
       updateData.type = validatedData.type;
@@ -176,7 +180,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);

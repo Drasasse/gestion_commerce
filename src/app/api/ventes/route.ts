@@ -36,7 +36,17 @@ export async function GET(request: NextRequest) {
     const dateFin = searchParams.get('dateFin');
     const skip = (page - 1) * limit;
 
-    const where: any = {
+    interface VenteWhereConditions {
+      boutiqueId: string;
+      OR?: Array<{
+        numeroVente?: { contains: string; mode: 'insensitive' };
+        client?: { nom?: { contains: string; mode: 'insensitive' }; prenom?: { contains: string; mode: 'insensitive' } };
+      }>;
+      statut?: string;
+      dateVente?: { gte?: Date; lte?: Date };
+    }
+
+    const where: VenteWhereConditions = {
       boutiqueId: session.user.boutiqueId,
       ...(search && {
         OR: [

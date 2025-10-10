@@ -49,12 +49,25 @@ export async function GET(request: NextRequest) {
 
     // Si stats demandées, calculer les totaux
     if (includeStats) {
-      const boutiquesAvecStats = boutiques.map(boutique => {
-        const totalVentes = boutique.ventes?.reduce((acc, v) => acc + v.montantTotal, 0) || 0;
-        const totalImpayes = boutique.ventes?.reduce((acc, v) => acc + v.montantRestant, 0) || 0;
+      type BoutiqueWithStats = typeof boutiques[0] & {
+        ventes?: Array<{ montantTotal: number; montantRestant: number }>;
+        _count?: { users: number; produits: number; ventes: number; clients: number };
+      };
+
+      const boutiquesAvecStats = (boutiques as BoutiqueWithStats[]).map(boutique => {
+        const ventes = boutique.ventes || [];
+        const totalVentes = ventes.reduce((acc, v) => acc + v.montantTotal, 0);
+        const totalImpayes = ventes.reduce((acc, v) => acc + v.montantRestant, 0);
 
         return {
-          ...boutique,
+          id: boutique.id,
+          nom: boutique.nom,
+          adresse: boutique.adresse,
+          telephone: boutique.telephone,
+          description: boutique.description,
+          capitalInitial: boutique.capitalInitial,
+          createdAt: boutique.createdAt,
+          updatedAt: boutique.updatedAt,
           stats: {
             totalVentes,
             totalImpayes,
@@ -63,8 +76,6 @@ export async function GET(request: NextRequest) {
             nombreVentes: boutique._count?.ventes || 0,
             nombreClients: boutique._count?.clients || 0,
           },
-          ventes: undefined,
-          _count: undefined,
         };
       });
 

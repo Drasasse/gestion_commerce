@@ -16,7 +16,7 @@ const utilisateurUpdateSchema = z.object({
 // GET - Récupérer un utilisateur par ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -28,8 +28,10 @@ export async function GET(
       );
     }
 
+    const { id } = await params;
+
     const user = await prisma.user.findUnique({
-      where: { id: params.id },
+      where: { id },
       select: {
         id: true,
         name: true,
@@ -67,7 +69,7 @@ export async function GET(
 // PUT - Mettre à jour un utilisateur
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -79,12 +81,13 @@ export async function PUT(
       );
     }
 
+    const { id } = await params;
     const body = await request.json();
     const validatedData = utilisateurUpdateSchema.parse(body);
 
     // Vérifier que l'utilisateur existe
     const existingUser = await prisma.user.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!existingUser) {
@@ -109,7 +112,13 @@ export async function PUT(
     }
 
     // Préparer les données de mise à jour
-    const updateData: any = {
+    const updateData: {
+      name?: string;
+      email?: string;
+      role?: 'ADMIN' | 'GESTIONNAIRE';
+      password?: string;
+      boutiqueId?: string | null;
+    } = {
       ...(validatedData.name && { name: validatedData.name }),
       ...(validatedData.email && { email: validatedData.email }),
       ...(validatedData.role && { role: validatedData.role }),
@@ -139,7 +148,7 @@ export async function PUT(
     }
 
     const user = await prisma.user.update({
-      where: { id: params.id },
+      where: { id },
       data: updateData,
       select: {
         id: true,
@@ -177,7 +186,7 @@ export async function PUT(
 // DELETE - Supprimer un utilisateur
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -189,8 +198,10 @@ export async function DELETE(
       );
     }
 
+    const { id } = await params;
+
     // Empêcher de se supprimer soi-même
-    if (session.user.id === params.id) {
+    if (session.user.id === id) {
       return NextResponse.json(
         { error: 'Vous ne pouvez pas supprimer votre propre compte' },
         { status: 400 }
@@ -199,8 +210,8 @@ export async function DELETE(
 
     // Vérifier que l'utilisateur n'a pas de ventes ou transactions
     const [ventes, transactions] = await Promise.all([
-      prisma.vente.count({ where: { userId: params.id } }),
-      prisma.transaction.count({ where: { userId: params.id } }),
+      prisma.vente.count({ where: { userId: id } }),
+      prisma.transaction.count({ where: { userId: id } }),
     ]);
 
     if (ventes > 0 || transactions > 0) {
@@ -211,7 +222,7 @@ export async function DELETE(
     }
 
     await prisma.user.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ success: true });

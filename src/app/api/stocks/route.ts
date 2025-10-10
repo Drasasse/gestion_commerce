@@ -32,7 +32,10 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     // Construire les conditions de recherche
-    const whereConditions: any = {
+    const whereConditions: {
+      boutiqueId: string;
+      produit?: { nom: { contains: string; mode: 'insensitive' } };
+    } = {
       boutiqueId: session.user.boutiqueId,
     };
 

@@ -43,14 +43,14 @@ export async function GET(
           }
         },
         mouvements: {
-          orderBy: { dateCreation: 'desc' },
+          orderBy: { createdAt: 'desc' },
           take: 20,
           select: {
             id: true,
             type: true,
             quantite: true,
             motif: true,
-            dateCreation: true,
+            createdAt: true,
             vente: {
               select: {
                 numeroVente: true,

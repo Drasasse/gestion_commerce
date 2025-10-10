@@ -13,6 +13,8 @@ const utilisateurSchema = z.object({
   boutiqueId: z.string().nullable().optional(),
 });
 
+// Schema for updates (unused for now, but kept for future use)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const utilisateurUpdateSchema = z.object({
   name: z.string().min(1, 'Le nom est requis').optional(),
   email: z.string().email('Email invalide').optional(),

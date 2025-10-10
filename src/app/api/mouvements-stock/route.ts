@@ -6,7 +6,7 @@ import { z } from 'zod';
 
 const mouvementSchema = z.object({
   stockId: z.string().min(1, 'Le stock est requis'),
-  type: z.enum(['ENTREE', 'SORTIE'], { required_error: 'Le type de mouvement est requis' }),
+  type: z.enum(['ENTREE', 'SORTIE']),
   quantite: z.number().min(1, 'La quantité doit être positive'),
   motif: z.string().min(1, 'Le motif est requis'),
 });
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     const whereConditions: {
       stock: { boutiqueId: string };
       stockId?: string;
-      type?: string;
+      type?: 'ENTREE' | 'SORTIE';
       createdAt?: { gte?: Date; lte?: Date };
     } = {
       stock: {
@@ -48,8 +48,8 @@ export async function GET(request: NextRequest) {
       whereConditions.stockId = stockId;
     }
 
-    if (type && ['ENTREE', 'SORTIE'].includes(type)) {
-      whereConditions.type = type;
+    if (type && (type === 'ENTREE' || type === 'SORTIE')) {
+      whereConditions.type = type as 'ENTREE' | 'SORTIE';
     }
 
     if (dateDebut || dateFin) {

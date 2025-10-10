@@ -44,18 +44,20 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit
 
     // Construire les filtres
+    type PaymentStatus = 'PAYE' | 'IMPAYE' | 'PARTIEL';
+
     const where: {
       boutiqueId: string;
-      statut?: string | { not: string };
+      statut?: PaymentStatus | { not: PaymentStatus };
       clientId?: string;
-      createdAt?: { gte?: Date; lte?: Date };
+      dateVente?: { gte?: Date; lte?: Date };
     } = {
       boutiqueId,
       statut: { not: 'PAYE' } // Par défaut, afficher les créances non payées
     }
 
-    if (query.statut) {
-      where.statut = query.statut
+    if (query.statut && (query.statut === 'PAYE' || query.statut === 'IMPAYE' || query.statut === 'PARTIEL')) {
+      where.statut = query.statut as PaymentStatus
     }
 
     if (query.clientId) {

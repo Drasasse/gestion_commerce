@@ -238,8 +238,12 @@ async function genererRapportVentes(boutiqueId: string, dateDebut: Date, dateFin
     type: 'ventes',
     resume: {
       totalVentes: ventes._sum.montantTotal || 0,
-      nombreVentes: ventes._count,
-      venteMoyenne: ventes._avg.montantTotal || 0
+      chiffreAffaires: ventes._sum.montantTotal || 0,
+      ventesParJour: ventesParJour.map(v => ({
+        date: v.dateVente.toISOString().split('T')[0],
+        nombre: v._count,
+        montant: v._sum.montantTotal || 0
+      }))
     },
     ventesParJour: ventesParJour.map(v => ({
       date: v.dateVente,
@@ -247,10 +251,18 @@ async function genererRapportVentes(boutiqueId: string, dateDebut: Date, dateFin
       nombre: v._count
     })),
     produitsVendus: produitsVendusAvecDetails,
+    produitsPopulaires: produitsVendus.slice(0, 5).map(pv => {
+      const produit = produitsDetails.find(p => p.id === pv.produitId);
+      return {
+        produit: produit ? { nom: produit.nom } : { nom: 'Inconnu' },
+        _sum: {
+          quantite: pv._sum.quantite || 0
+        }
+      };
+    }),
     statutsVente: statutsVente.map(m => ({
       statut: m.statut,
-      montant: m._sum.montantTotal || 0,
-      nombre: m._count
+      _count: m._count
     }))
   }
 }
@@ -295,14 +307,6 @@ async function genererRapportProduits(boutiqueId: string, dateDebut: Date, dateF
     select: { id: true, nom: true, prixVente: true, categorie: { select: { nom: true } } }
   })
 
-  const produitsPopulairesAvecDetails = produitsPopulaires.map(pp => {
-    const produit = produitsDetails.find(p => p.id === pp.produitId)
-    return {
-      ...pp,
-      produit
-    }
-  })
-
   // Analyser les stocks
   const stocksAnalyse = {
     enRupture: produitsStock.filter(s => s.quantite === 0).length,
@@ -316,17 +320,12 @@ async function genererRapportProduits(boutiqueId: string, dateDebut: Date, dateF
       totalProduits: produitsStats._count,
       prixMoyen: produitsStats._avg.prixVente || 0
     },
-    produitsPopulaires: produitsPopulairesAvecDetails,
-    stocks: {
-      analyse: stocksAnalyse,
-      details: produitsStock.map(s => ({
-        produit: s.produit,
-        quantite: s.quantite,
-        seuilAlerte: s.seuilAlerte,
-        statut: s.quantite === 0 ? 'rupture' : 
-                s.quantite <= s.seuilAlerte ? 'faible' : 'normal'
-      }))
-    }
+    produitsPopulaires: produitsDetails.map(p => ({
+      nom: p.nom,
+      prixVente: p.prixVente,
+      categorie: { nom: p.categorie?.nom || 'Sans catégorie' }
+    })),
+    stocksAnalyse: stocksAnalyse
   }
 }
 
@@ -356,34 +355,44 @@ async function genererRapportClients(boutiqueId: string, dateDebut: Date, dateFi
     prisma.client.count({
       where: {
         boutiqueId,
-        dateCreation: { gte: dateDebut, lte: dateFin }
+        createdAt: { gte: dateDebut, lte: dateFin }
       }
     })
   ])
+
+  // Tous les clients
+  const allClientsDetails = await prisma.client.findMany({
+    where: { boutiqueId },
+    select: { nom: true, prenom: true, email: true, telephone: true }
+  })
 
   // Enrichir les clients actifs
   const clientsDetails = await prisma.client.findMany({
     where: {
       id: { in: clientsActifs.map(c => c.clientId).filter(Boolean) as string[] }
     },
-    select: { id: true, prenom: true, nom: true, telephone: true }
-  })
-
-  const clientsActifsAvecDetails = clientsActifs.map(ca => {
-    const client = clientsDetails.find(c => c.id === ca.clientId)
-    return {
-      ...ca,
-      client
-    }
+    select: { id: true, prenom: true, nom: true, telephone: true, email: true }
   })
 
   return {
     type: 'clients',
     resume: {
       totalClients: clientsStats._count,
+      clientsActifs: clientsActifs.length,
       nouveauxClients
     },
-    clientsActifs: clientsActifsAvecDetails
+    clientsDetails: allClientsDetails.map(c => ({
+      nom: c.nom,
+      prenom: c.prenom || '',
+      email: c.email || undefined,
+      telephone: c.telephone || undefined
+    })),
+    clientsActifs: clientsDetails.map(c => ({
+      nom: c.nom,
+      prenom: c.prenom || '',
+      email: c.email || undefined,
+      telephone: c.telephone || undefined
+    }))
   }
 }
 
@@ -416,7 +425,7 @@ async function genererRapportStocks(boutiqueId: string) {
           }
         }
       },
-      orderBy: { dateCreation: 'desc' },
+      orderBy: { createdAt: 'desc' },
       take: 20
     })
   ])
@@ -432,12 +441,38 @@ async function genererRapportStocks(boutiqueId: string) {
     type: 'stocks',
     resume: {
       totalProduits: stocks.length,
-      enRupture: analyse.enRupture.length,
-      stockFaible: analyse.stockFaible.length,
+      valeurTotaleStock: analyse.valeurTotale
+    },
+    analyse: {
+      enRupture: analyse.enRupture.map(s => ({
+        produit: {
+          nom: s.produit.nom,
+          prixVente: s.produit.prixVente,
+          seuilAlerte: s.produit.seuilAlerte
+        }
+      })),
+      stockFaible: analyse.stockFaible.map(s => ({
+        produit: {
+          nom: s.produit.nom,
+          prixVente: s.produit.prixVente,
+          seuilAlerte: s.produit.seuilAlerte
+        }
+      })),
+      stockNormal: analyse.stockNormal.map(s => ({
+        produit: {
+          nom: s.produit.nom,
+          prixVente: s.produit.prixVente,
+          seuilAlerte: s.produit.seuilAlerte
+        }
+      })),
       valeurTotale: analyse.valeurTotale
     },
-    analyse,
-    mouvementsRecents
+    mouvementsRecents: mouvementsRecents.map(m => ({
+      type: m.type,
+      quantite: m.quantite,
+      motif: m.motif || '',
+      createdAt: m.createdAt
+    }))
   }
 }
 

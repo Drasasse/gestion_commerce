@@ -62,7 +62,7 @@ export default function UtilisateursPage() {
         setUsers(await usersRes.json());
         setBoutiques(await boutiquesRes.json());
       }
-    } catch (error) {
+    } catch {
       toast.error('Erreur lors du chargement');
     } finally {
       setLoading(false);
@@ -87,7 +87,13 @@ export default function UtilisateursPage() {
     }
 
     try {
-      const payload: any = {
+      const payload: {
+        name: string;
+        email: string;
+        role: string;
+        boutiqueId: string | null;
+        password?: string;
+      } = {
         name: formData.name,
         email: formData.email,
         role: formData.role,
@@ -116,7 +122,7 @@ export default function UtilisateursPage() {
         const errorData = await response.json();
         toast.error(errorData.error || 'Erreur');
       }
-    } catch (error) {
+    } catch {
       toast.error('Erreur lors de la sauvegarde');
     }
   };
@@ -145,7 +151,7 @@ export default function UtilisateursPage() {
         const errorData = await response.json();
         toast.error(errorData.error || 'Erreur');
       }
-    } catch (error) {
+    } catch {
       toast.error('Erreur lors de la suppression');
     }
   };
