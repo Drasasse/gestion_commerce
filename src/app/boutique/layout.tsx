@@ -20,12 +20,12 @@ export default async function BoutiqueLayout({
 
   if (!session.user.boutiqueId) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
             Aucune boutique assignée
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-600 dark:text-gray-300">
             Contactez l&apos;administrateur pour vous assigner une boutique.
           </p>
         </div>

@@ -47,7 +47,9 @@ export default function CategoriesPage() {
       const response = await fetch('/api/categories');
       if (response.ok) {
         const data = await response.json();
-        setCategories(data || []);
+        // L'API retourne {categories: [...]}
+        const categoriesArray = Array.isArray(data?.categories) ? data.categories : (Array.isArray(data) ? data : []);
+        setCategories(categoriesArray);
       }
     } catch (error) {
       console.error('Erreur lors du chargement des catégories:', error);
