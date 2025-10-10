@@ -15,8 +15,9 @@ const clientSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
-    if (!session?.user?.boutiqueId) {
+
+
+    if (!session?.user) {
       return NextResponse.json(
         { error: 'Non autorisé' },
         { status: 401 }
@@ -24,13 +25,27 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
+    const boutiqueIdParam = searchParams.get('boutiqueId');
     const search = searchParams.get('search') || '';
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
     const skip = (page - 1) * limit;
 
+    // Admin can view any boutique, GESTIONNAIRE only their own
+    let boutiqueId: string;
+    if (session.user.role === 'ADMIN' && boutiqueIdParam) {
+      boutiqueId = boutiqueIdParam;
+    } else if (session.user.boutiqueId) {
+      boutiqueId = session.user.boutiqueId;
+    } else {
+      return NextResponse.json(
+        { error: 'Non autorisé' },
+        { status: 401 }
+      );
+    }
+
     const where = {
-      boutiqueId: session.user.boutiqueId,
+      boutiqueId,
       ...(search && {
         OR: [
           { nom: { contains: search, mode: 'insensitive' as const } },

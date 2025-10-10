@@ -18,8 +18,8 @@ const produitSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
-    if (!session?.user?.boutiqueId) {
+
+    if (!session?.user) {
       return NextResponse.json(
         { error: 'Non autorisé' },
         { status: 401 }
@@ -27,15 +27,29 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
+    const boutiqueIdParam = searchParams.get('boutiqueId');
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
     const search = searchParams.get('search') || '';
     const categorieId = searchParams.get('categorieId') || '';
 
+    // Admin can view any boutique, GESTIONNAIRE only their own
+    let boutiqueId: string;
+    if (session.user.role === 'ADMIN' && boutiqueIdParam) {
+      boutiqueId = boutiqueIdParam;
+    } else if (session.user.boutiqueId) {
+      boutiqueId = session.user.boutiqueId;
+    } else {
+      return NextResponse.json(
+        { error: 'Non autorisé' },
+        { status: 401 }
+      );
+    }
+
     const skip = (page - 1) * limit;
 
     const where = {
-      boutiqueId: session.user.boutiqueId,
+      boutiqueId,
       ...(search && {
         OR: [
           { nom: { contains: search, mode: 'insensitive' as const } },
@@ -50,8 +64,7 @@ export async function GET(request: NextRequest) {
         where,
         include: {
           categorie: true,
-          stocks: {
-            where: { boutiqueId: session.user.boutiqueId },
+          stock: {
             select: { quantite: true },
           },
         },
@@ -65,8 +78,7 @@ export async function GET(request: NextRequest) {
     // Ajouter la quantité en stock à chaque produit
     const produitsAvecStock = produits.map(produit => ({
       ...produit,
-      quantiteStock: produit.stocks[0]?.quantite || 0,
-      stocks: undefined, // Retirer le tableau stocks de la réponse
+      quantiteStock: produit.stock?.quantite || 0,
     }));
 
     return NextResponse.json({

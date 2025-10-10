@@ -38,14 +38,27 @@ export default function RapportsAdminPage() {
 
   const loadData = async () => {
     try {
-      const boutiquesRes = await fetch('/api/boutiques?includeStats=true');
+      const [boutiquesRes, injectionsRes] = await Promise.all([
+        fetch('/api/boutiques?includeStats=true'),
+        fetch('/api/capital')
+      ]);
 
       if (boutiquesRes.ok) {
         const boutiquesData = await boutiquesRes.json();
+        const injections = injectionsRes.ok ? await injectionsRes.json() : [];
 
         // Process stats for each boutique
         const stats: BoutiqueStats[] = await Promise.all(
           boutiquesData.map(async (boutique: { id: string; nom: string; capitalInitial?: number; stats?: { totalVentes: number; nombreVentes: number; totalImpayes: number; nombreProduits: number; nombreClients: number } }) => {
+            // Calculate total injections for this boutique
+            const boutiqueInjections = injections.filter(
+              (inj: { boutique: { id: string }; montant: number }) => inj.boutique.id === boutique.id
+            );
+            const totalInjections = boutiqueInjections.reduce(
+              (sum: number, inj: { montant: number }) => sum + inj.montant,
+              0
+            );
+
             return {
               id: boutique.id,
               nom: boutique.nom,
@@ -54,7 +67,7 @@ export default function RapportsAdminPage() {
               totalImpayes: boutique.stats?.totalImpayes || 0,
               totalProduits: boutique.stats?.nombreProduits || 0,
               totalClients: boutique.stats?.nombreClients || 0,
-              capitalActuel: boutique.capitalInitial || 0,
+              capitalActuel: (boutique.capitalInitial || 0) + totalInjections,
             };
           })
         );

@@ -205,19 +205,27 @@ export default function BoutiquesPage() {
               </div>
             )}
 
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleEdit(boutique)}
-                className="flex-1 text-blue-600 hover:bg-blue-50 px-3 py-2 rounded-lg transition-colors text-sm font-medium"
+            <div className="flex flex-col gap-2">
+              <Link
+                href={`/dashboard/boutiques/${boutique.id}`}
+                className="text-center bg-blue-600 text-white hover:bg-blue-700 px-3 py-2 rounded-lg transition-colors text-sm font-medium"
               >
-                Modifier
-              </button>
-              <button
-                onClick={() => handleDelete(boutique.id)}
-                className="flex-1 text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg transition-colors text-sm font-medium"
-              >
-                Supprimer
-              </button>
+                Voir détails
+              </Link>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleEdit(boutique)}
+                  className="flex-1 text-blue-600 hover:bg-blue-50 px-3 py-2 rounded-lg transition-colors text-sm font-medium"
+                >
+                  Modifier
+                </button>
+                <button
+                  onClick={() => handleDelete(boutique.id)}
+                  className="flex-1 text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg transition-colors text-sm font-medium"
+                >
+                  Supprimer
+                </button>
+              </div>
             </div>
           </div>
         ))}
