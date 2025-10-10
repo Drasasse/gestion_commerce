@@ -1,16 +1,38 @@
 import { DEVISE_PRINCIPALE } from '@/types';
 
 /**
- * Formate un montant avec la devise principale
+ * Formate un montant avec la devise principale (FCFA)
  * @param montant - Le montant à formater
  * @param decimales - Nombre de décimales (par défaut 0 pour FCFA)
  * @returns Le montant formaté avec la devise
+ * @example formatMontant(50000) // "50 000 FCFA"
+ * @example formatMontant(50000.50, 2) // "50 000,50 FCFA"
  */
 export function formatMontant(montant: number, decimales: number = 0): string {
-  return `${montant.toLocaleString('fr-FR', {
+  // Format standard international pour FCFA (XOF)
+  const formatted = new Intl.NumberFormat('fr-FR', {
+    style: 'decimal',
     minimumFractionDigits: decimales,
     maximumFractionDigits: decimales,
-  })} ${DEVISE_PRINCIPALE}`;
+  }).format(montant);
+
+  return `${formatted} ${DEVISE_PRINCIPALE}`;
+}
+
+/**
+ * Formate un montant en version compacte (pour dashboards)
+ * @param montant - Le montant à formater
+ * @returns Le montant formaté en compact (ex: 50K, 1,2M)
+ * @example formatMontantCompact(50000) // "50K FCFA"
+ * @example formatMontantCompact(1200000) // "1,2M FCFA"
+ */
+export function formatMontantCompact(montant: number): string {
+  if (montant >= 1000000) {
+    return `${(montant / 1000000).toFixed(1)}M ${DEVISE_PRINCIPALE}`;
+  } else if (montant >= 1000) {
+    return `${(montant / 1000).toFixed(0)}K ${DEVISE_PRINCIPALE}`;
+  }
+  return formatMontant(montant);
 }
 
 /**
