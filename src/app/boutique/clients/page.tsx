@@ -3,17 +3,19 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { 
-  Plus, 
-  Search, 
-  Edit, 
-  Trash2, 
-  User, 
-  Phone, 
-  Mail, 
+import {
+  Plus,
+  Search,
+  Edit,
+  Trash2,
+  User,
+  Phone,
+  Mail,
   MapPin,
   ShoppingCart
 } from 'lucide-react';
+import ExportButton from '@/components/ExportButton';
+import { exportClientsToExcel, exportClientsToCSV } from '@/lib/export';
 
 interface Client {
   id: string;
@@ -186,13 +188,20 @@ export default function ClientsPage() {
           <h1 className="text-3xl font-bold text-gray-900">Gestion des Clients</h1>
           <p className="text-gray-600 mt-2">Gérez votre base de données clients</p>
         </div>
-        <button
-          onClick={openCreateModal}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-colors"
-        >
-          <Plus className="h-5 w-5" />
-          Nouveau Client
-        </button>
+        <div className="flex gap-3">
+          <ExportButton
+            onExportExcel={() => exportClientsToExcel(clients as unknown as Record<string, unknown>[], session?.user?.boutique?.nom)}
+            onExportCSV={() => exportClientsToCSV(clients as unknown as Record<string, unknown>[], session?.user?.boutique?.nom)}
+            disabled={clients.length === 0}
+          />
+          <button
+            onClick={openCreateModal}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-colors"
+          >
+            <Plus className="h-5 w-5" />
+            Nouveau Client
+          </button>
+        </div>
       </div>
 
       {/* Barre de recherche */}

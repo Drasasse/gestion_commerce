@@ -112,15 +112,16 @@ export default function BoutiqueDetailPage() {
         const categories = categoriesRes.ok ? await categoriesRes.json() : [];
         const clients = clientsRes.ok ? await clientsRes.json() : [];
         const ventes = ventesRes.ok ? await ventesRes.json() : [];
-        const stocks = stocksRes.ok ? await stocksRes.json() : [];
+        const stocksData = stocksRes.ok ? await stocksRes.json() : [];
+        const stocks = Array.isArray(stocksData) ? stocksData : [];
 
         setStats({
-          produits: produits.length,
-          categories: categories.length,
-          clients: clients.length,
-          ventes: ventes.length,
+          produits: Array.isArray(produits) ? produits.length : 0,
+          categories: Array.isArray(categories) ? categories.length : 0,
+          clients: Array.isArray(clients) ? clients.length : 0,
+          ventes: Array.isArray(ventes) ? ventes.length : 0,
           stocks: stocks.length,
-          totalVentes: ventes.reduce((sum: number, v: Vente) => sum + (v.montantTotal || 0), 0),
+          totalVentes: Array.isArray(ventes) ? ventes.reduce((sum: number, v: Vente) => sum + (v.montantTotal || 0), 0) : 0,
         });
       }
     } catch (error) {
@@ -151,10 +152,13 @@ export default function BoutiqueDetailPage() {
       const res = await fetch(endpoint);
       if (res.ok) {
         const data = await res.json();
-        setTabData(data);
+        setTabData(Array.isArray(data) ? data : []);
+      } else {
+        setTabData([]);
       }
     } catch (error) {
       console.error('Erreur:', error);
+      setTabData([]);
     }
   };
 

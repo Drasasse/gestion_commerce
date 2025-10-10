@@ -15,8 +15,8 @@ const stockSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
-    if (!session?.user?.boutiqueId) {
+
+    if (!session?.user) {
       return NextResponse.json(
         { error: 'Non autorisé' },
         { status: 401 }
@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
+    const boutiqueIdParam = searchParams.get('boutiqueId');
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
     const search = searchParams.get('search') || '';
@@ -31,12 +32,27 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit;
 
+    // Déterminer le boutiqueId à utiliser
+    let boutiqueId: string;
+    if (session.user.role === 'ADMIN' && boutiqueIdParam) {
+      // Admin peut spécifier une boutique
+      boutiqueId = boutiqueIdParam;
+    } else if (session.user.boutiqueId) {
+      // Gestionnaire utilise sa boutique
+      boutiqueId = session.user.boutiqueId;
+    } else {
+      return NextResponse.json(
+        { error: 'Boutique non spécifiée' },
+        { status: 400 }
+      );
+    }
+
     // Construire les conditions de recherche
     const whereConditions: {
       boutiqueId: string;
       produit?: { nom: { contains: string; mode: 'insensitive' } };
     } = {
-      boutiqueId: session.user.boutiqueId,
+      boutiqueId: boutiqueId,
     };
 
     if (search) {

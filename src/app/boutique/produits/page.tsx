@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
+import ExportButton from '@/components/ExportButton';
+import { exportProduitsToExcel, exportProduitsToCSV } from '@/lib/export';
 
 interface Categorie {
   id: string;
@@ -194,15 +196,22 @@ export default function ProduitsPage() {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Gestion des Produits</h1>
-        <button
-          onClick={() => {
-            resetForm();
-            setShowModal(true);
-          }}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          Ajouter un produit
-        </button>
+        <div className="flex gap-3">
+          <ExportButton
+            onExportExcel={() => exportProduitsToExcel(produits as unknown as Record<string, unknown>[], session?.user?.boutique?.nom)}
+            onExportCSV={() => exportProduitsToCSV(produits as unknown as Record<string, unknown>[], session?.user?.boutique?.nom)}
+            disabled={produits.length === 0}
+          />
+          <button
+            onClick={() => {
+              resetForm();
+              setShowModal(true);
+            }}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Ajouter un produit
+          </button>
+        </div>
       </div>
 
       {/* Filtres */}

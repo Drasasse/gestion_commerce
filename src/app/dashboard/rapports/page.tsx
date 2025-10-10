@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
 import { formatMontant } from '@/lib/utils';
+import ExportButton from '@/components/ExportButton';
+import { exportRapportsToExcel, exportRapportsToCSV } from '@/lib/export';
 
 interface BoutiqueStats {
   id: string;
@@ -103,9 +105,16 @@ export default function RapportsAdminPage() {
 
   return (
     <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Rapports Consolidés</h1>
-        <p className="text-gray-600 mt-1">Vue d&apos;ensemble de toutes les boutiques</p>
+      <div className="flex justify-between items-start mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Rapports Consolidés</h1>
+          <p className="text-gray-600 mt-1">Vue d&apos;ensemble de toutes les boutiques</p>
+        </div>
+        <ExportButton
+          onExportExcel={() => exportRapportsToExcel(boutiquesStats as unknown as Record<string, unknown>[])}
+          onExportCSV={() => exportRapportsToCSV(boutiquesStats as unknown as Record<string, unknown>[])}
+          disabled={boutiquesStats.length === 0}
+        />
       </div>
 
       {/* Filtres de date */}

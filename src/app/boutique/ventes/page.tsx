@@ -288,8 +288,8 @@ export default function VentesPage() {
         </div>
         <div className="flex gap-3">
           <ExportButton
-            onExportExcel={() => exportVentesToExcel(ventes, session?.user?.boutique?.nom)}
-            onExportCSV={() => exportVentesToCSV(ventes, session?.user?.boutique?.nom)}
+            onExportExcel={() => exportVentesToExcel(ventes as unknown as Record<string, unknown>[], session?.user?.boutique?.nom)}
+            onExportCSV={() => exportVentesToCSV(ventes as unknown as Record<string, unknown>[], session?.user?.boutique?.nom)}
             disabled={ventes.length === 0}
           />
           <button

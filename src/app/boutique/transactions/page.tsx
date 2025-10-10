@@ -3,12 +3,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { 
-  Plus, 
-  Search, 
-  Eye, 
-  Edit, 
-  Trash2, 
+import {
+  Plus,
+  Search,
+  Eye,
+  Edit,
+  Trash2,
   DollarSign,
   TrendingUp,
   TrendingDown,
@@ -19,6 +19,8 @@ import {
   ArrowUpCircle,
   ArrowDownCircle
 } from 'lucide-react';
+import ExportButton from '@/components/ExportButton';
+import { exportTransactionsToExcel, exportTransactionsToCSV } from '@/lib/export';
 
 interface Vente {
   numeroVente: string;
@@ -243,13 +245,20 @@ export default function TransactionsPage() {
           </h1>
           <p className="text-gray-600 mt-2">Gérez vos recettes et dépenses</p>
         </div>
-        <button
-          onClick={() => setShowForm(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-colors"
-        >
-          <Plus className="w-5 h-5" />
-          Nouvelle Transaction
-        </button>
+        <div className="flex gap-3">
+          <ExportButton
+            onExportExcel={() => exportTransactionsToExcel(transactions as unknown as Record<string, unknown>[], session?.user?.boutique?.nom)}
+            onExportCSV={() => exportTransactionsToCSV(transactions as unknown as Record<string, unknown>[], session?.user?.boutique?.nom)}
+            disabled={transactions.length === 0}
+          />
+          <button
+            onClick={() => setShowForm(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-colors"
+          >
+            <Plus className="w-5 h-5" />
+            Nouvelle Transaction
+          </button>
+        </div>
       </div>
 
       {/* Statistiques */}
