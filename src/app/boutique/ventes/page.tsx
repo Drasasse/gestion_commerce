@@ -3,11 +3,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { 
-  Plus, 
-  Search, 
-  Eye, 
-  Trash2, 
+import {
+  Plus,
+  Search,
+  Eye,
+  Trash2,
   ShoppingCart,
   User,
   Calendar,
@@ -16,6 +16,8 @@ import {
   CheckCircle,
   Clock
 } from 'lucide-react';
+import ExportButton from '@/components/ExportButton';
+import { exportVentesToExcel, exportVentesToCSV } from '@/lib/export';
 
 interface Produit {
   id: string;
@@ -283,13 +285,20 @@ export default function VentesPage() {
           </h1>
           <p className="text-gray-600 mt-2">Gérez vos ventes et suivez les paiements</p>
         </div>
-        <button
-          onClick={() => setShowForm(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-colors"
-        >
-          <Plus className="w-5 h-5" />
-          Nouvelle Vente
-        </button>
+        <div className="flex gap-3">
+          <ExportButton
+            onExportExcel={() => exportVentesToExcel(ventes, session?.user?.boutique?.nom)}
+            onExportCSV={() => exportVentesToCSV(ventes, session?.user?.boutique?.nom)}
+            disabled={ventes.length === 0}
+          />
+          <button
+            onClick={() => setShowForm(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-colors"
+          >
+            <Plus className="w-5 h-5" />
+            Nouvelle Vente
+          </button>
+        </div>
       </div>
 
       {/* Barre de recherche */}
