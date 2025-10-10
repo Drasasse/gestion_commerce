@@ -99,6 +99,7 @@ export interface Vente {
   paiements?: Paiement[];
   createdAt: string;
   updatedAt: string;
+  [key: string]: unknown;
 }
 
 export interface LigneVente {

@@ -1,6 +1,5 @@
 'use client';
 
-import { Fragment } from 'react';
 import { AlertTriangle, X } from 'lucide-react';
 
 interface ConfirmDialogProps {

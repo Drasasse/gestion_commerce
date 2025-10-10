@@ -60,6 +60,7 @@ interface Vente {
     name: string;
   };
   lignes: LigneVente[];
+  [key: string]: unknown;
 }
 
 interface LigneVenteForm {

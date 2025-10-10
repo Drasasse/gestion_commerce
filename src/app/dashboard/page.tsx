@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
-import { Store, Package, ShoppingCart, TrendingUp, AlertCircle, DollarSign, Users, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { LineChart, Line, BarChart, Bar, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { Store, ShoppingCart, TrendingUp, AlertCircle, DollarSign, Users, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { formatMontant, formatMontantCompact } from '@/lib/utils';
-import LoadingSkeleton, { PageLoadingSkeleton } from '@/components/LoadingSkeleton';
+import { PageLoadingSkeleton } from '@/components/LoadingSkeleton';
 
 interface DashboardStats {
   boutiques: number;
@@ -48,8 +48,6 @@ interface AlerteStock {
   seuil: number;
 }
 
-const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
-
 export default function DashboardPage() {
   const { data: session, status } = useSession();
   const [loading, setLoading] = useState(true);
@@ -68,17 +66,7 @@ export default function DashboardPage() {
   const [topProduits, setTopProduits] = useState<TopProduit[]>([]);
   const [alertes, setAlertes] = useState<AlerteStock[]>([]);
 
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      redirect('/login');
-    }
-    if (session?.user?.role !== 'ADMIN') {
-      redirect('/boutique');
-    }
-    loadDashboardData();
-  }, [session, status]);
-
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
     try {
       // Charger les stats générales
       const [boutiquesRes, ventesRes, stocksRes] = await Promise.all([
@@ -167,7 +155,17 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      redirect('/login');
+    }
+    if (session?.user?.role !== 'ADMIN') {
+      redirect('/boutique');
+    }
+    loadDashboardData();
+  }, [session, status, loadDashboardData]);
 
   const getlast7Days = () => {
     const days = [];
@@ -185,7 +183,7 @@ export default function DashboardPage() {
 
   const statCards = [
     {
-      title: 'Chiffre d\'Affaires',
+      title: 'Chiffre d&apos;Affaires',
       value: formatMontantCompact(stats.chiffreAffaires),
       fullValue: formatMontant(stats.chiffreAffaires),
       icon: DollarSign,
@@ -230,7 +228,7 @@ export default function DashboardPage() {
           Tableau de Bord Administrateur
         </h1>
         <p className="text-gray-600 mt-1">
-          Vue d'ensemble de toutes les boutiques
+          Vue d&apos;ensemble de toutes les boutiques
         </p>
       </div>
 

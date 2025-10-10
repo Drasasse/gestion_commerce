@@ -41,7 +41,7 @@ function formatValue(value: unknown, format?: string): string | number {
           year: 'numeric',
         });
       }
-      return value;
+      return String(value);
 
     case 'number':
       return Number(value);
@@ -62,7 +62,7 @@ export function exportToExcel(options: ExportOptions): void {
   const wb = XLSX.utils.book_new();
 
   // Préparer les données
-  const rows: any[][] = [];
+  const rows: (string | number)[][] = [];
 
   // Ajouter le titre et sous-titre si fournis
   if (title) {
