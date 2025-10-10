@@ -19,9 +19,11 @@ import {
   DollarSign,
   Tags,
   FileText,
-  CreditCard
+  CreditCard,
+  Truck
 } from "lucide-react"
 import { useState } from "react"
+import ThemeToggle from "./ThemeToggle"
 
 const adminLinks = [
   { href: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard },
@@ -36,11 +38,13 @@ const gestionnaireLinks = [
   { href: "/boutique/categories", label: "Catégories", icon: Tags },
   { href: "/boutique/produits", label: "Produits", icon: Package },
   { href: "/boutique/stocks", label: "Stocks", icon: Archive },
+  { href: "/boutique/fournisseurs", label: "Fournisseurs", icon: Truck },
+  { href: "/boutique/commandes", label: "Commandes", icon: FileText },
   { href: "/boutique/ventes", label: "Ventes", icon: ShoppingCart },
   { href: "/boutique/clients", label: "Clients", icon: Users },
   { href: "/boutique/paiements", label: "Paiements", icon: CreditCard },
   { href: "/boutique/transactions", label: "Transactions", icon: TrendingUp },
-  { href: "/boutique/rapports", label: "Rapports", icon: FileText },
+  { href: "/boutique/rapports", label: "Rapports", icon: BarChart3 },
 ]
 
 export function Sidebar() {
@@ -53,12 +57,15 @@ export function Sidebar() {
 
   const SidebarContent = () => (
     <>
-      <div className="p-6 border-b border-gray-200">
-        <h1 className="text-xl font-bold text-gray-900">Gestion Commerce</h1>
-        <p className="text-sm text-gray-600 mt-1">
+      <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-start justify-between mb-2">
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">Gestion Commerce</h1>
+          <ThemeToggle />
+        </div>
+        <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
           {session?.user?.name}
         </p>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-gray-500 dark:text-gray-400">
           {isAdmin ? "Administrateur" : session?.user?.boutique?.nom || "Gestionnaire"}
         </p>
       </div>
@@ -74,8 +81,8 @@ export function Sidebar() {
               onClick={() => setMobileOpen(false)}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                 isActive
-                  ? "bg-blue-50 text-blue-700 font-medium"
-                  : "text-gray-700 hover:bg-gray-100"
+                  ? "bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-medium"
+                  : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
               }`}
             >
               <Icon size={20} />
@@ -85,10 +92,10 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-4 border-t border-gray-200 dark:border-gray-700">
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}
-          className="flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors w-full"
+          className="flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors w-full"
         >
           <LogOut size={20} />
           <span>Déconnexion</span>
@@ -102,7 +109,7 @@ export function Sidebar() {
       {/* Mobile menu button */}
       <button
         onClick={() => setMobileOpen(!mobileOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-lg"
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg shadow-lg"
       >
         {mobileOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
@@ -115,7 +122,7 @@ export function Sidebar() {
         />
       )}
       <aside
-        className={`lg:hidden fixed top-0 left-0 bottom-0 w-64 bg-white shadow-xl z-40 transform transition-transform ${
+        className={`lg:hidden fixed top-0 left-0 bottom-0 w-64 bg-white dark:bg-gray-900 shadow-xl z-40 transform transition-transform ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -125,7 +132,7 @@ export function Sidebar() {
       </aside>
 
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-gray-200 h-screen sticky top-0">
+      <aside className="hidden lg:flex flex-col w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 h-screen sticky top-0">
         <SidebarContent />
       </aside>
     </>
