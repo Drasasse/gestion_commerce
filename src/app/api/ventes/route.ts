@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
         numeroVente?: { contains: string; mode: 'insensitive' };
         client?: { nom?: { contains: string; mode: 'insensitive' }; prenom?: { contains: string; mode: 'insensitive' } };
       }>;
-      statut?: string;
+      statut?: 'PAYE' | 'IMPAYE' | 'PARTIEL';
       dateVente?: { gte?: Date; lte?: Date };
     }
 
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
           { client: { prenom: { contains: search, mode: 'insensitive' as const } } },
         ],
       }),
-      ...(statut && { statut }),
+      ...(statut && { statut: statut as 'PAYE' | 'IMPAYE' | 'PARTIEL' }),
       ...(dateDebut && dateFin && {
         dateVente: {
           gte: new Date(dateDebut),

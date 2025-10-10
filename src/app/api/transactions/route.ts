@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     // Construction des filtres
     interface WhereConditions {
       boutiqueId: string;
-      type?: string;
+      type?: 'VENTE' | 'ACHAT' | 'DEPENSE' | 'INJECTION_CAPITAL' | 'RETRAIT' | 'RECETTE';
       categorie?: { contains: string; mode: 'insensitive' };
       dateTransaction?: { gte?: Date; lte?: Date };
       description?: { contains: string; mode: 'insensitive' };
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     };
 
     if (type && ['RECETTE', 'DEPENSE'].includes(type)) {
-      where.type = type;
+      where.type = type as 'RECETTE' | 'DEPENSE';
     }
 
     if (categorie) {
@@ -78,15 +78,15 @@ export async function GET(request: NextRequest) {
       prisma.transaction.findMany({
         where,
         include: {
-          vente: {
+          user: {
             select: {
-              numeroVente: true,
-              client: {
-                select: {
-                  nom: true,
-                  prenom: true,
-                },
-              },
+              name: true,
+              email: true,
+            },
+          },
+          boutique: {
+            select: {
+              nom: true,
             },
           },
         },
@@ -177,8 +177,6 @@ export async function POST(request: NextRequest) {
         type: validatedData.type,
         montant: montantAjuste,
         description: validatedData.description,
-        categorie: validatedData.categorie,
-        venteId: validatedData.venteId,
         dateTransaction: validatedData.dateTransaction
           ? new Date(validatedData.dateTransaction)
           : new Date(),
@@ -186,15 +184,15 @@ export async function POST(request: NextRequest) {
         userId: session.user.id,
       },
       include: {
-        vente: {
+        user: {
           select: {
-            numeroVente: true,
-            client: {
-              select: {
-                nom: true,
-                prenom: true,
-              },
-            },
+            name: true,
+            email: true,
+          },
+        },
+        boutique: {
+          select: {
+            nom: true,
           },
         },
       },
@@ -204,7 +202,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Données invalides', details: error.errors },
+        { error: 'Données invalides', details: error.issues },
         { status: 400 }
       );
     }

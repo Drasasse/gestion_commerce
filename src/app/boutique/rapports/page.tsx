@@ -37,6 +37,7 @@ interface RapportData {
     produitId: string
     nom: string
     quantiteVendue: number
+    categorie?: string
   }>
   clientsActifs?: Array<{
     clientId: string
@@ -60,6 +61,13 @@ interface RapportData {
     nombre: number
     montant: number
   }>
+  stocks?: {
+    analyse: {
+      enRupture: number
+      stockFaible: number
+      stockNormal: number
+    }
+  }
   [key: string]: unknown
 }
 
@@ -145,7 +153,7 @@ export default function RapportsPage() {
               <div>
                 <p className="text-gray-600 text-sm">Total des ventes</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {formatMontant(rapportData.resume.totalVentes)}
+                  {formatMontant(Number(rapportData.resume.totalVentes))}
                 </p>
               </div>
             </div>
@@ -173,7 +181,7 @@ export default function RapportsPage() {
               <div>
                 <p className="text-gray-600 text-sm">Vente moyenne</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {formatMontant(rapportData.resume.venteMoyenne)}
+                  {formatMontant(Number(rapportData.resume.venteMoyenne))}
                 </p>
               </div>
             </div>
@@ -194,15 +202,15 @@ export default function RapportsPage() {
                       {index + 1}
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900">{item.produit?.nom}</p>
+                      <p className="font-medium text-gray-900">{item.nom}</p>
                       <p className="text-sm text-gray-600">
-                        {item._sum.quantite} unités vendues
+                        {item.quantiteVendue} unités vendues
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
                     <p className="font-semibold text-gray-900">
-                      {formatMontant(item._sum.sousTotal || 0)}
+                      {formatMontant(item.chiffreAffaires || 0)}
                     </p>
                   </div>
                 </div>
@@ -265,7 +273,7 @@ export default function RapportsPage() {
               <div>
                 <p className="text-gray-600 text-sm">Prix moyen</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {formatMontant(rapportData.resume.prixMoyen)}
+                  {formatMontant(Number(rapportData.resume.prixMoyen))}
                 </p>
               </div>
             </div>
@@ -326,18 +334,18 @@ export default function RapportsPage() {
                       {index + 1}
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900">{item.produit?.nom}</p>
+                      <p className="font-medium text-gray-900">{item.nom}</p>
                       <p className="text-sm text-gray-600">
-                        {item.produit?.categorie?.nom}
+                        Catégorie: {item.categorie || 'Non définie'}
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
                     <p className="font-semibold text-gray-900">
-                      {formatMontant(item._sum.sousTotal || 0)}
+                      Populaire
                     </p>
                     <p className="text-sm text-gray-600">
-                      {item._sum.quantite} vendus
+                      {item.quantiteVendue} vendus
                     </p>
                   </div>
                 </div>
@@ -400,19 +408,19 @@ export default function RapportsPage() {
                     </div>
                     <div>
                       <p className="font-medium text-gray-900">
-                        {item.client?.prenom} {item.client?.nom}
+                        {item.prenom} {item.nom}
                       </p>
                       <p className="text-sm text-gray-600">
-                        {item.client?.telephone}
+                        Client actif
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
                     <p className="font-semibold text-gray-900">
-                      {formatMontant(item._sum.montantTotal || 0)}
+                      {formatMontant(item.montantTotal || 0)}
                     </p>
                     <p className="text-sm text-gray-600">
-                      {item._count} achats
+                      {item.nombreAchats} achats
                     </p>
                   </div>
                 </div>
@@ -481,7 +489,7 @@ export default function RapportsPage() {
               <div>
                 <p className="text-gray-600 text-sm">Valeur totale</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {formatMontant(rapportData.resume.valeurTotale)}
+                  {formatMontant(Number(rapportData.resume.valeurTotale))}
                 </p>
               </div>
             </div>
@@ -498,7 +506,7 @@ export default function RapportsPage() {
               {rapportData.mouvementsRecents?.slice(0, 10).map((mouvement) => (
                 <div key={mouvement.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div>
-                    <p className="font-medium text-gray-900">{mouvement.stock.produit.nom}</p>
+                    <p className="font-medium text-gray-900">{mouvement.produit.nom}</p>
                     <p className="text-sm text-gray-600">
                       {formatDate(mouvement.dateCreation)} - {mouvement.type}
                     </p>
@@ -535,7 +543,7 @@ export default function RapportsPage() {
               <div>
                 <p className="text-gray-600 text-sm">Chiffre d&apos;affaires</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {formatMontant(rapportData.resume.chiffreAffaires)}
+                  {formatMontant(Number(rapportData.resume.chiffreAffaires))}
                 </p>
               </div>
             </div>
@@ -549,7 +557,7 @@ export default function RapportsPage() {
               <div>
                 <p className="text-gray-600 text-sm">Recettes</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {formatMontant(rapportData.resume.recettes)}
+                  {formatMontant(Number(rapportData.resume.recettes))}
                 </p>
               </div>
             </div>
@@ -563,7 +571,7 @@ export default function RapportsPage() {
               <div>
                 <p className="text-gray-600 text-sm">Dépenses</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {formatMontant(rapportData.resume.depenses)}
+                  {formatMontant(Number(rapportData.resume.depenses))}
                 </p>
               </div>
             </div>
@@ -572,16 +580,16 @@ export default function RapportsPage() {
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
             <div className="flex items-center gap-4">
               <div className={`p-3 rounded-lg ${
-                rapportData.resume.benefice >= 0 ? 'bg-green-500' : 'bg-red-500'
+                Number(rapportData.resume.benefice) >= 0 ? 'bg-green-500' : 'bg-red-500'
               }`}>
                 <Target className="text-white" size={24} />
               </div>
               <div>
                 <p className="text-gray-600 text-sm">Bénéfice</p>
                 <p className={`text-2xl font-bold ${
-                  rapportData.resume.benefice >= 0 ? 'text-green-600' : 'text-red-600'
+                  Number(rapportData.resume.benefice) >= 0 ? 'text-green-600' : 'text-red-600'
                 }`}>
-                  {formatMontant(rapportData.resume.benefice)}
+                  {formatMontant(Number(rapportData.resume.benefice))}
                 </p>
               </div>
             </div>

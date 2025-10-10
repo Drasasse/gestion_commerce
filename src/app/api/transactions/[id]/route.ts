@@ -23,37 +23,23 @@ export async function GET(
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
+    const { id } = await params;
+
     const transaction = await prisma.transaction.findFirst({
       where: {
-        id: params.id,
+        id: id,
         boutiqueId: session.user.boutiqueId,
       },
       include: {
-        vente: {
+        user: {
           select: {
-            id: true,
-            numeroVente: true,
-            montantTotal: true,
-            statut: true,
-            dateVente: true,
-            client: {
-              select: {
-                nom: true,
-                prenom: true,
-                email: true,
-              },
-            },
-            lignes: {
-              select: {
-                quantite: true,
-                prixUnitaire: true,
-                produit: {
-                  select: {
-                    nom: true,
-                  },
-                },
-              },
-            },
+            name: true,
+            email: true,
+          },
+        },
+        boutique: {
+          select: {
+            nom: true,
           },
         },
       },
@@ -86,13 +72,14 @@ export async function PUT(
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
+    const { id } = await params;
     const body = await request.json();
     const validatedData = transactionUpdateSchema.parse(body);
 
     // Vérifier que la transaction existe et appartient à la boutique
     const existingTransaction = await prisma.transaction.findFirst({
       where: {
-        id: params.id,
+        id: id,
         boutiqueId: session.user.boutiqueId,
       },
     });
@@ -104,19 +91,14 @@ export async function PUT(
       );
     }
 
-    // Vérifier si la transaction est liée à une vente
-    if (existingTransaction.venteId) {
-      return NextResponse.json(
-        { error: 'Impossible de modifier une transaction liée à une vente' },
-        { status: 400 }
-      );
-    }
+
 
     // Préparer les données de mise à jour
     const updateData: {
-      type?: string;
+      type?: 'VENTE' | 'ACHAT' | 'DEPENSE' | 'INJECTION_CAPITAL' | 'RETRAIT' | 'RECETTE';
       montant?: number;
       description?: string;
+      dateTransaction?: Date;
     } = {};
 
     if (validatedData.type !== undefined) {
@@ -135,27 +117,25 @@ export async function PUT(
       updateData.description = validatedData.description;
     }
 
-    if (validatedData.categorie !== undefined) {
-      updateData.categorie = validatedData.categorie;
-    }
+
 
     if (validatedData.dateTransaction !== undefined) {
       updateData.dateTransaction = new Date(validatedData.dateTransaction);
     }
 
     const transaction = await prisma.transaction.update({
-      where: { id: params.id },
+      where: { id: id },
       data: updateData,
       include: {
-        vente: {
+        user: {
           select: {
-            numeroVente: true,
-            client: {
-              select: {
-                nom: true,
-                prenom: true,
-              },
-            },
+            name: true,
+            email: true,
+          },
+        },
+        boutique: {
+          select: {
+            nom: true,
           },
         },
       },
@@ -165,7 +145,7 @@ export async function PUT(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Données invalides', details: error.errors },
+        { error: 'Données invalides', details: error.issues },
         { status: 400 }
       );
     }
@@ -188,10 +168,12 @@ export async function DELETE(
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
+    const { id } = await params;
+
     // Vérifier que la transaction existe et appartient à la boutique
     const transaction = await prisma.transaction.findFirst({
       where: {
-        id: params.id,
+        id: id,
         boutiqueId: session.user.boutiqueId,
       },
     });
@@ -203,16 +185,10 @@ export async function DELETE(
       );
     }
 
-    // Vérifier si la transaction est liée à une vente
-    if (transaction.venteId) {
-      return NextResponse.json(
-        { error: 'Impossible de supprimer une transaction liée à une vente' },
-        { status: 400 }
-      );
-    }
+
 
     await prisma.transaction.delete({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     return NextResponse.json({ message: 'Transaction supprimée avec succès' });
