@@ -190,13 +190,21 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.boutiqueId) {
+    if (!session?.user) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
     }
 
     const body = await request.json()
     const data = paiementSchema.parse(body)
-    const boutiqueId = session.user.boutiqueId
+
+    // Déterminer le boutiqueId
+    const boutiqueId = session.user.boutiqueId || body.boutiqueId;
+    if (!boutiqueId) {
+      return NextResponse.json(
+        { error: 'Boutique non spécifiée' },
+        { status: 400 }
+      );
+    }
 
     // Vérifier que la vente existe et appartient à la boutique
     const vente = await prisma.vente.findFirst({

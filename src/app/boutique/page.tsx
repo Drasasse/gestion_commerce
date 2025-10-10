@@ -97,16 +97,21 @@ export default function BoutiquePage() {
       ]);
 
       if (produitsRes.ok && ventesRes.ok) {
-        const produits = await produitsRes.json();
+        const produitsData = await produitsRes.json();
+        const produits = Array.isArray(produitsData?.produits) ? produitsData.produits : (Array.isArray(produitsData) ? produitsData : []);
+
         const ventesResponse = await ventesRes.json();
-        const ventesRaw = ventesResponse.ventes || ventesResponse;
+        const ventesRaw = ventesResponse?.ventes || ventesResponse;
         const ventes = Array.isArray(ventesRaw) ? ventesRaw : [];
-        const clientsRaw = clientsRes.ok ? await clientsRes.json() : { clients: [] };
-        const clients = clientsRaw.clients || clientsRaw;
-        const categoriesRaw = categoriesRes.ok ? await categoriesRes.json() : [];
-        const categories = Array.isArray(categoriesRaw) ? categoriesRaw : [];
-        const stocksRaw = stocksRes.ok ? await stocksRes.json() : [];
-        const stocks = Array.isArray(stocksRaw) ? stocksRaw : [];
+
+        const clientsData = clientsRes.ok ? await clientsRes.json() : { clients: [] };
+        const clients = Array.isArray(clientsData?.clients) ? clientsData.clients : (Array.isArray(clientsData) ? clientsData : []);
+
+        const categoriesData = categoriesRes.ok ? await categoriesRes.json() : { categories: [] };
+        const categories = Array.isArray(categoriesData?.categories) ? categoriesData.categories : (Array.isArray(categoriesData) ? categoriesData : []);
+
+        const stocksData = stocksRes.ok ? await stocksRes.json() : { stocks: [] };
+        const stocks = Array.isArray(stocksData?.stocks) ? stocksData.stocks : (Array.isArray(stocksData) ? stocksData : []);
 
         // Calculer stats
         const totalCA = ventes.reduce((sum: number, v: { montantTotal: number }) => sum + v.montantTotal, 0);
@@ -128,9 +133,9 @@ export default function BoutiquePage() {
         );
 
         setStats({
-          produits: produits.produits?.length || produits.length || 0,
+          produits: produits.length,
           ventes: ventes.length,
-          clients: clients.clients?.length || clients.length || 0,
+          clients: clients.length,
           ca: totalCA,
           impayes: totalImpayes,
           stocksFaibles: stocksFaibles.length,

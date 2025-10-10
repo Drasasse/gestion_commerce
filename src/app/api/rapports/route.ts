@@ -83,11 +83,13 @@ type RapportType = RapportVentes | RapportProduits | RapportClients | RapportSto
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.boutiqueId) {
+    if (!session?.user) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
+    const boutiqueIdParam = searchParams.get('boutiqueId')
+
     const query = rapportQuerySchema.parse({
       type: searchParams.get('type'),
       periode: searchParams.get('periode'),
@@ -95,7 +97,18 @@ export async function GET(request: NextRequest) {
       dateFin: searchParams.get('dateFin'),
     })
 
-    const boutiqueId = session.user.boutiqueId
+    // Déterminer le boutiqueId à utiliser
+    let boutiqueId: string;
+    if (session.user.role === 'ADMIN' && boutiqueIdParam) {
+      boutiqueId = boutiqueIdParam;
+    } else if (session.user.boutiqueId) {
+      boutiqueId = session.user.boutiqueId;
+    } else {
+      return NextResponse.json(
+        { error: 'Boutique non spécifiée' },
+        { status: 400 }
+      );
+    }
     const now = new Date()
     let dateDebut: Date
     let dateFin: Date = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59)
