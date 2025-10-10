@@ -24,6 +24,39 @@ interface Stats {
   totalVentes: number;
 }
 
+interface Vente {
+  id: string;
+  numeroVente: string;
+  montantTotal: number;
+  dateVente: string;
+  statut: string;
+  client?: { nom: string };
+}
+
+interface Produit {
+  id: string;
+  nom: string;
+  prixVente: number;
+  categorie?: { nom: string };
+  stock?: { quantite: number };
+}
+
+interface Categorie {
+  id: string;
+  nom: string;
+  description?: string;
+}
+
+interface Client {
+  id: string;
+  nom: string;
+  prenom?: string;
+  telephone?: string;
+  email?: string;
+}
+
+type TabData = Produit[] | Categorie[] | Client[] | Vente[];
+
 export default function BoutiqueDetailPage() {
   const { data: session } = useSession();
   const params = useParams();
@@ -41,7 +74,7 @@ export default function BoutiqueDetailPage() {
   });
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'produits' | 'categories' | 'clients' | 'ventes'>('produits');
-  const [tabData, setTabData] = useState<any[]>([]);
+  const [tabData, setTabData] = useState<TabData>([]);
 
   useEffect(() => {
     if (session?.user.role !== 'ADMIN') {
@@ -49,12 +82,14 @@ export default function BoutiqueDetailPage() {
       return;
     }
     loadBoutiqueData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
 
   useEffect(() => {
     if (boutique) {
       loadTabData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, boutique]);
 
   const loadBoutiqueData = async () => {
@@ -85,7 +120,7 @@ export default function BoutiqueDetailPage() {
           clients: clients.length,
           ventes: ventes.length,
           stocks: stocks.length,
-          totalVentes: ventes.reduce((sum: number, v: any) => sum + (v.montantTotal || 0), 0),
+          totalVentes: ventes.reduce((sum: number, v: Vente) => sum + (v.montantTotal || 0), 0),
         });
       }
     } catch (error) {
@@ -251,7 +286,7 @@ export default function BoutiqueDetailPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {tabData.map((produit: any) => (
+                  {(tabData as Produit[]).map((produit) => (
                     <tr key={produit.id}>
                       <td className="px-4 py-3">{produit.nom}</td>
                       <td className="px-4 py-3">{produit.categorie?.nom || 'N/A'}</td>
@@ -274,7 +309,7 @@ export default function BoutiqueDetailPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {tabData.map((categorie: any) => (
+                  {(tabData as Categorie[]).map((categorie) => (
                     <tr key={categorie.id}>
                       <td className="px-4 py-3">{categorie.nom}</td>
                       <td className="px-4 py-3">{categorie.description || '-'}</td>
@@ -297,7 +332,7 @@ export default function BoutiqueDetailPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {tabData.map((client: any) => (
+                  {(tabData as Client[]).map((client) => (
                     <tr key={client.id}>
                       <td className="px-4 py-3">{client.nom}</td>
                       <td className="px-4 py-3">{client.prenom || '-'}</td>
@@ -323,7 +358,7 @@ export default function BoutiqueDetailPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {tabData.map((vente: any) => (
+                  {(tabData as Vente[]).map((vente) => (
                     <tr key={vente.id}>
                       <td className="px-4 py-3">{vente.numeroVente}</td>
                       <td className="px-4 py-3">{vente.client?.nom || 'Client anonyme'}</td>

@@ -64,7 +64,8 @@ export async function GET(request: NextRequest) {
         where,
         include: {
           categorie: true,
-          stock: {
+          stocks: {
+            where: { boutiqueId },
             select: { quantite: true },
           },
         },
@@ -78,7 +79,8 @@ export async function GET(request: NextRequest) {
     // Ajouter la quantité en stock à chaque produit
     const produitsAvecStock = produits.map(produit => ({
       ...produit,
-      quantiteStock: produit.stock?.quantite || 0,
+      quantiteStock: produit.stocks[0]?.quantite || 0,
+      stocks: undefined,
     }));
 
     return NextResponse.json({
