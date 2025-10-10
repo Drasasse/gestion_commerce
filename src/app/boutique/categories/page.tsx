@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
 
@@ -33,16 +33,7 @@ export default function CategoriesPage() {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Charger les catégories
-  useEffect(() => {
-    loadCategories();
-  }, []);
-
-  // Redirection si non connecté
-  if (status === 'loading') return <div>Chargement...</div>;
-  if (!session) redirect('/login');
-
-  const loadCategories = async () => {
+  const loadCategories = useCallback(async () => {
     try {
       const response = await fetch('/api/categories');
       if (response.ok) {
@@ -56,7 +47,16 @@ export default function CategoriesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // Charger les catégories
+  useEffect(() => {
+    loadCategories();
+  }, [loadCategories]);
+
+  // Redirection si non connecté
+  if (status === 'loading') return <div>Chargement...</div>;
+  if (!session) redirect('/login');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
