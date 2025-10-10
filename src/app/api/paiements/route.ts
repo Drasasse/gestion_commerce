@@ -24,11 +24,14 @@ const creanceQuerySchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.boutiqueId) {
+
+    if (!session?.user) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
+    const boutiqueIdParam = searchParams.get('boutiqueId')
+
     const query = creanceQuerySchema.parse({
       statut: searchParams.get('statut'),
       clientId: searchParams.get('clientId'),
@@ -38,7 +41,20 @@ export async function GET(request: NextRequest) {
       limit: searchParams.get('limit'),
     })
 
-    const boutiqueId = session.user.boutiqueId
+    // Déterminer le boutiqueId à utiliser
+    let boutiqueId: string;
+    if (session.user.role === 'ADMIN' && boutiqueIdParam) {
+      // Admin peut spécifier une boutique
+      boutiqueId = boutiqueIdParam;
+    } else if (session.user.boutiqueId) {
+      // Gestionnaire utilise sa boutique
+      boutiqueId = session.user.boutiqueId;
+    } else {
+      return NextResponse.json(
+        { error: 'Boutique non spécifiée' },
+        { status: 400 }
+      );
+    }
     const page = parseInt(query.page || '1')
     const limit = parseInt(query.limit || '10')
     const skip = (page - 1) * limit

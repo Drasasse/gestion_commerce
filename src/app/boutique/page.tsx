@@ -99,10 +99,14 @@ export default function BoutiquePage() {
       if (produitsRes.ok && ventesRes.ok) {
         const produits = await produitsRes.json();
         const ventesResponse = await ventesRes.json();
-        const ventes = ventesResponse.ventes || ventesResponse;
-        const clients = clientsRes.ok ? await clientsRes.json() : { clients: [] };
-        const categories = categoriesRes.ok ? await categoriesRes.json() : [];
-        const stocks = stocksRes.ok ? await stocksRes.json() : [];
+        const ventesRaw = ventesResponse.ventes || ventesResponse;
+        const ventes = Array.isArray(ventesRaw) ? ventesRaw : [];
+        const clientsRaw = clientsRes.ok ? await clientsRes.json() : { clients: [] };
+        const clients = clientsRaw.clients || clientsRaw;
+        const categoriesRaw = categoriesRes.ok ? await categoriesRes.json() : [];
+        const categories = Array.isArray(categoriesRaw) ? categoriesRaw : [];
+        const stocksRaw = stocksRes.ok ? await stocksRes.json() : [];
+        const stocks = Array.isArray(stocksRaw) ? stocksRaw : [];
 
         // Calculer stats
         const totalCA = ventes.reduce((sum: number, v: { montantTotal: number }) => sum + v.montantTotal, 0);
