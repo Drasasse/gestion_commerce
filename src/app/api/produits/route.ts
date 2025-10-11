@@ -11,6 +11,8 @@ import {
   formatZodErrors,
   logger
 } from '@/lib/error-handler';
+import { checkRateLimit, apiRateLimiter, sensitiveApiRateLimiter } from '@/lib/rate-limit';
+import { cached, invalidateByTag, CachePrefix, CacheTTL, CacheTag } from '@/lib/cache';
 
 // Schema de validation pour les produits
 const produitSchema = z.object({
@@ -24,6 +26,12 @@ const produitSchema = z.object({
 
 // GET - Récupérer tous les produits
 export const GET = withErrorHandler(async (request: NextRequest) => {
+  // Rate limiting
+  const rateLimitCheck = await checkRateLimit(request, apiRateLimiter);
+  if (!rateLimitCheck.success) {
+    return rateLimitCheck.response!;
+  }
+
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
@@ -62,43 +70,64 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 
   logger.info('Fetching products', { userId: session.user.id, boutiqueId, page });
 
-  const [produits, total] = await Promise.all([
-    prisma.produit.findMany({
-      where,
-      include: {
-        categorie: true,
-        stocks: {
-          where: { boutiqueId },
-          select: { quantite: true },
+  // Clé de cache unique par requête
+  const cacheKey = `${CachePrefix.PRODUITS}:${boutiqueId}:page${page}:limit${limit}:search${search}:cat${categorieId}`;
+
+  // Utiliser le cache pour les requêtes GET
+  const result = await cached(
+    cacheKey,
+    async () => {
+      const [produits, total] = await Promise.all([
+        prisma.produit.findMany({
+          where,
+          include: {
+            categorie: true,
+            stocks: {
+              where: { boutiqueId },
+              select: { quantite: true },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+          skip,
+          take: limit,
+        }),
+        prisma.produit.count({ where }),
+      ]);
+
+      // Ajouter la quantité en stock à chaque produit
+      const produitsAvecStock = produits.map(produit => ({
+        ...produit,
+        quantiteStock: produit.stocks[0]?.quantite || 0,
+        stocks: undefined,
+      }));
+
+      return {
+        produits: produitsAvecStock,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
         },
-      },
-      orderBy: { createdAt: 'desc' },
-      skip,
-      take: limit,
-    }),
-    prisma.produit.count({ where }),
-  ]);
-
-  // Ajouter la quantité en stock à chaque produit
-  const produitsAvecStock = produits.map(produit => ({
-    ...produit,
-    quantiteStock: produit.stocks[0]?.quantite || 0,
-    stocks: undefined,
-  }));
-
-  return NextResponse.json({
-    produits: produitsAvecStock,
-    pagination: {
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit),
+      };
     },
-  });
+    {
+      ttl: CacheTTL.MEDIUM, // 5 minutes
+      tags: [CacheTag.PRODUITS, `boutique:${boutiqueId}`],
+    }
+  );
+
+  return NextResponse.json(result);
 });
 
 // POST - Créer un nouveau produit
 export const POST = withErrorHandler(async (request: NextRequest) => {
+  // Rate limiting pour API sensible (création)
+  const rateLimitCheck = await checkRateLimit(request, sensitiveApiRateLimiter);
+  if (!rateLimitCheck.success) {
+    return rateLimitCheck.response!;
+  }
+
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.boutiqueId) {
@@ -156,6 +185,10 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
 
     return nouveauProduit;
   });
+
+  // Invalider le cache des produits
+  await invalidateByTag(CacheTag.PRODUITS);
+  await invalidateByTag(`boutique:${session.user.boutiqueId}`);
 
   return NextResponse.json(produit, { status: 201 });
 });

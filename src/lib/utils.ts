@@ -1,4 +1,6 @@
 import { DEVISE_PRINCIPALE } from '@/types';
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 
 /**
  * Formate un montant avec la devise principale (FCFA)
@@ -152,9 +154,12 @@ export function tronquerTexte(texte: string, longueur: number = 50): string {
 }
 
 /**
- * Combine des classes CSS conditionnelles
- * Utile pour les classes Tailwind dynamiques
+ * Combine des classes CSS conditionnelles avec gestion intelligente des conflits Tailwind
+ * Utilise clsx pour la logique conditionnelle et tailwind-merge pour résoudre les conflits
+ * @param inputs - Classes CSS (string, objet conditionnel, ou tableau)
+ * @returns Classes combinées et dédupliquées
+ * @example cn('px-2 py-1', condition && 'bg-blue-500', { 'font-bold': isActive })
  */
-export function cn(...classes: (string | boolean | undefined)[]): string {
-  return classes.filter(Boolean).join(' ');
+export function cn(...inputs: ClassValue[]): string {
+  return twMerge(clsx(inputs));
 }

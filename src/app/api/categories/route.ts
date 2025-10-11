@@ -11,6 +11,8 @@ import {
   formatZodErrors,
   logger
 } from '@/lib/error-handler';
+import { checkRateLimit, apiRateLimiter, sensitiveApiRateLimiter } from '@/lib/rate-limit';
+import { cached, invalidateByTag, CachePrefix, CacheTTL, CacheTag } from '@/lib/cache';
 
 // Schema de validation pour les catégories
 const categorieSchema = z.object({
@@ -20,6 +22,12 @@ const categorieSchema = z.object({
 
 // GET - Récupérer toutes les catégories
 export const GET = withErrorHandler(async (request: NextRequest) => {
+  // Rate limiting
+  const rateLimitCheck = await checkRateLimit(request, apiRateLimiter);
+  if (!rateLimitCheck.success) {
+    return rateLimitCheck.response!;
+  }
+
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
@@ -42,25 +50,41 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 
   logger.info('Fetching categories', { userId: session.user.id, boutiqueId });
 
-  const categories = await prisma.categorie.findMany({
-    where: {
-      boutiqueId,
-    },
-    include: {
-      ...(includeCount && {
-        _count: {
-          select: { produits: true },
+  // Cache avec TTL long car les catégories changent rarement
+  const categories = await cached(
+    `${CachePrefix.CATEGORIES}:${boutiqueId}:count${includeCount}`,
+    async () => {
+      return await prisma.categorie.findMany({
+        where: {
+          boutiqueId,
         },
-      }),
+        include: {
+          ...(includeCount && {
+            _count: {
+              select: { produits: true },
+            },
+          }),
+        },
+        orderBy: { nom: 'asc' },
+      });
     },
-    orderBy: { nom: 'asc' },
-  });
+    {
+      ttl: CacheTTL.LONG, // 15 minutes
+      tags: [CacheTag.CATEGORIES, `boutique:${boutiqueId}`],
+    }
+  );
 
   return NextResponse.json({ categories });
 });
 
 // POST - Créer une nouvelle catégorie
 export const POST = withErrorHandler(async (request: NextRequest) => {
+  // Rate limiting pour API sensible
+  const rateLimitCheck = await checkRateLimit(request, sensitiveApiRateLimiter);
+  if (!rateLimitCheck.success) {
+    return rateLimitCheck.response!;
+  }
+
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.boutiqueId) {
@@ -101,6 +125,10 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
       boutiqueId: session.user.boutiqueId,
     },
   });
+
+  // Invalider le cache des catégories
+  await invalidateByTag(CacheTag.CATEGORIES);
+  await invalidateByTag(`boutique:${session.user.boutiqueId}`);
 
   return NextResponse.json(categorie, { status: 201 });
 });
