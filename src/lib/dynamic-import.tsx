@@ -30,12 +30,13 @@ export const DefaultLoader = () => (
 /**
  * Wrapper pour dynamic import avec loader par défaut
  */
-export function dynamicImport<P = Record<string, unknown>>(
-  importFn: () => Promise<{ default: ComponentType<P> }>,
+export function dynamicImport(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  importFn: () => Promise<{ default: any }>,
   options: DynamicOptions = {}
 ) {
   return dynamic(importFn, {
-    loading: options.loading || DefaultLoader,
+    loading: options.loading ? () => React.createElement(options.loading!) : DefaultLoader,
     ssr: options.ssr !== false,
   });
 }
@@ -48,13 +49,7 @@ export const DynamicChart = dynamicImport(
   { ssr: false }
 );
 
-/**
- * Import dynamique pour les éditeurs de texte
- */
-export const DynamicEditor = dynamicImport(
-  () => import('@/components/Editor').catch(() => ({ default: () => <div>Editor non disponible</div> })),
-  { ssr: false }
-);
+
 
 /**
  * Hook pour charger des données de manière lazy

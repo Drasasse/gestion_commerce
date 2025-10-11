@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { getServerSession, Session } from 'next-auth';
 import { authOptions } from './auth';
 import { checkRateLimit, apiRateLimiter, sensitiveApiRateLimiter } from './rate-limit';
 
@@ -14,7 +14,7 @@ import { checkRateLimit, apiRateLimiter, sensitiveApiRateLimiter } from './rate-
  */
 export async function withAuthAndRateLimit(
   request: NextRequest,
-  handler: (session: Awaited<ReturnType<typeof getServerSession>>) => Promise<NextResponse>,
+  handler: (session: Session) => Promise<NextResponse>,
   options: {
     rateLimiter?: typeof apiRateLimiter | typeof sensitiveApiRateLimiter;
   } = {}
@@ -51,7 +51,7 @@ export async function withAuthAndRateLimit(
  * Extraire le boutiqueId depuis la session ou les paramètres
  */
 export function getBoutiqueId(
-  session: Awaited<ReturnType<typeof getServerSession>>,
+  session: Session | null,
   searchParams: URLSearchParams
 ): { success: true; boutiqueId: string } | { success: false; response: NextResponse } {
   const boutiqueIdParam = searchParams.get('boutiqueId');

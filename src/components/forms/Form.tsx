@@ -5,15 +5,14 @@
  */
 
 import * as React from 'react';
-import { useForm, FormProvider, UseFormReturn, FieldValues, SubmitHandler } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm, FormProvider, UseFormReturn, FieldValues, SubmitHandler, DefaultValues, Path } from 'react-hook-form';
 import { z } from 'zod';
 
-export interface FormProps<T extends FieldValues> extends Omit<React.FormHTMLAttributes<HTMLFormElement>, 'onSubmit'> {
+export interface FormProps<T extends FieldValues> extends Omit<React.FormHTMLAttributes<HTMLFormElement>, 'onSubmit' | 'children'> {
   /** Schema Zod pour la validation */
   schema: z.ZodType<T>;
   /** Valeurs par défaut */
-  defaultValues?: Partial<T>;
+  defaultValues?: DefaultValues<T>;
   /** Handler de soumission */
   onSubmit: SubmitHandler<T>;
   /** Enfants (champs du formulaire) */
@@ -31,14 +30,29 @@ export function Form<T extends FieldValues>({
   ...props
 }: FormProps<T>) {
   const methods = useForm<T>({
-    resolver: zodResolver(schema),
     defaultValues,
     mode,
   });
 
+  const handleSubmit = async (data: T) => {
+    try {
+      const validatedData = schema.parse(data);
+      await onSubmit(validatedData);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        error.issues.forEach((err) => {
+          methods.setError(err.path.join('.') as Path<T>, {
+            type: 'manual',
+            message: err.message,
+          });
+        });
+      }
+    }
+  };
+
   return (
     <FormProvider {...methods}>
-      <form onSubmit={methods.handleSubmit(onSubmit)} {...props}>
+      <form onSubmit={methods.handleSubmit(handleSubmit)} {...props}>
         {typeof children === 'function' ? children(methods) : children}
       </form>
     </FormProvider>
