@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+import { checkRateLimit, apiRateLimiter, sensitiveApiRateLimiter } from '@/lib/rate-limit';
+import { cached, invalidateByTag, CachePrefix, CacheTTL, CacheTag } from '@/lib/cache';
 
 const ligneVenteSchema = z.object({
   produitId: z.string(),
@@ -18,6 +20,12 @@ const venteSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
+    // Rate limiting
+    const rateLimitCheck = await checkRateLimit(request, apiRateLimiter);
+    if (!rateLimitCheck.success) {
+      return rateLimitCheck.response!;
+    }
+
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
