@@ -32,14 +32,28 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const boutiqueIdParam = searchParams.get('boutiqueId')
 
-    const query = creanceQuerySchema.parse({
-      statut: searchParams.get('statut'),
-      clientId: searchParams.get('clientId'),
-      dateDebut: searchParams.get('dateDebut'),
-      dateFin: searchParams.get('dateFin'),
-      page: searchParams.get('page'),
-      limit: searchParams.get('limit'),
-    })
+    let query;
+    try {
+      query = creanceQuerySchema.parse({
+        statut: searchParams.get('statut'),
+        clientId: searchParams.get('clientId'),
+        dateDebut: searchParams.get('dateDebut'),
+        dateFin: searchParams.get('dateFin'),
+        page: searchParams.get('page'),
+        limit: searchParams.get('limit'),
+      });
+    } catch (error) {
+      console.error('Validation error in query params:', error);
+      // Use default values if validation fails
+      query = {
+        statut: undefined,
+        clientId: undefined,
+        dateDebut: undefined,
+        dateFin: undefined,
+        page: '1',
+        limit: '10',
+      };
+    }
 
     // Déterminer le boutiqueId à utiliser
     let boutiqueId: string;

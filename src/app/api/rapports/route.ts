@@ -90,12 +90,21 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const boutiqueIdParam = searchParams.get('boutiqueId')
 
-    const query = rapportQuerySchema.parse({
-      type: searchParams.get('type'),
-      periode: searchParams.get('periode'),
-      dateDebut: searchParams.get('dateDebut'),
-      dateFin: searchParams.get('dateFin'),
-    })
+    let query;
+    try {
+      query = rapportQuerySchema.parse({
+        type: searchParams.get('type'),
+        periode: searchParams.get('periode'),
+        dateDebut: searchParams.get('dateDebut'),
+        dateFin: searchParams.get('dateFin'),
+      });
+    } catch (error) {
+      console.error('Validation error in query params:', error);
+      return NextResponse.json(
+        { error: "Paramètres invalides. Le paramètre 'type' est requis et doit être l'un de: ventes, produits, clients, stocks, financier" },
+        { status: 400 }
+      );
+    }
 
     // Déterminer le boutiqueId à utiliser
     let boutiqueId: string;

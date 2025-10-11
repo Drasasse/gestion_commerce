@@ -476,7 +476,7 @@ export default function VentesPage() {
                           <option value="">Sélectionner un produit</option>
                           {produits.map((produit) => (
                             <option key={produit.id} value={produit.id}>
-                              {produit.nom} (Stock: {produit.stocks[0]?.quantite || 0})
+                              {produit.nom} (Stock: {produit.stocks?.[0]?.quantite ?? 0})
                             </option>
                           ))}
                         </select>

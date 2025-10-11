@@ -268,7 +268,7 @@ export default function TransactionsPage() {
             <div>
               <p className="text-gray-600 text-sm">Recettes du mois</p>
               <p className="text-2xl font-bold text-green-600">
-                {stats.recettesMois.toLocaleString()} FCFA
+                {(stats?.recettesMois ?? 0).toLocaleString()} FCFA
               </p>
             </div>
             <div className="bg-green-100 p-3 rounded-lg">
@@ -282,7 +282,7 @@ export default function TransactionsPage() {
             <div>
               <p className="text-gray-600 text-sm">Dépenses du mois</p>
               <p className="text-2xl font-bold text-red-600">
-                {stats.depensesMois.toLocaleString()} FCFA
+                {(stats?.depensesMois ?? 0).toLocaleString()} FCFA
               </p>
             </div>
             <div className="bg-red-100 p-3 rounded-lg">
@@ -295,12 +295,12 @@ export default function TransactionsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-600 text-sm">Bénéfice du mois</p>
-              <p className={`text-2xl font-bold ${stats.beneficeMois >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {stats.beneficeMois.toLocaleString()} FCFA
+              <p className={`text-2xl font-bold ${(stats?.beneficeMois ?? 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {(stats?.beneficeMois ?? 0).toLocaleString()} FCFA
               </p>
             </div>
-            <div className={`p-3 rounded-lg ${stats.beneficeMois >= 0 ? 'bg-green-100' : 'bg-red-100'}`}>
-              <BarChart3 className={`w-6 h-6 ${stats.beneficeMois >= 0 ? 'text-green-600' : 'text-red-600'}`} />
+            <div className={`p-3 rounded-lg ${(stats?.beneficeMois ?? 0) >= 0 ? 'bg-green-100' : 'bg-red-100'}`}>
+              <BarChart3 className={`w-6 h-6 ${(stats?.beneficeMois ?? 0) >= 0 ? 'text-green-600' : 'text-red-600'}`} />
             </div>
           </div>
         </div>
@@ -309,8 +309,8 @@ export default function TransactionsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-600 text-sm">Solde total</p>
-              <p className={`text-2xl font-bold ${stats.solde >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                {stats.solde.toLocaleString()} FCFA
+              <p className={`text-2xl font-bold ${(stats?.solde ?? 0) >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                {(stats?.solde ?? 0).toLocaleString()} FCFA
               </p>
             </div>
             <div className="bg-blue-100 p-3 rounded-lg">

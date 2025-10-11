@@ -35,13 +35,17 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
   const search = searchParams.get('search') || '';
 
   // Déterminer le boutiqueId à utiliser
-  let boutiqueId: string;
+  let boutiqueId: string | null = null;
   if (session.user.role === 'ADMIN' && boutiqueIdParam) {
     boutiqueId = boutiqueIdParam;
   } else if (session.user.boutiqueId) {
     boutiqueId = session.user.boutiqueId;
-  } else {
-    throw new AuthenticationError('Boutique non spécifiée');
+  }
+
+  // Si pas de boutiqueId trouvé, retourner un tableau vide plutôt qu'une erreur
+  if (!boutiqueId) {
+    logger.warn('No boutiqueId found for user', { userId: session.user.id, role: session.user.role });
+    return NextResponse.json([]);
   }
 
   logger.info('Fetching suppliers', { userId: session.user.id, boutiqueId });

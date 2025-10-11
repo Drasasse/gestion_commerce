@@ -1,6 +1,36 @@
-# Gestion Commerce - Application de Gestion Commerciale
+# 🏪 Gestion Commerce - Application de Gestion Commerciale
 
 Application web complète pour la gestion de boutiques multi-sites avec suivi des stocks, ventes, clients et trésorerie.
+
+## 📊 État du Projet
+
+**Version**: 0.1.0 (MVP)
+**Status**: ✅ Fonctionnel | ⚠️ Non production-ready
+**Score Global**: 5.4/10
+
+> ⚠️ **IMPORTANT**: Cette application nécessite des améliorations de sécurité et de tests avant déploiement en production.
+> Consultez [AUDIT_RAPPORT_COMPLET.md](./AUDIT_RAPPORT_COMPLET.md) pour les détails complets.
+
+### 📚 Documentation Complète
+
+- 📊 **[AUDIT_RAPPORT_COMPLET.md](./AUDIT_RAPPORT_COMPLET.md)** - Analyse approfondie de l'application
+- 📍 **[ETAT_ACTUEL.md](./ETAT_ACTUEL.md)** - État détaillé du projet (21 pages, 24 API, 18 composants)
+- 🚀 **[PLAN_AMELIORATIONS_IMMEDIATE.md](./PLAN_AMELIORATIONS_IMMEDIATE.md)** - Roadmap 8 semaines vers production
+- 💡 **[PROPOSITION_AMELIORATIONS.md](./PROPOSITION_AMELIORATIONS.md)** - Suggestions initiales
+
+### ⚡ Améliorations Prioritaires
+
+#### 🔴 CRITIQUE (à faire avant production)
+- [ ] Rate limiting (anti brute-force)
+- [ ] CSRF protection
+- [ ] Tests (0% coverage actuellement)
+- [ ] Validation input côté client
+
+#### 🟠 IMPORTANT
+- [ ] Redis caching (performances)
+- [ ] Design system cohérent
+- [ ] Architecture en services/repositories
+- [ ] Monitoring & logs professionnels
 
 ## 🚀 Fonctionnalités
 
@@ -19,15 +49,33 @@ Application web complète pour la gestion de boutiques multi-sites avec suivi de
 - Suivi des clients et impayés
 - Statistiques de performance
 
-## 📦 Technologies Utilisées
+## 📦 Stack Technique
 
-- **Frontend**: Next.js 14 (App Router), React, TypeScript
-- **Styling**: Tailwind CSS (responsive mobile-first)
-- **Backend**: Next.js API Routes
-- **Base de données**: PostgreSQL
-- **ORM**: Prisma
-- **Authentification**: NextAuth.js avec gestion des rôles
-- **Déploiement**: Vercel
+### Core
+- **Framework**: Next.js 15.5.4 (App Router, Turbopack)
+- **Language**: TypeScript 5.7.3 (strict mode)
+- **UI Library**: React 19.0.0
+- **Styling**: Tailwind CSS v4.0 + Dark Mode
+
+### Backend
+- **API**: Next.js API Routes (24 endpoints)
+- **Database**: PostgreSQL
+- **ORM**: Prisma 6.2.1 (15 modèles)
+- **Auth**: NextAuth 5.0.0 (JWT + Credentials)
+- **Validation**: Zod 3.24.1
+
+### Features
+- **State Management**: TanStack Query 5.64.5
+- **Tables**: Custom responsive tables + virtual scrolling
+- **Export**: XLSX (Excel/CSV)
+- **Icons**: Lucide React 0.469.0
+- **Toasts**: React Hot Toast 2.4.1
+- **Theme**: next-themes 0.4.6
+
+### DevOps
+- **Hosting**: Vercel
+- **Database**: Vercel Postgres / Supabase
+- **Version Control**: Git + GitHub
 
 ## 🛠️ Installation Locale
 
@@ -174,6 +222,68 @@ npm run db:seed      # Remplir la DB avec des données de test
 npm run db:generate  # Générer le client Prisma
 ```
 
+## 📊 Métriques du Projet
+
+| Catégorie | Valeur |
+|-----------|--------|
+| **Lignes de code** | ~10,000+ |
+| **Fichiers source** | 81 TS/TSX |
+| **Modèles Prisma** | 15 |
+| **Routes API** | 24 |
+| **Pages** | 21 (13 GESTIONNAIRE + 6 ADMIN + 2 auth) |
+| **Composants** | 18 |
+| **Dépendances** | 857 npm packages |
+| **Bundle size** | ~350kb (à optimiser) |
+| **Coverage tests** | 0% (à implémenter) |
+
+## 🎯 Scores de Qualité
+
+| Aspect | Score | Status |
+|--------|-------|--------|
+| Fonctionnalités | 8/10 | ✅ Complet MVP |
+| Code Quality | 6/10 | ⚠️ TypeScript OK, manque tests |
+| Sécurité | 4/10 | 🚨 Critiques non résolus |
+| Performance | 5/10 | ⚠️ Aucune optimisation |
+| UX/UI | 7/10 | ✅ Bon, manque design system |
+| Scalabilité | 5/10 | ⚠️ Architecture monolithique |
+| Maintenabilité | 5/10 | ⚠️ Duplication code |
+| Documentation | 3/10 | ❌ Quasi inexistante |
+
+**Score Global**: **5.4/10** - Bon MVP, pas production-ready
+
+## 🚧 Problèmes Connus
+
+### 🚨 Critiques (Bloquants Production)
+1. **Pas de rate limiting** - Vulnérable aux attaques brute-force
+2. **Pas de CSRF protection** - Formulaires non sécurisés
+3. **0% code coverage** - Aucun test
+4. **Pas de validation client** - Erreurs seulement après soumission
+
+### ⚠️ Importants (À Corriger Rapidement)
+1. **Pas de caching** - Performances médiocres
+2. **Design system incohérent** - Couleurs hardcodées partout
+3. **Architecture monolithique** - Logique métier mélangée avec routes
+4. **Pas de monitoring** - Logs en console.log
+
+### 📋 Voir [AUDIT_RAPPORT_COMPLET.md](./AUDIT_RAPPORT_COMPLET.md) pour la liste complète
+
+## 🤝 Contributing
+
+Pour contribuer au projet:
+
+1. Lire **[ETAT_ACTUEL.md](./ETAT_ACTUEL.md)** pour comprendre l'architecture
+2. Consulter **[PLAN_AMELIORATIONS_IMMEDIATE.md](./PLAN_AMELIORATIONS_IMMEDIATE.md)** pour la roadmap
+3. Créer une branche depuis `main`
+4. Suivre les conventions TypeScript strictes
+5. Ajouter des tests (Vitest)
+6. Soumettre une Pull Request
+
 ## 📄 Licence
 
 Application propriétaire - Usage interne uniquement
+
+---
+
+**Dernière mise à jour**: 11 Octobre 2025
+**Maintenu par**: Équipe Gestion Commerce
+**Contact**: [À définir]

@@ -73,11 +73,30 @@ export default function ProduitsPage() {
       if (produitsRes.ok && categoriesRes.ok) {
         const produitsData = await produitsRes.json();
         const categoriesData = await categoriesRes.json();
-        setProduits(produitsData.produits || []);
-        setCategories(categoriesData || []);
+
+        // Validation robuste des données
+        const produits = Array.isArray(produitsData?.produits)
+          ? produitsData.produits
+          : (Array.isArray(produitsData) ? produitsData : []);
+
+        const categories = Array.isArray(categoriesData?.categories)
+          ? categoriesData.categories
+          : (Array.isArray(categoriesData) ? categoriesData : []);
+
+        setProduits(produits);
+        setCategories(categories);
+      } else {
+        console.error('Erreur API:', {
+          produitsStatus: produitsRes.status,
+          categoriesStatus: categoriesRes.status
+        });
+        setProduits([]);
+        setCategories([]);
       }
     } catch (error) {
       console.error('Erreur lors du chargement des données:', error);
+      setProduits([]);
+      setCategories([]);
     } finally {
       setLoading(false);
     }
