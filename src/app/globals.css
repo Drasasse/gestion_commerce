@@ -77,3 +77,45 @@ body {
 html {
   scroll-behavior: smooth;
 }
+
+/* Toast animations */
+@keyframes animate-enter {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes animate-leave {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+.animate-enter {
+  animation: animate-enter 0.3s ease-out;
+}
+
+.animate-leave {
+  animation: animate-leave 0.2s ease-in;
+}
+
+/* Loading spinner */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
