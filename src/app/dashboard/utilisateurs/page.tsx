@@ -4,6 +4,13 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
 import toast from 'react-hot-toast';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
+import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
+import { Table, TableCell } from '@/components/ui/Table';
+import { Edit, Trash2 } from 'lucide-react';
 
 interface Boutique {
   id: string;
@@ -170,135 +177,153 @@ export default function UtilisateursPage() {
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Gestion des Utilisateurs</h1>
-        <button
-          onClick={() => { resetForm(); setShowModal(true); }}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-        >
-          Ajouter un utilisateur
-        </button>
-      </div>
+      <PageHeader
+        title="Gestion des Utilisateurs"
+        description="Gérez les utilisateurs et leurs accès aux boutiques"
+        actions={
+          <Button onClick={() => { resetForm(); setShowModal(true); }}>
+            Ajouter un utilisateur
+          </Button>
+        }
+      />
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nom</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rôle</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Boutique</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {users.map((user) => (
-              <tr key={user.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{user.email}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 py-1 text-xs rounded-full ${
-                    user.role === 'ADMIN' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
-                  }`}>
-                    {user.role}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {user.boutique?.nom || '-'}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button onClick={() => handleEdit(user)} className="text-blue-600 hover:text-blue-900 mr-3">
-                    Modifier
-                  </button>
-                  <button onClick={() => handleDelete(user.id)} className="text-red-600 hover:text-red-900">
-                    Supprimer
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-lg font-semibold mb-4">
-              {editingUser ? 'Modifier' : 'Ajouter'} un utilisateur
-            </h2>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nom *</label>
-                <input type="text" value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className={`w-full px-3 py-2 border rounded-md ${errors.name ? 'border-red-500' : 'border-gray-300'}`}
-                />
-                {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-                <input type="email" value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className={`w-full px-3 py-2 border rounded-md ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
-                />
-                {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Mot de passe {editingUser ? '(laisser vide pour ne pas changer)' : '*'}
-                </label>
-                <input type="password" value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className={`w-full px-3 py-2 border rounded-md ${errors.password ? 'border-red-500' : 'border-gray-300'}`}
-                />
-                {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Rôle *</label>
-                <select value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value as 'ADMIN' | 'GESTIONNAIRE' })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+      <Table
+        columns={[
+          { key: 'name', label: 'Nom' },
+          { key: 'email', label: 'Email' },
+          { key: 'role', label: 'Rôle' },
+          { key: 'boutique', label: 'Boutique' },
+          { key: 'actions', label: 'Actions' },
+        ]}
+        data={users}
+        renderRow={(user) => (
+          <>
+            <TableCell>
+              <div className="text-sm font-medium text-gray-900">{user.name}</div>
+            </TableCell>
+            <TableCell>
+              <div className="text-sm text-gray-900">{user.email}</div>
+            </TableCell>
+            <TableCell>
+              <span className={`px-2 py-1 text-xs rounded-full ${
+                user.role === 'ADMIN' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
+              }`}>
+                {user.role}
+              </span>
+            </TableCell>
+            <TableCell>
+              <div className="text-sm text-gray-900">{user.boutique?.nom || '-'}</div>
+            </TableCell>
+            <TableCell>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleEdit(user)}
+                  className="p-2"
                 >
-                  <option value="GESTIONNAIRE">Gestionnaire</option>
-                  <option value="ADMIN">Administrateur</option>
-                </select>
+                  <Edit size={16} />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDelete(user.id)}
+                  className="p-2 text-red-600 hover:text-red-700"
+                >
+                  <Trash2 size={16} />
+                </Button>
               </div>
+            </TableCell>
+          </>
+        )}
+        emptyMessage="Aucun utilisateur trouvé"
+      />
 
-              {formData.role === 'GESTIONNAIRE' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Boutique *</label>
-                  <select value={formData.boutiqueId}
-                    onChange={(e) => setFormData({ ...formData, boutiqueId: e.target.value })}
-                    className={`w-full px-3 py-2 border rounded-md ${errors.boutiqueId ? 'border-red-500' : 'border-gray-300'}`}
-                  >
-                    <option value="">Sélectionner une boutique</option>
-                    {boutiques.map(b => <option key={b.id} value={b.id}>{b.nom}</option>)}
-                  </select>
-                  {errors.boutiqueId && <p className="text-red-500 text-xs mt-1">{errors.boutiqueId}</p>}
-                </div>
-              )}
-
-              <div className="flex justify-end space-x-3 pt-4">
-                <button type="button" onClick={() => setShowModal(false)}
-                  className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">
-                  Annuler
-                </button>
-                <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-                  {editingUser ? 'Modifier' : 'Créer'}
-                </button>
-              </div>
-            </form>
+      <Modal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        title={`${editingUser ? 'Modifier' : 'Ajouter'} un utilisateur`}
+        footer={
+          <>
+            <Button
+              variant="outline"
+              onClick={() => setShowModal(false)}
+            >
+              Annuler
+            </Button>
+            <Button
+              type="submit"
+              form="user-form"
+            >
+              {editingUser ? 'Modifier' : 'Créer'}
+            </Button>
+          </>
+        }
+      >
+        <form id="user-form" onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Nom *</label>
+            <Input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              error={errors.name}
+            />
+            {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
           </div>
-        </div>
-      )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+            <Input
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              error={errors.email}
+            />
+            {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Mot de passe {editingUser ? '(laisser vide pour ne pas changer)' : '*'}
+            </label>
+            <Input
+              type="password"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              error={errors.password}
+            />
+            {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Rôle *</label>
+            <Select
+              value={formData.role}
+              onChange={(value) => setFormData({ ...formData, role: value as 'ADMIN' | 'GESTIONNAIRE' })}
+              options={[
+                { value: 'GESTIONNAIRE', label: 'Gestionnaire' },
+                { value: 'ADMIN', label: 'Administrateur' },
+              ]}
+              placeholder="Sélectionner un rôle"
+            />
+          </div>
+
+          {formData.role === 'GESTIONNAIRE' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Boutique *</label>
+              <Select
+                value={formData.boutiqueId}
+                onChange={(value) => setFormData({ ...formData, boutiqueId: value })}
+                options={boutiques.map(b => ({ value: b.id, label: b.nom }))}
+                placeholder="Sélectionner une boutique"
+                error={errors.boutiqueId}
+              />
+              {errors.boutiqueId && <p className="text-red-500 text-xs mt-1">{errors.boutiqueId}</p>}
+            </div>
+          )}
+        </form>
+      </Modal>
     </div>
   );
 }

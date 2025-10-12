@@ -86,9 +86,9 @@ export function TableRow({ children, className = '', onClick }: { children: Reac
 /**
  * Cellule de table
  */
-export function TableCell({ children, className = '' }: { children: ReactNode; className?: string }) {
+export function TableCell({ children, className = '', colSpan }: { children: ReactNode; className?: string; colSpan?: number }) {
   return (
-    <td className={`px-3 py-4 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap ${className}`}>
+    <td className={`px-3 py-4 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap ${className}`} colSpan={colSpan}>
       {children}
     </td>
   );

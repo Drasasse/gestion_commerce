@@ -3,9 +3,14 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
-import Link from 'next/link';
 import { Boutique } from '@/types';
 import { formatMontant } from '@/lib/utils';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { BoutiqueCard } from '@/components/ui/BoutiqueCard';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Card } from '@/components/ui/Card';
+import { Modal } from '@/components/ui/Modal';
 
 interface BoutiqueWithStats extends Boutique {
   stats?: {
@@ -99,7 +104,7 @@ export default function BoutiquesPage() {
     }
   };
 
-  const handleEdit = (boutique: BoutiqueWithStats) => {
+  const handleEdit = (boutique: Boutique) => {
     setEditingBoutique(boutique);
     setFormData({
       nom: boutique.nom,
@@ -143,92 +148,30 @@ export default function BoutiquesPage() {
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Gestion des Boutiques</h1>
-        <button
-          onClick={() => {
-            resetForm();
-            setShowModal(true);
-          }}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          Ajouter une boutique
-        </button>
-      </div>
+      <PageHeader
+        title="Gestion des Boutiques"
+        description="Gérez vos boutiques et consultez leurs performances"
+        actions={
+          <Button
+            onClick={() => {
+              resetForm();
+              setShowModal(true);
+            }}
+          >
+            Ajouter une boutique
+          </Button>
+        }
+      />
 
       {/* Liste des boutiques */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {boutiques.map((boutique) => (
-          <div key={boutique.id} className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">{boutique.nom}</h3>
-                {boutique.adresse && (
-                  <p className="text-sm text-gray-600 mt-1">{boutique.adresse}</p>
-                )}
-                {boutique.telephone && (
-                  <p className="text-sm text-gray-600">{boutique.telephone}</p>
-                )}
-              </div>
-            </div>
-
-            {boutique.description && (
-              <p className="text-sm text-gray-600 mb-4">{boutique.description}</p>
-            )}
-
-            {boutique.stats && (
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                <div className="bg-blue-50 p-3 rounded-lg">
-                  <p className="text-xs text-blue-600 font-medium">Ventes</p>
-                  <p className="text-lg font-bold text-blue-900">{boutique.stats.nombreVentes}</p>
-                  <p className="text-xs text-blue-600">{formatMontant(boutique.stats.totalVentes)}</p>
-                </div>
-                <div className="bg-green-50 p-3 rounded-lg">
-                  <p className="text-xs text-green-600 font-medium">Produits</p>
-                  <p className="text-lg font-bold text-green-900">{boutique.stats.nombreProduits}</p>
-                </div>
-                <div className="bg-purple-50 p-3 rounded-lg">
-                  <p className="text-xs text-purple-600 font-medium">Utilisateurs</p>
-                  <p className="text-lg font-bold text-purple-900">{boutique.stats.nombreUsers}</p>
-                </div>
-                <div className="bg-orange-50 p-3 rounded-lg">
-                  <p className="text-xs text-orange-600 font-medium">Clients</p>
-                  <p className="text-lg font-bold text-orange-900">{boutique.stats.nombreClients}</p>
-                </div>
-              </div>
-            )}
-
-            {boutique.stats && boutique.stats.totalImpayes > 0 && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-2 mb-4">
-                <p className="text-xs text-red-600">
-                  Impayés: {formatMontant(boutique.stats.totalImpayes)}
-                </p>
-              </div>
-            )}
-
-            <div className="flex flex-col gap-2">
-              <Link
-                href={`/dashboard/boutiques/${boutique.id}`}
-                className="text-center bg-blue-600 text-white hover:bg-blue-700 px-3 py-2 rounded-lg transition-colors text-sm font-medium"
-              >
-                Voir détails
-              </Link>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleEdit(boutique)}
-                  className="flex-1 text-blue-600 hover:bg-blue-50 px-3 py-2 rounded-lg transition-colors text-sm font-medium"
-                >
-                  Modifier
-                </button>
-                <button
-                  onClick={() => handleDelete(boutique.id)}
-                  className="flex-1 text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg transition-colors text-sm font-medium"
-                >
-                  Supprimer
-                </button>
-              </div>
-            </div>
-          </div>
+          <BoutiqueCard
+            key={boutique.id}
+            boutique={boutique}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
         ))}
       </div>
 
@@ -239,98 +182,90 @@ export default function BoutiquesPage() {
       )}
 
       {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-lg font-semibold mb-4">
-              {editingBoutique ? 'Modifier la boutique' : 'Ajouter une boutique'}
-            </h2>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nom *
-                </label>
-                <input
-                  type="text"
-                  value={formData.nom}
-                  onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
-                  className={`w-full px-3 py-2 border rounded-md ${
-                    errors.nom ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                />
-                {errors.nom && <p className="text-red-500 text-xs mt-1">{errors.nom}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Adresse
-                </label>
-                <input
-                  type="text"
-                  value={formData.adresse}
-                  onChange={(e) => setFormData({ ...formData, adresse: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Téléphone
-                </label>
-                <input
-                  type="text"
-                  value={formData.telephone}
-                  onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Description
-                </label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Capital Initial (FCFA)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={formData.capitalInitial}
-                  onChange={(e) => setFormData({ ...formData, capitalInitial: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  placeholder="0.00"
-                />
-              </div>
-
-              <div className="flex justify-end space-x-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
-                >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                >
-                  {editingBoutique ? 'Modifier' : 'Ajouter'}
-                </button>
-              </div>
-            </form>
+      <Modal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        title={editingBoutique ? 'Modifier la boutique' : 'Ajouter une boutique'}
+        footer={
+          <>
+            <Button
+              variant="outline"
+              onClick={() => setShowModal(false)}
+            >
+              Annuler
+            </Button>
+            <Button
+              type="submit"
+              form="boutique-form"
+            >
+              {editingBoutique ? 'Modifier' : 'Ajouter'}
+            </Button>
+          </>
+        }
+      >
+        <form id="boutique-form" onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Nom *
+            </label>
+            <Input
+              type="text"
+              value={formData.nom}
+              onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
+              error={errors.nom}
+              className={errors.nom ? 'border-red-500' : ''}
+            />
+            {errors.nom && <p className="text-red-500 text-xs mt-1">{errors.nom}</p>}
           </div>
-        </div>
-      )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Adresse
+            </label>
+            <Input
+              type="text"
+              value={formData.adresse}
+              onChange={(e) => setFormData({ ...formData, adresse: e.target.value })}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Téléphone
+            </label>
+            <Input
+              type="text"
+              value={formData.telephone}
+              onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Description
+            </label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Capital Initial (FCFA)
+            </label>
+            <Input
+              type="number"
+              step="0.01"
+              value={formData.capitalInitial}
+              onChange={(e) => setFormData({ ...formData, capitalInitial: e.target.value })}
+              placeholder="0.00"
+            />
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

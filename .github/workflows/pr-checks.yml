@@ -1,0 +1,201 @@
+name: Pull Request Checks
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+    types: [opened, synchronize, reopened]
+
+jobs:
+  # Validation rapide
+  quick-checks:
+    name: Vérifications rapides
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout du code
+      uses: actions/checkout@v4
+
+    - name: Configuration Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+
+    - name: Installation des dépendances
+      run: npm ci
+
+    - name: Vérification du linting
+      run: npm run lint
+
+    - name: Vérification TypeScript
+      run: npx tsc --noEmit
+
+    - name: Vérification du formatage
+      run: npx prettier --check "src/**/*.{ts,tsx,js,jsx,json,css,md}"
+
+  # Tests unitaires et d'intégration
+  tests:
+    name: Tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout du code
+      uses: actions/checkout@v4
+
+    - name: Configuration Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+
+    - name: Installation des dépendances
+      run: npm ci
+
+    - name: Exécution des tests unitaires
+      run: npm run test:run
+
+    - name: Tests de composants avec Storybook
+      run: |
+        npm run build-storybook
+        npx concurrently -k -s first -n "SB,TEST" -c "magenta,blue" \
+          "npx http-server storybook-static --port 6006 --silent" \
+          "npx wait-on http://127.0.0.1:6006 && npm run test:storybook"
+
+  # Vérification de la construction
+  build-check:
+    name: Vérification du build
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout du code
+      uses: actions/checkout@v4
+
+    - name: Configuration Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+
+    - name: Installation des dépendances
+      run: npm ci
+
+    - name: Test de build
+      run: npm run build
+      env:
+        NEXTAUTH_SECRET: "test-secret-for-build"
+        NEXTAUTH_URL: "http://localhost:3000"
+
+  # Analyse de la taille du bundle
+  bundle-analysis:
+    name: Analyse du bundle
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout du code
+      uses: actions/checkout@v4
+
+    - name: Configuration Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+
+    - name: Installation des dépendances
+      run: npm ci
+
+    - name: Analyse de la taille du bundle
+      run: |
+        npm run build
+        npx @next/bundle-analyzer
+
+    - name: Commentaire sur la PR avec l'analyse
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          if (fs.existsSync('.next/analyze/bundle-analyzer-report.html')) {
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '📊 Analyse du bundle générée. Vérifiez la taille des chunks pour optimiser les performances.'
+            });
+          }
+
+  # Tests d'accessibilité
+  accessibility:
+    name: Tests d'accessibilité
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout du code
+      uses: actions/checkout@v4
+
+    - name: Configuration Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+
+    - name: Installation des dépendances
+      run: npm ci
+
+    - name: Build de Storybook
+      run: npm run build-storybook
+
+    - name: Tests d'accessibilité avec axe
+      run: |
+        npx concurrently -k -s first -n "SB,A11Y" -c "magenta,blue" \
+          "npx http-server storybook-static --port 6006 --silent" \
+          "npx wait-on http://127.0.0.1:6006 && npx storybook-test-runner --url http://127.0.0.1:6006"
+
+  # Résumé des vérifications
+  pr-summary:
+    name: Résumé des vérifications
+    runs-on: ubuntu-latest
+    needs: [quick-checks, tests, build-check, bundle-analysis, accessibility]
+    if: always()
+
+    steps:
+    - name: Commentaire de résumé sur la PR
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const results = {
+            'Vérifications rapides': '${{ needs.quick-checks.result }}',
+            'Tests': '${{ needs.tests.result }}',
+            'Build': '${{ needs.build-check.result }}',
+            'Analyse du bundle': '${{ needs.bundle-analysis.result }}',
+            'Accessibilité': '${{ needs.accessibility.result }}'
+          };
+
+          const getEmoji = (status) => {
+            switch(status) {
+              case 'success': return '✅';
+              case 'failure': return '❌';
+              case 'cancelled': return '⏹️';
+              case 'skipped': return '⏭️';
+              default: return '⏳';
+            }
+          };
+
+          let summary = '## 📋 Résumé des vérifications PR\n\n';
+          
+          for (const [check, result] of Object.entries(results)) {
+            summary += `${getEmoji(result)} **${check}**: ${result}\n`;
+          }
+
+          const allPassed = Object.values(results).every(result => result === 'success');
+          
+          if (allPassed) {
+            summary += '\n🎉 **Toutes les vérifications sont passées !** Cette PR est prête à être mergée.';
+          } else {
+            summary += '\n⚠️ **Certaines vérifications ont échoué.** Veuillez corriger les problèmes avant de merger.';
+          }
+
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: summary
+          });

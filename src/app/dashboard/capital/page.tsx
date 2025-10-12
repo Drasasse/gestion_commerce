@@ -5,6 +5,10 @@ import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { formatMontant, formatDate } from '@/lib/utils';
+import LoadingSkeleton from '@/components/LoadingSkeleton';
+import MobileStatsCard from '@/components/MobileStatsCard';
+import ResponsiveTable, { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from '@/components/ResponsiveTable';
+import { DollarSign, TrendingUp, Building2 } from 'lucide-react';
 
 interface Boutique {
   id: string;
@@ -145,8 +149,14 @@ export default function CapitalPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="p-6">
+        <div className="mb-6">
+          <div className="h-8 bg-gray-200 rounded w-64 mb-4"></div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <LoadingSkeleton type="stat" count={3} />
+        </div>
+        <LoadingSkeleton type="table" />
       </div>
     );
   }
@@ -168,47 +178,26 @@ export default function CapitalPage() {
 
       {/* Vue d'ensemble */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-blue-100 text-sm">Capital Total</p>
-              <p className="text-3xl font-bold mt-2">{formatMontant(totalCapital)}</p>
-            </div>
-            <div className="bg-blue-400 bg-opacity-30 rounded-full p-3">
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-lg p-6 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-green-100 text-sm">Total Injections</p>
-              <p className="text-3xl font-bold mt-2">{formatMontant(totalInjections)}</p>
-            </div>
-            <div className="bg-green-400 bg-opacity-30 rounded-full p-3">
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11l5-5m0 0l5 5m-5-5v12" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-purple-100 text-sm">Nombre de Boutiques</p>
-              <p className="text-3xl font-bold mt-2">{boutiques.length}</p>
-            </div>
-            <div className="bg-purple-400 bg-opacity-30 rounded-full p-3">
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-            </div>
-          </div>
-        </div>
+        <MobileStatsCard
+          title="Capital Total"
+          value={formatMontant(totalCapital)}
+          icon={DollarSign}
+          color="blue"
+        />
+        
+        <MobileStatsCard
+          title="Total Injections"
+          value={formatMontant(totalInjections)}
+          icon={TrendingUp}
+          color="green"
+        />
+        
+        <MobileStatsCard
+          title="Nombre de Boutiques"
+          value={boutiques.length}
+          icon={Building2}
+          color="purple"
+        />
       </div>
 
       {/* Capital par boutique */}
@@ -245,52 +234,52 @@ export default function CapitalPage() {
       </div>
 
       {/* Historique des injections */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Historique des Injections</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Historique des Injections</h2>
         </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+        <ResponsiveTable>
+          <Table>
+            <TableHead>
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Boutique</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Montant</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+                <TableHeader>Date</TableHeader>
+                <TableHeader>Boutique</TableHeader>
+                <TableHeader>Montant</TableHeader>
+                <TableHeader>Description</TableHeader>
               </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            </TableHead>
+            <TableBody>
               {transactions
                 .filter(t => t.type === 'INJECTION_CAPITAL')
                 .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
                 .map((transaction) => (
-                  <tr key={transaction.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <TableRow key={transaction.id}>
+                    <TableCell>
                       {formatDate(transaction.createdAt)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{transaction.boutique.nom}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm font-semibold text-green-600">
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-medium">{transaction.boutique.nom}</div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="font-semibold text-green-600 dark:text-green-400">
                         +{formatMontant(transaction.montant)}
                       </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">{transaction.description}</div>
-                    </td>
-                  </tr>
+                    </TableCell>
+                    <TableCell>
+                      {transaction.description}
+                    </TableCell>
+                  </TableRow>
                 ))}
               {transactions.filter(t => t.type === 'INJECTION_CAPITAL').length === 0 && (
-                <tr>
-                  <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
+                <TableRow>
+                  <TableCell className="text-center text-gray-500 dark:text-gray-400" colSpan={4}>
                     Aucune injection de capital enregistrée
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               )}
-            </tbody>
-          </table>
-        </div>
+            </TableBody>
+          </Table>
+        </ResponsiveTable>
       </div>
 
       {/* Modal d'injection */}

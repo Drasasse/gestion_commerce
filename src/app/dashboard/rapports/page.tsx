@@ -6,6 +6,10 @@ import { redirect } from 'next/navigation';
 import { formatMontant } from '@/lib/utils';
 import ExportButton from '@/components/ExportButton';
 import { exportRapportsToExcel, exportRapportsToCSV } from '@/lib/export';
+import LoadingSkeleton from '@/components/LoadingSkeleton';
+import MobileStatsCard from '@/components/MobileStatsCard';
+import ResponsiveTable, { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from '@/components/ResponsiveTable';
+import { DollarSign, TrendingUp, AlertTriangle, Package } from 'lucide-react';
 
 interface BoutiqueStats {
   id: string;
@@ -85,8 +89,14 @@ export default function RapportsAdminPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="p-6">
+        <LoadingSkeleton
+          type="stat"
+          count={4}
+        />
+        <LoadingSkeleton
+          type="table"
+        />
       </div>
     );
   }
@@ -149,91 +159,110 @@ export default function RapportsAdminPage() {
 
       {/* Vue d'ensemble globale */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 text-white">
-          <p className="text-blue-100 text-sm">Total Ventes</p>
-          <p className="text-3xl font-bold mt-2">{formatMontant(totaux.totalVentes)}</p>
-          <p className="text-blue-100 text-xs mt-2">{totaux.nombreVentes} vente(s)</p>
-        </div>
+        <MobileStatsCard
+          title="Total Ventes"
+          value={formatMontant(totaux.totalVentes)}
+          icon={DollarSign}
+          color="blue"
+          trend={{
+            value: totaux.nombreVentes,
+            label: "vente(s)",
+            isPositive: true
+          }}
+        />
 
-        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-lg p-6 text-white">
-          <p className="text-green-100 text-sm">Capital Total</p>
-          <p className="text-3xl font-bold mt-2">{formatMontant(totaux.capitalTotal)}</p>
-          <p className="text-green-100 text-xs mt-2">{boutiquesStats.length} boutique(s)</p>
-        </div>
+        <MobileStatsCard
+          title="Capital Total"
+          value={formatMontant(totaux.capitalTotal)}
+          icon={TrendingUp}
+          color="green"
+          trend={{
+            value: boutiquesStats.length,
+            label: "boutique(s)",
+            isPositive: true
+          }}
+        />
 
-        <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-lg shadow-lg p-6 text-white">
-          <p className="text-red-100 text-sm">Total Impayés</p>
-          <p className="text-3xl font-bold mt-2">{formatMontant(totaux.totalImpayes)}</p>
-          <p className="text-red-100 text-xs mt-2">À recouvrer</p>
-        </div>
+        <MobileStatsCard
+          title="Total Impayés"
+          value={formatMontant(totaux.totalImpayes)}
+          icon={AlertTriangle}
+          color="red"
+        />
 
-        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">
-          <p className="text-purple-100 text-sm">Total Produits</p>
-          <p className="text-3xl font-bold mt-2">{totaux.totalProduits}</p>
-          <p className="text-purple-100 text-xs mt-2">{totaux.totalClients} client(s)</p>
-        </div>
+        <MobileStatsCard
+          title="Total Produits"
+          value={totaux.totalProduits.toString()}
+          icon={Package}
+          color="purple"
+          trend={{
+            value: totaux.totalClients,
+            label: "client(s)",
+            isPositive: true
+          }}
+        />
       </div>
 
       {/* Performance par boutique */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Performance par Boutique</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Performance par Boutique</h2>
         </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+        <ResponsiveTable>
+          <Table>
+            <TableHead>
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Boutique</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ventes</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nb Ventes</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Impayés</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Produits</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Clients</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Capital</th>
+                <TableHeader>Boutique</TableHeader>
+                <TableHeader>Ventes</TableHeader>
+                <TableHeader>Nb Ventes</TableHeader>
+                <TableHeader>Impayés</TableHeader>
+                <TableHeader>Produits</TableHeader>
+                <TableHeader>Clients</TableHeader>
+                <TableHeader>Capital</TableHeader>
               </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            </TableHead>
+            <TableBody>
               {boutiquesStats.map((boutique) => (
-                <tr key={boutique.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{boutique.nom}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                <TableRow key={boutique.id}>
+                  <TableCell>
+                    <div className="text-sm font-medium text-gray-900 dark:text-white">{boutique.nom}</div>
+                  </TableCell>
+                  <TableCell>
                     <div className="text-sm font-semibold text-green-600">
                       {formatMontant(boutique.totalVentes)}
                     </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{boutique.nombreVentes}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm text-gray-900 dark:text-gray-300">{boutique.nombreVentes}</div>
+                  </TableCell>
+                  <TableCell>
                     <div className="text-sm font-semibold text-red-600">
                       {formatMontant(boutique.totalImpayes)}
                     </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{boutique.totalProduits}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{boutique.totalClients}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm text-gray-900 dark:text-gray-300">{boutique.totalProduits}</div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm text-gray-900 dark:text-gray-300">{boutique.totalClients}</div>
+                  </TableCell>
+                  <TableCell>
                     <div className="text-sm font-medium text-blue-600">
                       {formatMontant(boutique.capitalActuel)}
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
               {boutiquesStats.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center text-gray-500 dark:text-gray-400 py-8">
                     Aucune donnée disponible
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               )}
-            </tbody>
-          </table>
-        </div>
+            </TableBody>
+          </Table>
+        </ResponsiveTable>
       </div>
 
       {/* Section d'analyse */}

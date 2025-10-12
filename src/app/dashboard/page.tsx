@@ -5,9 +5,16 @@ import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { LineChart, Line, BarChart, Bar, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
-import { Store, ShoppingCart, TrendingUp, AlertCircle, DollarSign, Users, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { Store, ShoppingCart, TrendingUp, AlertCircle, DollarSign, Users } from 'lucide-react';
 import { formatMontant, formatMontantCompact } from '@/lib/utils';
 import { PageLoadingSkeleton } from '@/components/LoadingSkeleton';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { StatsCard } from '@/components/ui/StatsCard';
+import { ChartCard } from '@/components/ui/ChartCard';
+import { ProductList } from '@/components/ui/ProductList';
+import { AlertsList } from '@/components/ui/AlertsList';
+import { QuickActions } from '@/components/ui/QuickActions';
+import { Button } from '@/components/ui/Button';
 
 interface DashboardStats {
   boutiques: number;
@@ -223,43 +230,32 @@ export default function DashboardPage() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">
-          Tableau de Bord Administrateur
-        </h1>
-        <p className="text-gray-600 mt-1">
-          Vue d&apos;ensemble de toutes les boutiques
-        </p>
-      </div>
+      <PageHeader
+        title="Tableau de Bord Administrateur"
+        description="Vue d'ensemble de toutes les boutiques"
+        actions={
+          <Link 
+            href="/dashboard/boutiques"
+            className="inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-blue-500 shadow-sm h-9 px-3 text-sm"
+          >
+            Gérer les boutiques
+          </Link>
+        }
+      />
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {statCards.map((card) => {
-          const Icon = card.icon;
-          const TrendIcon = card.trendUp ? ArrowUpRight : ArrowDownRight;
-          return (
-            <div
-              key={card.title}
-              className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div className={`${card.color} p-3 rounded-lg`}>
-                  <Icon className="text-white" size={24} />
-                </div>
-                {card.trend !== 0 && (
-                  <div className={`flex items-center gap-1 text-sm ${card.trendUp ? 'text-green-600' : 'text-red-600'}`}>
-                    <TrendIcon size={16} />
-                    <span>{Math.abs(card.trend)}%</span>
-                  </div>
-                )}
-              </div>
-              <p className="text-sm text-gray-600 mb-1">{card.title}</p>
-              <p className="text-2xl font-bold text-gray-900" title={card.fullValue}>
-                {card.value}
-              </p>
-            </div>
-          );
-        })}
+        {statCards.map((card) => (
+          <StatsCard
+            key={card.title}
+            title={card.title}
+            value={card.value}
+            fullValue={card.fullValue}
+            icon={card.icon}
+            iconColor={card.color.replace('bg-', '').replace('-500', '') as any}
+            trend={card.trend}
+          />
+        ))}
       </div>
 
       {/* Charts Row */}
@@ -302,8 +298,8 @@ export default function DashboardPage() {
                 contentStyle={{ background: '#fff', border: '1px solid #ddd', borderRadius: '8px' }}
               />
               <Legend />
-              <Bar dataKey="ventes" fill="#8B5CF6" name="Ventes" />
-              <Bar dataKey="ca" fill="#3B82F6" name="CA (FCFA)" />
+              <Bar dataKey="ventes" fill="#3B82F6" name="Nombre de ventes" />
+              <Bar dataKey="ca" fill="#10B981" name="CA (FCFA)" />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -312,102 +308,32 @@ export default function DashboardPage() {
       {/* Bottom Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top Produits */}
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center justify-between">
-            <span>Top 5 Produits</span>
-            <Link href="/dashboard/rapports" className="text-sm text-blue-600 hover:text-blue-800">
-              Voir tout
-            </Link>
-          </h3>
-          <div className="space-y-3">
-            {topProduits.map((produit, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-600 font-semibold text-sm">
-                    #{index + 1}
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">{produit.nom}</p>
-                    <p className="text-sm text-gray-600">{produit.quantite} vendus</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="font-semibold text-gray-900">{formatMontantCompact(produit.ca)}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <ProductList
+          title="Top 5 Produits"
+          products={topProduits}
+          viewAllHref="/dashboard/rapports"
+          formatAmount={formatMontantCompact}
+        />
 
         {/* Alertes Stock */}
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <AlertCircle className="text-orange-500" size={20} />
-            <span>Alertes Stock Faible ({stats.stocksFaibles})</span>
-          </h3>
-          <div className="space-y-3">
-            {alertes.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">Aucune alerte de stock</p>
-            ) : (
-              alertes.map((alerte, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200">
-                  <div>
-                    <p className="font-medium text-gray-900">{alerte.produit}</p>
-                    <p className="text-sm text-gray-600">{alerte.boutique}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-orange-600 font-semibold">{alerte.quantite} / {alerte.seuil}</p>
-                    <p className="text-xs text-gray-500">Stock actuel / Seuil</p>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-          {alertes.length > 0 && (
-            <Link
-              href="/dashboard/rapports?type=stocks"
-              className="mt-4 block text-center text-sm text-blue-600 hover:text-blue-800 font-medium"
-            >
-              Voir tous les stocks →
-            </Link>
-          )}
-        </div>
+        <AlertsList
+          title="Alertes Stock Faible"
+          alerts={alertes}
+          alertCount={stats.stocksFaibles}
+          viewAllHref="/dashboard/rapports?type=stocks"
+        />
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl shadow-lg p-6 text-white">
-        <h3 className="text-lg font-semibold mb-4">Actions Rapides</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Link
-            href="/dashboard/boutiques"
-            className="bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg p-4 transition-all text-center"
-          >
-            <Store className="mx-auto mb-2" size={24} />
-            <p className="text-sm font-medium">Boutiques</p>
-          </Link>
-          <Link
-            href="/dashboard/utilisateurs"
-            className="bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg p-4 transition-all text-center"
-          >
-            <Users className="mx-auto mb-2" size={24} />
-            <p className="text-sm font-medium">Utilisateurs</p>
-          </Link>
-          <Link
-            href="/dashboard/capital"
-            className="bg-white bg-opacity-30 hover:bg-opacity-30 rounded-lg p-4 transition-all text-center"
-          >
-            <DollarSign className="mx-auto mb-2" size={24} />
-            <p className="text-sm font-medium">Capital</p>
-          </Link>
-          <Link
-            href="/dashboard/rapports"
-            className="bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg p-4 transition-all text-center"
-          >
-            <TrendingUp className="mx-auto mb-2" size={24} />
-            <p className="text-sm font-medium">Rapports</p>
-          </Link>
-        </div>
-      </div>
+      <QuickActions
+        title="Actions Rapides"
+        actions={[
+          { href: '/dashboard/boutiques', icon: Store, label: 'Boutiques' },
+          { href: '/dashboard/utilisateurs', icon: Users, label: 'Utilisateurs' },
+          { href: '/dashboard/capital', icon: DollarSign, label: 'Capital', highlighted: true },
+          { href: '/dashboard/rapports', icon: TrendingUp, label: 'Rapports' },
+        ]}
+      />
     </div>
   );
 }
