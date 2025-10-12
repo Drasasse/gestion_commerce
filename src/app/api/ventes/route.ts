@@ -223,7 +223,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Créer la vente avec toutes les lignes et mouvements de stock
-      const vente = await prisma.$transaction(async (tx) => {
+      const vente = await prisma.$transaction(async (tx: any) => {
         // Créer la vente
         const nouvelleVente = await tx.vente.create({
           data: {

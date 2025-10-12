@@ -111,13 +111,13 @@ export async function GET(request: NextRequest) {
     // Filter stocks for alerts if needed
     let filteredStocks = stocks;
     if (alerteOnly) {
-      filteredStocks = stocks.filter(stock => 
+      filteredStocks = stocks.filter((stock: any) => 
         stock.produit.seuilAlerte && stock.quantite <= stock.produit.seuilAlerte
       );
     }
 
     // Calculate stocks in alert
-    const stocksEnAlerte = stocks.filter(stock => 
+    const stocksEnAlerte = stocks.filter((stock: any) => 
       stock.produit.seuilAlerte && stock.quantite <= stock.produit.seuilAlerte
     ).length;
 

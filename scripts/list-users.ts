@@ -26,7 +26,7 @@ async function main() {
   if (users.length === 0) {
     console.log('Aucun utilisateur trouvé.');
   } else {
-    users.forEach((user, index) => {
+    users.forEach((user: any, index: number) => {
       console.log(`\n${index + 1}. ${user.name}`);
       console.log(`   Email: ${user.email}`);
       console.log(`   Rôle: ${user.role}`);

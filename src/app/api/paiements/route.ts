@@ -130,8 +130,8 @@ export async function GET(request: NextRequest) {
     ])
 
     // Calculer les montants pour chaque créance
-    const creancesAvecMontants = creances.map(vente => {
-      const montantPaye = vente.paiements.reduce((sum, p) => sum + p.montant, 0)
+    const creancesAvecMontants = creances.map((vente: any) => {
+      const montantPaye = vente.paiements.reduce((sum: number, p: any) => sum + p.montant, 0)
       const montantRestant = vente.montantTotal - montantPaye
       const joursRetard = vente.dateEcheance ? 
         Math.max(0, Math.floor((new Date().getTime() - new Date(vente.dateEcheance).getTime()) / (1000 * 60 * 60 * 24))) : 0
@@ -184,7 +184,7 @@ export async function GET(request: NextRequest) {
         montantTotalPaye,
         montantTotalRestant,
         nombreCreances: stats._count,
-        repartitionStatuts: statsCreances.map(s => ({
+        repartitionStatuts: statsCreances.map((s: any) => ({
           statut: s.statut,
           montant: s._sum.montantTotal || 0,
           nombre: s._count
@@ -239,7 +239,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Calculer le montant déjà payé
-    const montantPaye = vente.paiements.reduce((sum, p) => sum + p.montant, 0)
+    const montantPaye = vente.paiements.reduce((sum: number, p: any) => sum + p.montant, 0)
     const montantRestant = vente.montantTotal - montantPaye
 
     // Vérifier que le montant du paiement ne dépasse pas le montant restant
@@ -251,7 +251,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Créer le paiement et mettre à jour le statut de la vente
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       // Créer le paiement
       const paiement = await tx.paiement.create({
         data: {

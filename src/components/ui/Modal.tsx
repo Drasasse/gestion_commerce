@@ -31,11 +31,11 @@ export function Modal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className={`bg-white rounded-lg w-full ${sizeClasses[size]} ${className}`}>
+    <div className="fixed inset-0 modal-overlay flex items-center justify-center z-50 p-4">
+      <div className={`modal-content rounded-lg w-full ${sizeClasses[size]} ${className}`}>
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+        <div className="flex items-center justify-between p-6 border-b border-border">
+          <h2 className="text-lg font-semibold text-foreground">{title}</h2>
           <Button
             variant="outline"
             size="sm"
@@ -53,7 +53,7 @@ export function Modal({
 
         {/* Footer */}
         {footer && (
-          <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">
+          <div className="flex items-center justify-end gap-3 p-6 border-t border-border">
             {footer}
           </div>
         )}

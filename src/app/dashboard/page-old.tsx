@@ -51,7 +51,7 @@ async function getLowStock() {
 
   // Filtrer ceux où la quantité est inférieure ou égale au seuil d'alerte
   return stocks
-    .filter(stock => stock.quantite <= stock.produit.seuilAlerte)
+    .filter((stock: any) => stock.quantite <= stock.produit.seuilAlerte)
     .slice(0, 5)
 }
 
@@ -134,7 +134,7 @@ export default async function DashboardPage() {
             {boutiques.length === 0 ? (
               <p className="text-gray-500 text-sm">Aucune boutique</p>
             ) : (
-              boutiques.map((boutique) => (
+              boutiques.map((boutique: any) => (
                 <div
                   key={boutique.id}
                   className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
@@ -161,7 +161,7 @@ export default async function DashboardPage() {
             {lowStock.length === 0 ? (
               <p className="text-gray-500 text-sm">Aucune alerte</p>
             ) : (
-              lowStock.map((stock) => (
+              lowStock.map((stock: any) => (
                 <div
                   key={stock.id}
                   className="flex items-center justify-between p-3 bg-orange-50 rounded-lg"

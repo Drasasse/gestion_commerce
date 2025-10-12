@@ -113,8 +113,8 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const recettesMois = stats.find(s => s.type === 'RECETTE')?._sum.montant || 0;
-    const depensesMois = stats.find(s => s.type === 'DEPENSE')?._sum.montant || 0;
+    const recettesMois = stats.find((s: any) => s.type === 'RECETTE')?._sum.montant || 0;
+    const depensesMois = stats.find((s: any) => s.type === 'DEPENSE')?._sum.montant || 0;
     const beneficeMois = recettesMois - depensesMois;
 
     return NextResponse.json({

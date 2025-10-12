@@ -36,11 +36,11 @@ export const PageHeader = React.forwardRef<HTMLDivElement, PageHeaderProps>(
         
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="space-y-1">
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="page-title">
               {title}
             </h1>
             {description && (
-              <p className="text-gray-600">
+              <p className="page-description">
                 {description}
               </p>
             )}

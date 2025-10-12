@@ -95,7 +95,7 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
       ]);
 
       // Ajouter la quantité en stock à chaque produit
-      const produitsAvecStock = produits.map(produit => ({
+      const produitsAvecStock = produits.map((produit: any) => ({
         ...produit,
         quantiteStock: produit.stocks[0]?.quantite || 0,
         stocks: undefined,
@@ -163,7 +163,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   });
 
   // Créer le produit et son stock initial
-  const produit = await prisma.$transaction(async (tx) => {
+  const produit = await prisma.$transaction(async (tx: any) => {
     const nouveauProduit = await tx.produit.create({
       data: {
         ...validatedData,

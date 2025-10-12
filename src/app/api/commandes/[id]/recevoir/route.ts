@@ -62,10 +62,10 @@ export async function POST(
     }
 
     // Utiliser une transaction pour garantir la cohérence
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       // Mettre à jour les lignes de commande et les stocks
       for (const ligneRecue of validatedData.lignesRecues) {
-        const ligne = commande.lignes.find((l) => l.id === ligneRecue.ligneId);
+        const ligne = commande.lignes.find((l: any) => l.id === ligneRecue.ligneId);
 
         if (!ligne) {
           throw new Error(`Ligne de commande ${ligneRecue.ligneId} non trouvée`);
@@ -129,7 +129,7 @@ export async function POST(
       // Vérifier si toutes les lignes sont complètement reçues
       const toutesLignesRecues = validatedData.lignesRecues.every(
         (lr) => {
-          const ligne = commande.lignes.find((l) => l.id === lr.ligneId);
+          const ligne = commande.lignes.find((l: any) => l.id === lr.ligneId);
           return ligne && lr.quantiteRecue >= ligne.quantite;
         }
       );

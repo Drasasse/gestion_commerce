@@ -56,8 +56,8 @@ export async function GET(request: NextRequest) {
 
       const boutiquesAvecStats = (boutiques as BoutiqueWithStats[]).map(boutique => {
         const ventes = boutique.ventes || [];
-        const totalVentes = ventes.reduce((acc, v) => acc + v.montantTotal, 0);
-        const totalImpayes = ventes.reduce((acc, v) => acc + v.montantRestant, 0);
+        const totalVentes = ventes.reduce((acc: number, v: any) => acc + v.montantTotal, 0);
+        const totalImpayes = ventes.reduce((acc: number, v: any) => acc + v.montantRestant, 0);
 
         return {
           id: boutique.id,

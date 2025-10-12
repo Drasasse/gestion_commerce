@@ -103,8 +103,8 @@ export async function PUT(
 
     // Si le montant change, vérifier que le nouveau total ne dépasse pas le montant de la vente
     if (data.montant && data.montant !== paiementExistant.montant) {
-      const autresPaiements = paiementExistant.vente.paiements.filter(p => p.id !== paiementId)
-      const montantAutresPaiements = autresPaiements.reduce((sum, p) => sum + p.montant, 0)
+      const autresPaiements = paiementExistant.vente.paiements.filter((p: any) => p.id !== paiementId)
+      const montantAutresPaiements = autresPaiements.reduce((sum: number, p: any) => sum + p.montant, 0)
       const nouveauTotal = montantAutresPaiements + data.montant
 
       if (nouveauTotal > paiementExistant.vente.montantTotal) {
@@ -116,7 +116,7 @@ export async function PUT(
     }
 
     // Mettre à jour le paiement et recalculer le statut de la vente
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       // Mettre à jour le paiement
       const paiementUpdated = await tx.paiement.update({
         where: { id: paiementId },
@@ -130,7 +130,7 @@ export async function PUT(
       })
 
       if (vente) {
-        const montantTotalPaye = vente.paiements.reduce((sum, p) => sum + p.montant, 0)
+        const montantTotalPaye = vente.paiements.reduce((sum: number, p: any) => sum + p.montant, 0)
         const montantRestant = vente.montantTotal - montantTotalPaye
 
         let nouveauStatut: 'PAYE' | 'IMPAYE' | 'PARTIEL'
@@ -213,15 +213,15 @@ export async function DELETE(
     }
 
     // Supprimer le paiement et recalculer le statut de la vente
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       // Supprimer le paiement
       await tx.paiement.delete({
         where: { id: paiementId }
       })
 
       // Recalculer le statut de la vente
-      const autresPaiements = paiement.vente.paiements.filter(p => p.id !== paiementId)
-      const montantTotalPaye = autresPaiements.reduce((sum, p) => sum + p.montant, 0)
+      const autresPaiements = paiement.vente.paiements.filter((p: any) => p.id !== paiementId)
+      const montantTotalPaye = autresPaiements.reduce((sum: number, p: any) => sum + p.montant, 0)
       const montantRestant = paiement.vente.montantTotal - montantTotalPaye
 
       let nouveauStatut: 'PAYE' | 'IMPAYE' | 'PARTIEL'

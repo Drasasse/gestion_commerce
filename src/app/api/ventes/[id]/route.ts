@@ -205,7 +205,7 @@ export async function DELETE(
     }
 
     // Annuler la vente en restaurant les stocks
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       // Restaurer les stocks
       for (const ligne of existingVente.lignes) {
         const stock = ligne.produit.stocks[0];

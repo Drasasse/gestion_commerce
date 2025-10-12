@@ -157,7 +157,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Créer le mouvement et mettre à jour le stock dans une transaction
-      const result = await prisma.$transaction(async (tx) => {
+      const result = await prisma.$transaction(async (tx: any) => {
         // Créer le mouvement
         const mouvement = await tx.mouvementStock.create({
           data: validatedData,

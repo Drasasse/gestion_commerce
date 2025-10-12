@@ -16,9 +16,9 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary:
-          'bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-blue-500 shadow-sm',
+          'bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-ring shadow-sm',
         secondary:
-          'bg-gray-100 text-gray-900 hover:bg-gray-200 focus-visible:ring-gray-500',
+          'bg-secondary text-secondary-foreground hover:bg-secondary/80 focus-visible:ring-ring',
         success:
           'bg-green-600 text-white hover:bg-green-700 focus-visible:ring-green-500 shadow-sm',
         danger:
@@ -26,11 +26,11 @@ const buttonVariants = cva(
         warning:
           'bg-orange-600 text-white hover:bg-orange-700 focus-visible:ring-orange-500 shadow-sm',
         outline:
-          'border-2 border-gray-300 bg-transparent hover:bg-gray-50 focus-visible:ring-gray-500',
+          'border-2 border-border bg-transparent text-foreground hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring',
         ghost:
-          'bg-transparent hover:bg-gray-100 focus-visible:ring-gray-500',
+          'bg-transparent text-foreground hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring',
         link:
-          'text-blue-600 underline-offset-4 hover:underline focus-visible:ring-blue-500',
+          'text-primary underline-offset-4 hover:underline focus-visible:ring-ring',
       },
       size: {
         sm: 'h-9 px-3 text-sm',

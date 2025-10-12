@@ -243,13 +243,13 @@ async function genererRapportVentes(boutiqueId: string, dateDebut: Date, dateFin
   // Enrichir les produits vendus avec les détails
   const produitsDetails = await prisma.produit.findMany({
     where: {
-      id: { in: produitsVendus.map(p => p.produitId) }
+      id: { in: produitsVendus.map((p: any) => p.produitId) }
     },
     select: { id: true, nom: true, prixVente: true }
   })
 
-  const produitsVendusAvecDetails = produitsVendus.map(pv => {
-    const produit = produitsDetails.find(p => p.id === pv.produitId)
+  const produitsVendusAvecDetails = produitsVendus.map((pv: any) => {
+    const produit = produitsDetails.find((p: any) => p.id === pv.produitId)
     return {
       ...pv,
       produit
@@ -261,20 +261,20 @@ async function genererRapportVentes(boutiqueId: string, dateDebut: Date, dateFin
     resume: {
       totalVentes: ventes._sum.montantTotal || 0,
       chiffreAffaires: ventes._sum.montantTotal || 0,
-      ventesParJour: ventesParJour.map(v => ({
+      ventesParJour: ventesParJour.map((v: any) => ({
         date: v.dateVente.toISOString().split('T')[0],
         nombre: v._count,
         montant: v._sum.montantTotal || 0
       }))
     },
-    ventesParJour: ventesParJour.map(v => ({
+    ventesParJour: ventesParJour.map((v: any) => ({
       date: v.dateVente,
       montant: v._sum.montantTotal || 0,
       nombre: v._count
     })),
     produitsVendus: produitsVendusAvecDetails,
-    produitsPopulaires: produitsVendus.slice(0, 5).map(pv => {
-      const produit = produitsDetails.find(p => p.id === pv.produitId);
+    produitsPopulaires: produitsVendus.slice(0, 5).map((pv: any) => {
+      const produit = produitsDetails.find((p: any) => p.id === pv.produitId);
       return {
         produit: produit ? { nom: produit.nom } : { nom: 'Inconnu' },
         _sum: {
@@ -282,7 +282,7 @@ async function genererRapportVentes(boutiqueId: string, dateDebut: Date, dateFin
         }
       };
     }),
-    statutsVente: statutsVente.map(m => ({
+    statutsVente: statutsVente.map((m: any) => ({
       statut: m.statut,
       _count: m._count
     }))
@@ -324,16 +324,16 @@ async function genererRapportProduits(boutiqueId: string, dateDebut: Date, dateF
   // Enrichir les produits populaires
   const produitsDetails = await prisma.produit.findMany({
     where: {
-      id: { in: produitsPopulaires.map(p => p.produitId) }
+      id: { in: produitsPopulaires.map((p: any) => p.produitId) }
     },
     select: { id: true, nom: true, prixVente: true, categorie: { select: { nom: true } } }
   })
 
   // Analyser les stocks
   const stocksAnalyse = {
-    enRupture: produitsStock.filter(s => s.quantite === 0).length,
-    stockFaible: produitsStock.filter(s => s.quantite > 0 && s.quantite <= s.produit.seuilAlerte).length,
-    stockNormal: produitsStock.filter(s => s.quantite > s.produit.seuilAlerte).length
+    enRupture: produitsStock.filter((s: any) => s.quantite === 0).length,
+    stockFaible: produitsStock.filter((s: any) => s.quantite > 0 && s.quantite <= s.produit.seuilAlerte).length,
+    stockNormal: produitsStock.filter((s: any) => s.quantite > s.produit.seuilAlerte).length
   }
 
   return {
@@ -342,7 +342,7 @@ async function genererRapportProduits(boutiqueId: string, dateDebut: Date, dateF
       totalProduits: produitsStats._count,
       prixMoyen: produitsStats._avg.prixVente || 0
     },
-    produitsPopulaires: produitsDetails.map(p => ({
+    produitsPopulaires: produitsDetails.map((p: any) => ({
       nom: p.nom,
       prixVente: p.prixVente,
       categorie: { nom: p.categorie?.nom || 'Sans catégorie' }
@@ -391,7 +391,7 @@ async function genererRapportClients(boutiqueId: string, dateDebut: Date, dateFi
   // Enrichir les clients actifs
   const clientsDetails = await prisma.client.findMany({
     where: {
-      id: { in: clientsActifs.map(c => c.clientId).filter(Boolean) as string[] }
+      id: { in: clientsActifs.map((c: any) => c.clientId).filter(Boolean) as string[] }
     },
     select: { id: true, prenom: true, nom: true, telephone: true, email: true }
   })
@@ -403,13 +403,13 @@ async function genererRapportClients(boutiqueId: string, dateDebut: Date, dateFi
       clientsActifs: clientsActifs.length,
       nouveauxClients
     },
-    clientsDetails: allClientsDetails.map(c => ({
+    clientsDetails: allClientsDetails.map((c: any) => ({
       nom: c.nom,
       prenom: c.prenom || '',
       email: c.email || undefined,
       telephone: c.telephone || undefined
     })),
-    clientsActifs: clientsDetails.map(c => ({
+    clientsActifs: clientsDetails.map((c: any) => ({
       nom: c.nom,
       prenom: c.prenom || '',
       email: c.email || undefined,
@@ -453,10 +453,10 @@ async function genererRapportStocks(boutiqueId: string) {
   ])
 
   const analyse = {
-    enRupture: stocks.filter(s => s.quantite === 0),
-    stockFaible: stocks.filter(s => s.quantite > 0 && s.quantite <= s.produit.seuilAlerte),
-    stockNormal: stocks.filter(s => s.quantite > s.produit.seuilAlerte),
-    valeurTotale: stocks.reduce((total, s) => total + (s.quantite * s.produit.prixVente), 0)
+    enRupture: stocks.filter((s: any) => s.quantite === 0),
+    stockFaible: stocks.filter((s: any) => s.quantite > 0 && s.quantite <= s.produit.seuilAlerte),
+    stockNormal: stocks.filter((s: any) => s.quantite > s.produit.seuilAlerte),
+    valeurTotale: stocks.reduce((total: number, s: any) => total + (s.quantite * s.produit.prixVente), 0)
   }
 
   return {
@@ -466,21 +466,21 @@ async function genererRapportStocks(boutiqueId: string) {
       valeurTotaleStock: analyse.valeurTotale
     },
     analyse: {
-      enRupture: analyse.enRupture.map(s => ({
+      enRupture: analyse.enRupture.map((s: any) => ({
         produit: {
           nom: s.produit.nom,
           prixVente: s.produit.prixVente,
           seuilAlerte: s.produit.seuilAlerte
         }
       })),
-      stockFaible: analyse.stockFaible.map(s => ({
+      stockFaible: analyse.stockFaible.map((s: any) => ({
         produit: {
           nom: s.produit.nom,
           prixVente: s.produit.prixVente,
           seuilAlerte: s.produit.seuilAlerte
         }
       })),
-      stockNormal: analyse.stockNormal.map(s => ({
+      stockNormal: analyse.stockNormal.map((s: any) => ({
         produit: {
           nom: s.produit.nom,
           prixVente: s.produit.prixVente,
@@ -489,7 +489,7 @@ async function genererRapportStocks(boutiqueId: string) {
       })),
       valeurTotale: analyse.valeurTotale
     },
-    mouvementsRecents: mouvementsRecents.map(m => ({
+    mouvementsRecents: mouvementsRecents.map((m: any) => ({
       type: m.type,
       quantite: m.quantite,
       motif: m.motif || '',
@@ -531,12 +531,12 @@ async function genererRapportFinancier(boutiqueId: string, dateDebut: Date, date
   })
 
   const recettes = transactionsParType
-    .filter(t => t.type === 'RECETTE')
-    .reduce((sum, t) => sum + (t._sum.montant || 0), 0)
+    .filter((t: any) => t.type === 'RECETTE')
+    .reduce((sum: number, t: any) => sum + (t._sum.montant || 0), 0)
 
   const depenses = transactionsParType
-    .filter(t => t.type === 'DEPENSE')
-    .reduce((sum, t) => sum + (t._sum.montant || 0), 0)
+    .filter((t: any) => t.type === 'DEPENSE')
+    .reduce((sum: number, t: any) => sum + (t._sum.montant || 0), 0)
 
   return {
     type: 'financier',
@@ -547,7 +547,7 @@ async function genererRapportFinancier(boutiqueId: string, dateDebut: Date, date
       benefice: (ventes._sum.montantTotal || 0) - depenses,
       solde: recettes - depenses
     },
-    transactionsParType: transactionsParType.map(t => ({
+    transactionsParType: transactionsParType.map((t: any) => ({
       type: t.type,
       montant: t._sum.montant || 0,
       nombre: t._count

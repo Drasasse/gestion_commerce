@@ -281,7 +281,7 @@ export default async function BoutiquePage() {
             {recentVentes.length === 0 ? (
               <p className="text-gray-500 text-sm">Aucune vente</p>
             ) : (
-              recentVentes.map((vente) => (
+              recentVentes.map((vente: any) => (
                 <div
                   key={vente.id}
                   className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
@@ -318,7 +318,7 @@ export default async function BoutiquePage() {
             {stats.stocks.length === 0 ? (
               <p className="text-gray-500 text-sm">Aucune alerte</p>
             ) : (
-              stats.stocks.map((stock) => (
+              stats.stocks.map((stock: any) => (
                 <div
                   key={stock.id}
                   className="flex items-center justify-between p-3 bg-orange-50 rounded-lg"
