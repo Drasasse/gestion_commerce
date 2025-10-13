@@ -156,14 +156,23 @@ interface RapportStocks extends RapportBase {
 
 interface RapportFinancier extends RapportBase {
   resume: {
+    capitalInitial: number;
+    totalInjections: number;
     chiffreAffaires: number;
     recettes: number;
-    depenses: number;
-    benefice: number;
+    depensesTotales: number;
+    depensesMarchandises: number;
+    depensesExploitation: number;
+    autresDepenses: number;
+    beneficeBrut: number;
+    beneficeNet: number;
+    margeCommerciale: number;
+    cashFlow: number;
     solde: number;
   };
+  depensesParCategorie: Array<{ categorie: string; montant: number; nombre: number }>;
   transactionsParType: Array<{ type: string; montant: number; nombre: number }>;
-  transactions: Array<{ type: string; montant: number; description: string; dateTransaction: Date }>;
+  transactions: Array<{ type: string; montant: number; description: string; dateTransaction: Date; categorieDepense?: string }>;
 }
 
 type RapportType = RapportVentes | RapportProduits | RapportClients | RapportStocks | RapportFinancier;
@@ -698,8 +707,7 @@ async function genererRapportFinancier(boutiqueId: string, dateDebut: Date, date
       beneficeNet,
       cashFlow,
       margeCommerciale,
-      tresorerie,
-      solde: recettes - depensesTotales
+      solde: tresorerie
     },
     depensesParCategorie: depensesParCategorie.map((d: any) => ({
       categorie: d.categorieDepense || 'NON_CATEGORISE',
@@ -711,7 +719,13 @@ async function genererRapportFinancier(boutiqueId: string, dateDebut: Date, date
       montant: t._sum.montant || 0,
       nombre: t._count
     })),
-    transactions: transactionsList,
+    transactions: transactionsList.map(t => ({
+      type: t.type,
+      montant: t.montant,
+      description: t.description,
+      dateTransaction: t.dateTransaction,
+      categorieDepense: t.categorieDepense || undefined
+    })),
     injections: (capitalTransactions as Transaction[]).map(t => ({
       id: t.id,
       montant: t.montant,
