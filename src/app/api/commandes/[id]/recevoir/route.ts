@@ -10,7 +10,7 @@ import { invalidateByTag } from '@/lib/cache';
 interface LigneCommande {
   id: string;
   produitId: string;
-  quantiteCommandee: number;
+  quantite: number;
   quantiteRecue: number;
   prixUnitaire: number;
 }
@@ -147,7 +147,7 @@ export async function POST(
        const toutesLignesRecues = validatedData.lignesRecues.every(
          (lr) => {
            const ligne = commande.lignes.find(l => l.id === lr.ligneId);
-           return ligne && lr.quantiteRecue >= ligne.quantiteCommandee;
+           return ligne && lr.quantiteRecue >= ligne.quantite;
          }
        );
 
