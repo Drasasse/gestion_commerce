@@ -99,8 +99,8 @@ export async function GET(request: NextRequest) {
       prisma.transaction.count({ where }),
     ]);
 
-    // Calcul des statistiques
-    const stats = await prisma.transaction.groupBy({
+    // Calcul des statistiques du mois en cours
+    const statsMonth = await prisma.transaction.groupBy({
       by: ['type'],
       where: {
         boutiqueId: session.user.boutiqueId,
@@ -113,9 +113,34 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const recettesMois = stats.find((s: any) => s.type === 'RECETTE')?._sum.montant || 0;
-    const depensesMois = stats.find((s: any) => s.type === 'DEPENSE')?._sum.montant || 0;
+    // Calcul du solde total (toutes les transactions depuis le début)
+    const statsTotal = await prisma.transaction.groupBy({
+      by: ['type'],
+      where: {
+        boutiqueId: session.user.boutiqueId,
+      },
+      _sum: {
+        montant: true,
+      },
+    });
+
+    const recettesMois = statsMonth.find((s: any) => s.type === 'RECETTE')?._sum.montant || 0;
+    const depensesMois = Math.abs(statsMonth.find((s: any) => s.type === 'DEPENSE')?._sum.montant || 0);
     const beneficeMois = recettesMois - depensesMois;
+
+    // Calcul du solde total (capital + injections + recettes - dépenses)
+    const recettesTotal = statsTotal.find((s: any) => s.type === 'RECETTE')?._sum.montant || 0;
+    const depensesTotal = Math.abs(statsTotal.find((s: any) => s.type === 'DEPENSE')?._sum.montant || 0);
+    const injectionsTotal = statsTotal.find((s: any) => s.type === 'INJECTION_CAPITAL')?._sum.montant || 0;
+    
+    // Récupérer le capital initial de la boutique
+    const boutique = await prisma.boutique.findUnique({
+      where: { id: session.user.boutiqueId },
+      select: { capitalInitial: true }
+    });
+    
+    const capitalInitial = boutique?.capitalInitial || 0;
+    const solde = capitalInitial + injectionsTotal + recettesTotal - depensesTotal;
 
     return NextResponse.json({
       transactions,
@@ -129,6 +154,7 @@ export async function GET(request: NextRequest) {
         recettesMois,
         depensesMois,
         beneficeMois,
+        solde,
       },
     });
   } catch (error) {

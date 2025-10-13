@@ -29,7 +29,30 @@ interface RapportData {
     type: string
   }
   resume: {
-    [key: string]: number | string
+    capitalInitial?: number
+    totalInjections?: number
+    tresorerie?: number
+    chiffreAffaires?: number
+    recettes?: number
+    depenses?: number
+    benefice?: number
+    solde?: number
+    totalProduits?: number
+    prixMoyen?: number
+    produitsEnRupture?: number
+    produitsStockFaible?: number
+    produitsStockNormal?: number
+    valeurTotale?: number
+    totalVentes?: number
+    nombreVentes?: number
+    venteMoyenne?: number
+    totalClients?: number
+    nouveauxClients?: number
+    clientsActifs?: number
+    clientsInactifs?: number
+    enRupture?: number
+    stockFaible?: number
+    [key: string]: number | string | undefined
   }
   produitsVendus?: Array<{
     produitId: string
@@ -43,10 +66,13 @@ interface RapportData {
     montant: number
   }>
   produitsPopulaires?: Array<{
-    produitId: string
+    produitId?: string
     nom: string
-    quantiteVendue: number
-    categorie?: string
+    quantiteVendue?: number
+    prixVente?: number
+    categorie?: {
+      nom: string
+    }
   }>
   clientsActifs?: Array<{
     clientId: string
@@ -69,6 +95,12 @@ interface RapportData {
     type: string
     nombre: number
     montant: number
+  }>
+  injections?: Array<{
+    id: string
+    montant: number
+    description: string
+    dateTransaction: string
   }>
   stocks?: {
     analyse: {
@@ -368,7 +400,7 @@ export default function RapportsPage() {
                     <div>
                       <p className="font-medium text-gray-900">{item.nom}</p>
                       <p className="text-sm text-gray-600">
-                        Catégorie: {item.categorie || 'Non définie'}
+                        Catégorie: {item.categorie?.nom || 'Non définie'}
                       </p>
                     </div>
                   </div>
@@ -565,6 +597,55 @@ export default function RapportsPage() {
 
     return (
       <div className="space-y-6">
+        {/* Capital et Trésorerie */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div className="flex items-center gap-4">
+              <div className="bg-purple-500 p-3 rounded-lg">
+                <DollarSign className="text-white" size={24} />
+              </div>
+              <div>
+                <p className="text-gray-600 text-sm">Capital initial</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {formatMontant(Number(rapportData.resume.capitalInitial || 0))}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div className="flex items-center gap-4">
+              <div className="bg-indigo-500 p-3 rounded-lg">
+                <TrendingUp className="text-white" size={24} />
+              </div>
+              <div>
+                <p className="text-gray-600 text-sm">Total injections</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {formatMontant(Number(rapportData.resume.totalInjections || 0))}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div className="flex items-center gap-4">
+              <div className={`p-3 rounded-lg ${
+                Number(rapportData.resume.tresorerie || 0) >= 0 ? 'bg-green-500' : 'bg-red-500'
+              }`}>
+                <DollarSign className="text-white" size={24} />
+              </div>
+              <div>
+                <p className="text-gray-600 text-sm">Trésorerie</p>
+                <p className={`text-2xl font-bold ${
+                  Number(rapportData.resume.tresorerie || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  {formatMontant(Number(rapportData.resume.tresorerie || 0))}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Résumé financier */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
@@ -627,6 +708,34 @@ export default function RapportsPage() {
             </div>
           </div>
         </div>
+
+        {/* Injections de capital */}
+        {rapportData.injections && rapportData.injections.length > 0 && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+            <div className="p-6 border-b border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-900">Injections de capital</h3>
+            </div>
+            <div className="p-6">
+              <div className="space-y-4">
+                {rapportData.injections.map((injection) => (
+                  <div key={injection.id} className="flex items-center justify-between p-4 bg-indigo-50 rounded-lg">
+                    <div>
+                      <p className="font-medium text-gray-900">{injection.description || 'Injection de capital'}</p>
+                      <p className="text-sm text-gray-600">
+                        {formatDate(injection.dateTransaction)}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-semibold text-indigo-600">
+                        +{formatMontant(injection.montant)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Transactions par type */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100">

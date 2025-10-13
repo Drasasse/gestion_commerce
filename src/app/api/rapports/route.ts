@@ -259,35 +259,33 @@ async function genererRapportVentes(boutiqueId: string, dateDebut: Date, dateFin
     }
   })
 
+  const totalVentes = ventes._sum.montantTotal || 0
+  const nombreVentes = ventes._count || 0
+  const venteMoyenne = nombreVentes > 0 ? totalVentes / nombreVentes : 0
+
   return {
     type: 'ventes',
     resume: {
-      totalVentes: ventes._count || 0,
-      chiffreAffaires: ventes._sum.montantTotal || 0,
-      ventesParJour: ventesParJour.map((v: any) => ({
-        date: v.dateVente.toISOString().split('T')[0],
-        nombre: v._count,
-        montant: v._sum.montantTotal || 0
-      }))
+      totalVentes: totalVentes,
+      nombreVentes: nombreVentes,
+      venteMoyenne: venteMoyenne,
+      chiffreAffaires: totalVentes
     },
     ventesParJour: ventesParJour.map((v: any) => ({
       date: v.dateVente,
       montant: v._sum.montantTotal || 0,
       nombre: v._count
     })),
-    produitsVendus: produitsVendusAvecDetails,
-    produitsPopulaires: produitsVendus.slice(0, 5).map((pv: any) => {
-      const produit = produitsDetails.find((p: any) => p.id === pv.produitId);
-      return {
-        produit: produit ? { nom: produit.nom } : { nom: 'Inconnu' },
-        _sum: {
-          quantite: pv._sum.quantite || 0
-        }
-      };
-    }),
-    statutsVente: statutsVente.map((m: any) => ({
-      statut: m.statut,
-      _count: m._count
+    produitsVendus: produitsVendusAvecDetails.map((pv: any) => ({
+      produitId: pv.produitId,
+      nom: pv.produit?.nom || 'Produit inconnu',
+      quantiteVendue: pv._sum.quantite || 0,
+      chiffreAffaires: pv._sum.sousTotal || 0
+    })),
+    methodesVente: statutsVente.map((s: any) => ({
+      methode: s.statut,
+      nombre: s._count,
+      montant: s._sum.montantTotal || 0
     }))
   }
 }
@@ -496,16 +494,20 @@ async function genererRapportStocks(boutiqueId: string) {
       valeurTotale: analyse.valeurTotale
     },
     mouvementsRecents: mouvementsRecents.map((m: any) => ({
+      id: m.id,
       type: m.type,
       quantite: m.quantite,
       motif: m.motif || '',
-      createdAt: m.createdAt
+      dateCreation: m.createdAt,
+      produit: {
+        nom: m.stock?.produit?.nom || 'Produit inconnu'
+      }
     }))
   }
 }
 
 async function genererRapportFinancier(boutiqueId: string, dateDebut: Date, dateFin: Date) {
-  const [transactionsList, ventes] = await Promise.all([
+  const [transactionsList, ventes, boutique, capitalTransactions] = await Promise.all([
     // Transactions financières
     prisma.transaction.findMany({
       where: {
@@ -522,6 +524,21 @@ async function genererRapportFinancier(boutiqueId: string, dateDebut: Date, date
         dateVente: { gte: dateDebut, lte: dateFin }
       },
       _sum: { montantTotal: true }
+    }),
+
+    // Informations de la boutique
+    prisma.boutique.findUnique({
+      where: { id: boutiqueId },
+      select: { capitalInitial: true }
+    }),
+
+    // Transactions de capital (injections)
+    prisma.transaction.findMany({
+      where: {
+        boutiqueId,
+        type: 'INJECTION_CAPITAL'
+      },
+      orderBy: { dateTransaction: 'desc' }
     })
   ])
 
@@ -544,13 +561,27 @@ async function genererRapportFinancier(boutiqueId: string, dateDebut: Date, date
     .filter((t: any) => t.type === 'DEPENSE')
     .reduce((sum: number, t: any) => sum + (t._sum.montant || 0), 0)
 
+  // Calcul des injections de capital
+  const totalInjections = capitalTransactions.reduce((sum: number, t: any) => sum + (t.montant || 0), 0)
+  
+  // Calcul de la trésorerie (capital initial + injections + recettes - dépenses)
+  const capitalInitial = boutique?.capitalInitial || 0
+  const tresorerie = capitalInitial + totalInjections + recettes - depenses
+  
+  // Calcul du bénéfice (chiffre d'affaires - dépenses)
+  const chiffreAffaires = ventes._sum.montantTotal || 0
+  const benefice = chiffreAffaires - depenses
+
   return {
     type: 'financier',
     resume: {
-      chiffreAffaires: ventes._sum.montantTotal || 0,
+      capitalInitial,
+      totalInjections,
+      chiffreAffaires,
       recettes,
       depenses,
-      benefice: (ventes._sum.montantTotal || 0) - depenses,
+      benefice,
+      tresorerie,
       solde: recettes - depenses
     },
     transactionsParType: transactionsParType.map((t: any) => ({
@@ -558,6 +589,12 @@ async function genererRapportFinancier(boutiqueId: string, dateDebut: Date, date
       montant: t._sum.montant || 0,
       nombre: t._count
     })),
-    transactions: transactionsList
+    transactions: transactionsList,
+    injections: capitalTransactions.map((t: any) => ({
+      id: t.id,
+      montant: t.montant,
+      description: t.description,
+      dateTransaction: t.dateTransaction
+    }))
   }
 }
