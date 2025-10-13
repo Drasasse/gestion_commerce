@@ -60,6 +60,7 @@ export default function CommandeDetailsPage({ params }: { params: Promise<{ id: 
   const [loading, setLoading] = useState(true);
   const [showRecevoirModal, setShowRecevoirModal] = useState(false);
   const [quantitesRecues, setQuantitesRecues] = useState<Record<string, number>>({});
+  const [montantPaye, setMontantPaye] = useState<string>('');
 
   useEffect(() => {
     if (status !== 'loading' && !session) {
@@ -99,15 +100,33 @@ export default function CommandeDetailsPage({ params }: { params: Promise<{ id: 
     if (!commande) return;
 
     try {
+      // Transformer les données au format attendu par l'API
+      const lignesRecues = Object.entries(quantitesRecues)
+        .filter(([_, quantite]) => quantite > 0)
+        .map(([ligneId, quantiteRecue]) => ({
+          ligneId,
+          quantiteRecue,
+        }));
+
+      const requestData: { lignesRecues: typeof lignesRecues; montantPaye?: number } = {
+        lignesRecues,
+      };
+
+      // Ajouter le montant payé s'il est fourni
+      if (montantPaye && parseFloat(montantPaye) > 0) {
+        requestData.montantPaye = parseFloat(montantPaye);
+      }
+
       const response = await fetch(`/api/commandes/${id}/recevoir`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ quantites: quantitesRecues }),
+        body: JSON.stringify(requestData),
       });
 
       if (response.ok) {
         toast.success('Commande réceptionnée avec succès!');
         setShowRecevoirModal(false);
+        setMontantPaye('');
         loadCommande();
       } else {
         const error = await response.json();
@@ -435,9 +454,40 @@ export default function CommandeDetailsPage({ params }: { params: Promise<{ id: 
               ))}
             </div>
 
+            {/* Champ montant payé */}
+            <div className="px-6 pb-4">
+              <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-700">
+                <h4 className="font-medium text-gray-900 dark:text-white mb-3">Paiement (optionnel)</h4>
+                <div className="flex items-center gap-3">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Montant payé:
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    max={commande?.montantRestant || 0}
+                    step="0.01"
+                    value={montantPaye}
+                    onChange={(e) => setMontantPaye(e.target.value)}
+                    placeholder="0.00"
+                    className="w-32 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
+                  />
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    / {formatMontant(commande?.montantRestant || 0)} restant
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  Si vous effectuez un paiement, une transaction de dépense sera automatiquement créée.
+                </p>
+              </div>
+            </div>
+
             <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
               <button
-                onClick={() => setShowRecevoirModal(false)}
+                onClick={() => {
+                  setShowRecevoirModal(false);
+                  setMontantPaye('');
+                }}
                 className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 Annuler

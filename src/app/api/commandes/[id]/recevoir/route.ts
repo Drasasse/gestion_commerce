@@ -193,6 +193,7 @@ export async function POST(
     return NextResponse.json(result);
   } catch (error) {
     if (error instanceof z.ZodError) {
+      console.error('Erreur de validation Zod:', error.issues);
       return NextResponse.json(
         { error: 'Données invalides', details: error.issues },
         { status: 400 }
