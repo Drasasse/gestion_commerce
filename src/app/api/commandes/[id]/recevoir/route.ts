@@ -56,6 +56,7 @@ export async function POST(
         boutiqueId: session.user.boutiqueId,
       },
       include: {
+        fournisseur: true,
         lignes: {
           include: {
             produit: true,
@@ -150,6 +151,20 @@ export async function POST(
            return ligne && lr.quantiteRecue >= ligne.quantite;
          }
        );
+
+      // Créer une transaction de dépense si un montant est payé
+      if (validatedData.montantPaye !== undefined && validatedData.montantPaye > 0) {
+        await tx.transaction.create({
+          data: {
+            boutiqueId: session.user.boutiqueId!,
+            userId: session.user.id,
+            type: 'DEPENSE',
+            montant: validatedData.montantPaye,
+            description: `Paiement commande ${commande.numeroCommande} - ${commande.fournisseur.nom}`,
+            dateTransaction: new Date(),
+          },
+        });
+      }
 
       // Mettre à jour la commande
       const updatedCommande = await tx.commande.update({

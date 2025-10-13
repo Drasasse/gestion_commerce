@@ -142,7 +142,16 @@ interface RapportStocks extends RapportBase {
     stockNormal: Array<{ produit: { nom: string; prixVente: number; seuilAlerte: number } }>;
     valeurTotale: number;
   };
-  mouvementsRecents: Array<{ type: string; quantite: number; motif: string; createdAt: Date }>;
+  mouvementsRecents: Array<{ 
+    id: string; 
+    type: string; 
+    quantite: number; 
+    motif: string; 
+    dateCreation: string;
+    produit: {
+      nom: string;
+    }
+  }>;
 }
 
 interface RapportFinancier extends RapportBase {
@@ -569,10 +578,14 @@ async function genererRapportStocks(boutiqueId: string) {
       valeurTotale: analyse.valeurTotale
     },
     mouvementsRecents: mouvementsRecents.map((m: any) => ({
+      id: m.id,
       type: m.type,
       quantite: m.quantite,
       motif: m.motif || '',
-      createdAt: m.createdAt
+      dateCreation: m.createdAt.toISOString(),
+      produit: {
+        nom: m.stock.produit.nom
+      }
     }))
   }
 }
