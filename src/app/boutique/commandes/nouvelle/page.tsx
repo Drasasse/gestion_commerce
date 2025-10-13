@@ -129,38 +129,51 @@ export default function NouvelleCommandePage() {
       return;
     }
 
-    // Vérifier que toutes les lignes sont complètes
-    const lignesInvalides = lignes.some((ligne) => {
+    // Vérifier que toutes les lignes sont complètes et valides
+    const lignesValidees = [];
+    for (const ligne of lignes) {
+      if (!ligne.produitId) {
+        toast.error('Veuillez sélectionner un produit pour toutes les lignes');
+        return;
+      }
+
       const quantite = typeof ligne.quantite === 'string' ? parseFloat(ligne.quantite) : ligne.quantite;
-      const prix = typeof ligne.prixUnitaire === 'string' ? parseFloat(ligne.prixUnitaire) : ligne.prixUnitaire;
-      return !ligne.produitId || isNaN(quantite) || quantite <= 0 || isNaN(prix) || prix < 0;
-    });
-    if (lignesInvalides) {
-      toast.error('Veuillez compléter toutes les lignes de la commande avec des valeurs valides');
-      return;
+      const prixUnitaire = typeof ligne.prixUnitaire === 'string' ? parseFloat(ligne.prixUnitaire) : ligne.prixUnitaire;
+
+      if (isNaN(quantite) || quantite <= 0) {
+        toast.error('La quantité doit être un nombre supérieur à 0');
+        return;
+      }
+
+      if (isNaN(prixUnitaire) || prixUnitaire < 0) {
+        toast.error('Le prix unitaire doit être un nombre positif ou nul');
+        return;
+      }
+
+      lignesValidees.push({
+        produitId: ligne.produitId,
+        quantite: quantite,
+        prixUnitaire: prixUnitaire,
+      });
     }
 
     setSubmitting(true);
 
     try {
+      const commandeData = {
+        fournisseurId: formData.fournisseurId,
+        dateEcheance: formData.dateEcheance || undefined,
+        notes: formData.notes || undefined,
+        dateCommande: formData.dateCommande,
+        lignes: lignesValidees,
+      };
+
+      console.log('Données envoyées à l\'API:', commandeData);
+
       const response = await fetch('/api/commandes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fournisseurId: formData.fournisseurId,
-          dateEcheance: formData.dateEcheance || null,
-          notes: formData.notes || null,
-          dateCommande: formData.dateCommande,
-          lignes: lignes.map((ligne) => {
-            const quantite = typeof ligne.quantite === 'string' ? parseFloat(ligne.quantite) : ligne.quantite;
-            const prixUnitaire = typeof ligne.prixUnitaire === 'string' ? parseFloat(ligne.prixUnitaire) : ligne.prixUnitaire;
-            return {
-              produitId: ligne.produitId,
-              quantite: quantite,
-              prixUnitaire: prixUnitaire,
-            };
-          }),
-        }),
+        body: JSON.stringify(commandeData),
       });
 
       if (response.ok) {
