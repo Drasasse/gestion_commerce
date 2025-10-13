@@ -3,6 +3,23 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+import { checkRateLimit, sensitiveApiRateLimiter } from '@/lib/rate-limit';
+import { invalidateByTag } from '@/lib/cache';
+
+// Interfaces TypeScript
+interface LigneCommande {
+  id: string;
+  produitId: string;
+  quantiteCommandee: number;
+  quantiteRecue: number;
+  prixUnitaire: number;
+}
+
+interface Commande {
+  id: string;
+  statut: string;
+  lignes: LigneCommande[];
+}
 
 const recevoirCommandeSchema = z.object({
   lignesRecues: z.array(
@@ -64,8 +81,8 @@ export async function POST(
     // Utiliser une transaction pour garantir la cohérence
     const result = await prisma.$transaction(async (tx: any) => {
       // Mettre à jour les lignes de commande et les stocks
-      for (const ligneRecue of validatedData.lignesRecues) {
-        const ligne = commande.lignes.find((l: any) => l.id === ligneRecue.ligneId);
+       for (const ligneRecue of validatedData.lignesRecues) {
+         const ligne = commande.lignes.find(l => l.id === ligneRecue.ligneId);
 
         if (!ligne) {
           throw new Error(`Ligne de commande ${ligneRecue.ligneId} non trouvée`);
@@ -127,12 +144,12 @@ export async function POST(
       }
 
       // Vérifier si toutes les lignes sont complètement reçues
-      const toutesLignesRecues = validatedData.lignesRecues.every(
-        (lr) => {
-          const ligne = commande.lignes.find((l: any) => l.id === lr.ligneId);
-          return ligne && lr.quantiteRecue >= ligne.quantite;
-        }
-      );
+       const toutesLignesRecues = validatedData.lignesRecues.every(
+         (lr) => {
+           const ligne = commande.lignes.find(l => l.id === lr.ligneId);
+           return ligne && lr.quantiteRecue >= ligne.quantiteCommandee;
+         }
+       );
 
       // Mettre à jour la commande
       const updatedCommande = await tx.commande.update({

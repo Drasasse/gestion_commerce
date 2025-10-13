@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 import { checkRateLimit, apiRateLimiter, sensitiveApiRateLimiter } from '@/lib/rate-limit';
-import { cached, invalidateByTag, CachePrefix, CacheTTL, CacheTag } from '@/lib/cache';
+import { invalidateByTag } from '@/lib/cache';
 
 const clientSchema = z.object({
   nom: z.string().min(1, 'Le nom est requis'),

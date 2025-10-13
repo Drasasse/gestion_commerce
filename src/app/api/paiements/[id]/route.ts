@@ -1,8 +1,28 @@
-import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
-import { z } from "zod"
+import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
+import { z } from 'zod'
+import { checkRateLimit, sensitiveApiRateLimiter } from '@/lib/rate-limit'
+import { invalidateByTag } from '@/lib/cache'
+
+// Interfaces TypeScript
+interface Paiement {
+  id: string;
+  montant: number;
+}
+
+interface Vente {
+  id: string;
+  montantTotal: number;
+  paiements: Paiement[];
+}
+
+interface PaiementExistant {
+  id: string;
+  montant: number;
+  vente: Vente;
+}
 
 const paiementUpdateSchema = z.object({
   montant: z.number().positive().optional(),
@@ -102,9 +122,9 @@ export async function PUT(
     }
 
     // Si le montant change, vérifier que le nouveau total ne dépasse pas le montant de la vente
-    if (data.montant && data.montant !== paiementExistant.montant) {
-      const autresPaiements = paiementExistant.vente.paiements.filter((p: any) => p.id !== paiementId)
-      const montantAutresPaiements = autresPaiements.reduce((sum: number, p: any) => sum + p.montant, 0)
+     if (data.montant && data.montant !== paiementExistant.montant) {
+       const autresPaiements = paiementExistant.vente.paiements.filter(p => p.id !== paiementId)
+       const montantAutresPaiements = autresPaiements.reduce((sum: number, p) => sum + p.montant, 0)
       const nouveauTotal = montantAutresPaiements + data.montant
 
       if (nouveauTotal > paiementExistant.vente.montantTotal) {
@@ -130,7 +150,7 @@ export async function PUT(
       })
 
       if (vente) {
-        const montantTotalPaye = vente.paiements.reduce((sum: number, p: any) => sum + p.montant, 0)
+         const montantTotalPaye = vente.paiements.reduce((sum: number, p) => sum + p.montant, 0)
         const montantRestant = vente.montantTotal - montantTotalPaye
 
         let nouveauStatut: 'PAYE' | 'IMPAYE' | 'PARTIEL'
@@ -220,8 +240,8 @@ export async function DELETE(
       })
 
       // Recalculer le statut de la vente
-      const autresPaiements = paiement.vente.paiements.filter((p: any) => p.id !== paiementId)
-      const montantTotalPaye = autresPaiements.reduce((sum: number, p: any) => sum + p.montant, 0)
+       const autresPaiements = paiement.vente.paiements.filter(p => p.id !== paiementId)
+       const montantTotalPaye = autresPaiements.reduce((sum: number, p) => sum + p.montant, 0)
       const montantRestant = paiement.vente.montantTotal - montantTotalPaye
 
       let nouveauStatut: 'PAYE' | 'IMPAYE' | 'PARTIEL'

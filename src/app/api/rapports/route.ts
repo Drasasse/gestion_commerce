@@ -1,8 +1,76 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
+
+// Interfaces TypeScript pour les données de rapport
+interface ProduitVendu {
+  produitId: string
+  _sum: { quantite: number | null; montantTotal: number | null }
+  _count: number
+}
+
+interface ProduitDetail {
+  id: string
+  nom: string
+  prixVente: number
+}
+
+interface VenteParJour {
+  date: Date
+  _sum: { montantTotal: number | null }
+  _count: number
+}
+
+interface StatutVente {
+  statut: string
+  _sum: { montantTotal: number | null }
+  _count: number
+}
+
+interface ProduitPopulaire {
+  produitId: string
+  _sum: { quantite: number | null }
+}
+
+interface StockProduit {
+  id: string
+  quantite: number
+  produit: {
+    id: string
+    nom: string
+    prixVente: number
+    seuilAlerte: number
+  }
+}
+
+interface ClientActif {
+  clientId: string | null
+  _sum: { montantTotal: number | null }
+  _count: number
+}
+
+interface ClientDetail {
+  id: string
+  nom: string
+  prenom: string
+  email: string | null
+  telephone: string | null
+}
+
+interface TransactionParType {
+  type: string
+  _sum: { montant: number | null }
+  _count: number
+}
+
+interface Transaction {
+  id: string
+  montant: number
+  description: string
+  dateTransaction: Date
+}
 
 const rapportQuerySchema = z.object({
   type: z.string().refine((val) => ['ventes', 'produits', 'clients', 'stocks', 'financier'].includes(val), {
@@ -246,13 +314,13 @@ async function genererRapportVentes(boutiqueId: string, dateDebut: Date, dateFin
   // Enrichir les produits vendus avec les détails
   const produitsDetails = await prisma.produit.findMany({
     where: {
-      id: { in: produitsVendus.map((p: any) => p.produitId) }
+      id: { in: (produitsVendus as ProduitVendu[]).map(p => p.produitId) }
     },
     select: { id: true, nom: true, prixVente: true }
   })
 
-  const produitsVendusAvecDetails = produitsVendus.map((pv: any) => {
-    const produit = produitsDetails.find((p: any) => p.id === pv.produitId)
+  const produitsVendusAvecDetails = (produitsVendus as ProduitVendu[]).map(pv => {
+    const produit = (produitsDetails as ProduitDetail[]).find(p => p.id === pv.produitId)
     return {
       ...pv,
       produit
@@ -271,18 +339,18 @@ async function genererRapportVentes(boutiqueId: string, dateDebut: Date, dateFin
       venteMoyenne: venteMoyenne,
       chiffreAffaires: totalVentes
     },
-    ventesParJour: ventesParJour.map((v: any) => ({
-      date: v.dateVente,
+    ventesParJour: (ventesParJour as VenteParJour[]).map(v => ({
+      date: v.date,
       montant: v._sum.montantTotal || 0,
       nombre: v._count
     })),
-    produitsVendus: produitsVendusAvecDetails.map((pv: any) => ({
+    produitsVendus: produitsVendusAvecDetails.map(pv => ({
       produitId: pv.produitId,
       nom: pv.produit?.nom || 'Produit inconnu',
       quantiteVendue: pv._sum.quantite || 0,
       chiffreAffaires: pv._sum.sousTotal || 0
     })),
-    methodesVente: statutsVente.map((s: any) => ({
+    methodesVente: (statutsVente as StatutVente[]).map(s => ({
       methode: s.statut,
       nombre: s._count,
       montant: s._sum.montantTotal || 0
@@ -325,16 +393,16 @@ async function genererRapportProduits(boutiqueId: string, dateDebut: Date, dateF
   // Enrichir les produits populaires
   const produitsDetails = await prisma.produit.findMany({
     where: {
-      id: { in: produitsPopulaires.map((p: any) => p.produitId) }
+      id: { in: (produitsPopulaires as ProduitPopulaire[]).map(p => p.produitId) }
     },
     select: { id: true, nom: true, prixVente: true, categorie: { select: { nom: true } } }
   })
 
   // Analyser les stocks
   const stocksAnalyse = {
-    enRupture: produitsStock.filter((s: any) => s.quantite === 0).length,
-    stockFaible: produitsStock.filter((s: any) => s.quantite > 0 && s.quantite <= s.produit.seuilAlerte).length,
-    stockNormal: produitsStock.filter((s: any) => s.quantite > s.produit.seuilAlerte).length
+    enRupture: (produitsStock as StockProduit[]).filter(s => s.quantite === 0).length,
+    stockFaible: (produitsStock as StockProduit[]).filter(s => s.quantite > 0 && s.quantite <= s.produit.seuilAlerte).length,
+    stockNormal: (produitsStock as StockProduit[]).filter(s => s.quantite > s.produit.seuilAlerte).length
   }
 
   return {
@@ -343,7 +411,7 @@ async function genererRapportProduits(boutiqueId: string, dateDebut: Date, dateF
       totalProduits: produitsStats._count,
       prixMoyen: produitsStats._avg.prixVente || 0
     },
-    produitsPopulaires: produitsDetails.map((p: any) => ({
+    produitsPopulaires: (produitsDetails as ProduitDetail[]).map(p => ({
       nom: p.nom,
       prixVente: p.prixVente,
       categorie: { nom: p.categorie?.nom || 'Sans catégorie' }
@@ -392,7 +460,7 @@ async function genererRapportClients(boutiqueId: string, dateDebut: Date, dateFi
   // Enrichir les clients actifs
   const clientsDetails = await prisma.client.findMany({
     where: {
-      id: { in: clientsActifs.map((c: any) => c.clientId).filter(Boolean) as string[] }
+      id: { in: (clientsActifs as ClientActif[]).map(c => c.clientId).filter(Boolean) as string[] }
     },
     select: { id: true, prenom: true, nom: true, telephone: true, email: true }
   })
@@ -404,13 +472,13 @@ async function genererRapportClients(boutiqueId: string, dateDebut: Date, dateFi
       clientsActifs: clientsActifs.length,
       nouveauxClients
     },
-    clientsDetails: allClientsDetails.map((c: any) => ({
+    clientsDetails: (allClientsDetails as ClientDetail[]).map(c => ({
       nom: c.nom,
       prenom: c.prenom || '',
       email: c.email || undefined,
       telephone: c.telephone || undefined
     })),
-    clientsActifs: clientsDetails.map((c: any) => ({
+    clientsActifs: (clientsDetails as ClientDetail[]).map(c => ({
       nom: c.nom,
       prenom: c.prenom || '',
       email: c.email || undefined,
@@ -584,13 +652,13 @@ async function genererRapportFinancier(boutiqueId: string, dateDebut: Date, date
       tresorerie,
       solde: recettes - depenses
     },
-    transactionsParType: transactionsParType.map((t: any) => ({
+    transactionsParType: (transactionsParType as TransactionParType[]).map(t => ({
       type: t.type,
       montant: t._sum.montant || 0,
       nombre: t._count
     })),
     transactions: transactionsList,
-    injections: capitalTransactions.map((t: any) => ({
+    injections: (capitalTransactions as Transaction[]).map(t => ({
       id: t.id,
       montant: t.montant,
       description: t.description,
