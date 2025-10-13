@@ -12,7 +12,12 @@ import {
   Target,
   BarChart3,
   PieChart,
-  Activity
+  Activity,
+  ArrowUpCircle,
+  ArrowDownCircle,
+  Wallet,
+  Settings,
+  MoreHorizontal
 } from 'lucide-react'
 import { formatMontant } from '@/lib/utils'
 import ExportButton from '@/components/ExportButton'
@@ -34,8 +39,14 @@ interface RapportData {
     tresorerie?: number
     chiffreAffaires?: number
     recettes?: number
-    depenses?: number
-    benefice?: number
+    depensesTotales?: number
+    depensesMarchandises?: number
+    depensesExploitation?: number
+    autresDepenses?: number
+    beneficeBrut?: number
+    beneficeNet?: number
+    cashFlow?: number
+    margeCommerciale?: number
     solde?: number
     totalProduits?: number
     prixMoyen?: number
@@ -54,6 +65,11 @@ interface RapportData {
     stockFaible?: number
     [key: string]: number | string | undefined
   }
+  depensesParCategorie?: Array<{
+    categorie: string
+    montant: number
+    nombre: number
+  }>
   produitsVendus?: Array<{
     produitId: string
     nom: string
@@ -646,7 +662,7 @@ export default function RapportsPage() {
           </div>
         </div>
 
-        {/* Résumé financier */}
+        {/* Indicateurs financiers principaux */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
             <div className="flex items-center gap-4">
@@ -656,35 +672,7 @@ export default function RapportsPage() {
               <div>
                 <p className="text-gray-600 text-sm">Chiffre d&apos;affaires</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {formatMontant(Number(rapportData.resume.chiffreAffaires))}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-            <div className="flex items-center gap-4">
-              <div className="bg-green-500 p-3 rounded-lg">
-                <DollarSign className="text-white" size={24} />
-              </div>
-              <div>
-                <p className="text-gray-600 text-sm">Recettes</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {formatMontant(Number(rapportData.resume.recettes))}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-            <div className="flex items-center gap-4">
-              <div className="bg-red-500 p-3 rounded-lg">
-                <DollarSign className="text-white" size={24} />
-              </div>
-              <div>
-                <p className="text-gray-600 text-sm">Dépenses</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {formatMontant(Number(rapportData.resume.depenses))}
+                  {formatMontant(Number(rapportData.resume.chiffreAffaires || 0))}
                 </p>
               </div>
             </div>
@@ -693,21 +681,180 @@ export default function RapportsPage() {
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
             <div className="flex items-center gap-4">
               <div className={`p-3 rounded-lg ${
-                Number(rapportData.resume.benefice) >= 0 ? 'bg-green-500' : 'bg-red-500'
+                Number(rapportData.resume.beneficeBrut || 0) >= 0 ? 'bg-green-500' : 'bg-red-500'
               }`}>
                 <Target className="text-white" size={24} />
               </div>
               <div>
-                <p className="text-gray-600 text-sm">Bénéfice</p>
+                <p className="text-gray-600 text-sm">Bénéfice brut</p>
                 <p className={`text-2xl font-bold ${
-                  Number(rapportData.resume.benefice) >= 0 ? 'text-green-600' : 'text-red-600'
+                  Number(rapportData.resume.beneficeBrut || 0) >= 0 ? 'text-green-600' : 'text-red-600'
                 }`}>
-                  {formatMontant(Number(rapportData.resume.benefice))}
+                  {formatMontant(Number(rapportData.resume.beneficeBrut || 0))}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div className="flex items-center gap-4">
+              <div className={`p-3 rounded-lg ${
+                Number(rapportData.resume.beneficeNet || 0) >= 0 ? 'bg-green-500' : 'bg-red-500'
+              }`}>
+                <Target className="text-white" size={24} />
+              </div>
+              <div>
+                <p className="text-gray-600 text-sm">Bénéfice net</p>
+                <p className={`text-2xl font-bold ${
+                  Number(rapportData.resume.beneficeNet || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  {formatMontant(Number(rapportData.resume.beneficeNet || 0))}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div className="flex items-center gap-4">
+              <div className="bg-purple-500 p-3 rounded-lg">
+                <BarChart3 className="text-white" size={24} />
+              </div>
+              <div>
+                <p className="text-gray-600 text-sm">Marge commerciale</p>
+                <p className="text-2xl font-bold text-purple-600">
+                  {Number(rapportData.resume.margeCommerciale || 0).toFixed(1)}%
                 </p>
               </div>
             </div>
           </div>
         </div>
+
+        {/* Flux financiers */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div className="flex items-center gap-4">
+              <div className="bg-green-500 p-3 rounded-lg">
+                <ArrowUpCircle className="text-white" size={24} />
+              </div>
+              <div>
+                <p className="text-gray-600 text-sm">Recettes</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {formatMontant(Number(rapportData.resume.recettes || 0))}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div className="flex items-center gap-4">
+              <div className="bg-red-500 p-3 rounded-lg">
+                <ArrowDownCircle className="text-white" size={24} />
+              </div>
+              <div>
+                <p className="text-gray-600 text-sm">Dépenses totales</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {formatMontant(Number(rapportData.resume.depensesTotales || 0))}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div className="flex items-center gap-4">
+              <div className={`p-3 rounded-lg ${
+                Number(rapportData.resume.cashFlow || 0) >= 0 ? 'bg-green-500' : 'bg-red-500'
+              }`}>
+                <Wallet className="text-white" size={24} />
+              </div>
+              <div>
+                <p className="text-gray-600 text-sm">Cash-flow</p>
+                <p className={`text-2xl font-bold ${
+                  Number(rapportData.resume.cashFlow || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  {formatMontant(Number(rapportData.resume.cashFlow || 0))}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Répartition des dépenses */}
+        {rapportData.depensesParCategorie && rapportData.depensesParCategorie.length > 0 && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+            <div className="p-6 border-b border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-900">Répartition des dépenses par catégorie</h3>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-orange-50 rounded-lg p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-orange-500 p-2 rounded-lg">
+                      <Package className="text-white" size={20} />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Marchandises</p>
+                      <p className="text-xl font-bold text-orange-600">
+                        {formatMontant(Number(rapportData.resume.depensesMarchandises || 0))}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 rounded-lg p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-blue-500 p-2 rounded-lg">
+                      <Settings className="text-white" size={20} />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Exploitation</p>
+                      <p className="text-xl font-bold text-blue-600">
+                        {formatMontant(Number(rapportData.resume.depensesExploitation || 0))}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-gray-500 p-2 rounded-lg">
+                      <MoreHorizontal className="text-white" size={20} />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Autres</p>
+                      <p className="text-xl font-bold text-gray-600">
+                        {formatMontant(Number(rapportData.resume.autresDepenses || 0))}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Détail par catégorie */}
+              <div className="mt-6">
+                <div className="space-y-3">
+                  {rapportData.depensesParCategorie.map((categorie) => (
+                    <div key={categorie.categorie} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div>
+                        <p className="font-medium text-gray-900">
+                          {categorie.categorie === 'MARCHANDISES' ? 'Marchandises' :
+                           categorie.categorie === 'EXPLOITATION' ? 'Exploitation' :
+                           categorie.categorie === 'MARKETING' ? 'Marketing' :
+                           categorie.categorie === 'TRANSPORT' ? 'Transport' :
+                           categorie.categorie === 'ADMINISTRATION' ? 'Administration' :
+                           categorie.categorie === 'AUTRE' ? 'Autre' : 'Non catégorisé'}
+                        </p>
+                        <p className="text-sm text-gray-600">{categorie.nombre} transaction(s)</p>
+                      </div>
+                      <p className="font-semibold text-gray-900">
+                        {formatMontant(categorie.montant)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Injections de capital */}
         {rapportData.injections && rapportData.injections.length > 0 && (

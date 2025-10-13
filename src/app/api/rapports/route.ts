@@ -641,20 +641,47 @@ async function genererRapportFinancier(boutiqueId: string, dateDebut: Date, date
     .filter((t: any) => t.type === 'RECETTE')
     .reduce((sum: number, t: any) => sum + (t._sum.montant || 0), 0)
 
-  const depenses = transactionsParType
+  const depensesTotales = Math.abs(transactionsParType
     .filter((t: any) => t.type === 'DEPENSE')
-    .reduce((sum: number, t: any) => sum + (t._sum.montant || 0), 0)
+    .reduce((sum: number, t: any) => sum + (t._sum.montant || 0), 0))
+
+  // Calcul des dépenses par catégorie
+  const depensesParCategorie = await prisma.transaction.groupBy({
+    by: ['categorieDepense'],
+    where: {
+      boutiqueId,
+      type: 'DEPENSE',
+      dateTransaction: { gte: dateDebut, lte: dateFin }
+    },
+    _sum: { montant: true },
+    _count: true
+  })
+
+  const depensesMarchandises = Math.abs(depensesParCategorie
+    .filter((d: any) => d.categorieDepense === 'MARCHANDISES')
+    .reduce((sum: number, d: any) => sum + (d._sum.montant || 0), 0))
+
+  const depensesExploitation = Math.abs(depensesParCategorie
+    .filter((d: any) => d.categorieDepense === 'EXPLOITATION')
+    .reduce((sum: number, d: any) => sum + (d._sum.montant || 0), 0))
+
+  const autresDepenses = Math.abs(depensesParCategorie
+    .filter((d: any) => d.categorieDepense && d.categorieDepense !== 'MARCHANDISES' && d.categorieDepense !== 'EXPLOITATION')
+    .reduce((sum: number, d: any) => sum + (d._sum.montant || 0), 0))
 
   // Calcul des injections de capital
   const totalInjections = capitalTransactions.reduce((sum: number, t: any) => sum + (t.montant || 0), 0)
   
-  // Calcul de la trésorerie (capital initial + injections + recettes - dépenses)
+  // Calcul de la trésorerie (position de caisse)
   const capitalInitial = boutique?.capitalInitial || 0
-  const tresorerie = capitalInitial + totalInjections + recettes - depenses
+  const tresorerie = capitalInitial + totalInjections + recettes - depensesTotales
   
-  // Calcul du bénéfice (chiffre d'affaires - dépenses)
+  // Calculs financiers corrects
   const chiffreAffaires = ventes._sum.montantTotal || 0
-  const benefice = chiffreAffaires - depenses
+  const beneficeBrut = chiffreAffaires - depensesMarchandises  // Marge commerciale
+  const beneficeNet = chiffreAffaires - depensesTotales        // Bénéfice après toutes charges
+  const cashFlow = recettes - depensesTotales                  // Flux de trésorerie période
+  const margeCommerciale = chiffreAffaires > 0 ? (beneficeBrut / chiffreAffaires) * 100 : 0
 
   return {
     type: 'financier',
@@ -663,11 +690,22 @@ async function genererRapportFinancier(boutiqueId: string, dateDebut: Date, date
       totalInjections,
       chiffreAffaires,
       recettes,
-      depenses,
-      benefice,
+      depensesTotales,
+      depensesMarchandises,
+      depensesExploitation,
+      autresDepenses,
+      beneficeBrut,
+      beneficeNet,
+      cashFlow,
+      margeCommerciale,
       tresorerie,
-      solde: recettes - depenses
+      solde: recettes - depensesTotales
     },
+    depensesParCategorie: depensesParCategorie.map((d: any) => ({
+      categorie: d.categorieDepense || 'NON_CATEGORISE',
+      montant: Math.abs(d._sum.montant || 0),
+      nombre: d._count
+    })),
     transactionsParType: (transactionsParType as TransactionParType[]).map(t => ({
       type: t.type,
       montant: t._sum.montant || 0,

@@ -123,11 +123,14 @@ export interface Paiement {
   dateCreation: string;
 }
 
+export type CategorieDepense = 'MARCHANDISES' | 'EXPLOITATION' | 'MARKETING' | 'TRANSPORT' | 'ADMINISTRATION' | 'AUTRE';
+
 export interface Transaction {
   id: string;
   type: 'VENTE' | 'ACHAT' | 'DEPENSE' | 'INJECTION_CAPITAL' | 'RETRAIT' | 'RECETTE';
   montant: number;
   description: string;
+  categorieDepense?: CategorieDepense; // Catégorie pour les dépenses uniquement
   boutiqueId: string;
   userId: string;
   user?: Pick<User, 'name'>;
@@ -227,6 +230,15 @@ export const TRANSACTION_TYPE_LABELS = {
   INJECTION_CAPITAL: 'Injection capital',
   RETRAIT: 'Retrait',
   RECETTE: 'Recette',
+} as const;
+
+export const CATEGORIE_DEPENSE_LABELS = {
+  MARCHANDISES: 'Marchandises',
+  EXPLOITATION: 'Exploitation',
+  MARKETING: 'Marketing',
+  TRANSPORT: 'Transport',
+  ADMINISTRATION: 'Administration',
+  AUTRE: 'Autre',
 } as const;
 
 export const MOUVEMENT_TYPE_LABELS = {

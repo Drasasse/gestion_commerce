@@ -161,6 +161,7 @@ export async function POST(
             type: 'DEPENSE',
             montant: validatedData.montantPaye,
             description: `Paiement commande ${commande.numeroCommande} - ${commande.fournisseur.nom}`,
+            categorieDepense: 'MARCHANDISES', // Catégorisation automatique pour les achats de marchandises
             dateTransaction: new Date(),
           },
         });

@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import ExportButton from '@/components/ExportButton';
 import { exportTransactionsToExcel, exportTransactionsToCSV } from '@/lib/export';
+import { CategorieDepense, CATEGORIE_DEPENSE_LABELS } from '@/types';
 
 interface Vente {
   numeroVente: string;
@@ -36,6 +37,7 @@ interface Transaction {
   montant: number;
   description: string;
   categorie: string;
+  categorieDepense?: CategorieDepense;
   dateTransaction: string;
   dateCreation: string;
   vente?: Vente;
@@ -46,6 +48,7 @@ interface TransactionForm {
   montant: number;
   description: string;
   categorie: string;
+  categorieDepense?: CategorieDepense;
   dateTransaction: string;
 }
 
@@ -82,6 +85,7 @@ export default function TransactionsPage() {
     montant: 0,
     description: '',
     categorie: '',
+    categorieDepense: undefined,
     dateTransaction: new Date().toISOString().split('T')[0],
   });
 
@@ -201,6 +205,7 @@ export default function TransactionsPage() {
       montant: 0,
       description: '',
       categorie: '',
+      categorieDepense: undefined,
       dateTransaction: new Date().toISOString().split('T')[0],
     });
     setEditingTransaction(null);
@@ -213,6 +218,7 @@ export default function TransactionsPage() {
       montant: Math.abs(transaction.montant),
       description: transaction.description,
       categorie: transaction.categorie,
+      categorieDepense: transaction.categorieDepense,
       dateTransaction: new Date(transaction.dateTransaction).toISOString().split('T')[0],
     });
     setEditingTransaction(transaction);
@@ -409,6 +415,9 @@ export default function TransactionsPage() {
                   Catégorie
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Cat. Dépense
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Montant
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -447,6 +456,15 @@ export default function TransactionsPage() {
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500">
                     {transaction.categorie}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-500">
+                    {transaction.type === 'DEPENSE' && transaction.categorieDepense ? (
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                        {CATEGORIE_DEPENSE_LABELS[transaction.categorieDepense]}
+                      </span>
+                    ) : (
+                      '-'
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <span className={transaction.type === 'RECETTE' ? 'text-green-600' : 'text-red-600'}>
@@ -531,7 +549,11 @@ export default function TransactionsPage() {
                 </label>
                 <select
                   value={formData.type}
-                  onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value as 'RECETTE' | 'DEPENSE' }))}
+                  onChange={(e) => setFormData(prev => ({ 
+                    ...prev, 
+                    type: e.target.value as 'RECETTE' | 'DEPENSE',
+                    categorieDepense: e.target.value === 'RECETTE' ? undefined : prev.categorieDepense
+                  }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 >
@@ -539,6 +561,28 @@ export default function TransactionsPage() {
                   <option value="DEPENSE">Dépense</option>
                 </select>
               </div>
+
+              {formData.type === 'DEPENSE' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Catégorie de dépense *
+                  </label>
+                  <select
+                    value={formData.categorieDepense || ''}
+                    onChange={(e) => setFormData(prev => ({ 
+                      ...prev, 
+                      categorieDepense: e.target.value as CategorieDepense || undefined
+                    }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  >
+                    <option value="">Sélectionner une catégorie</option>
+                    {Object.entries(CATEGORIE_DEPENSE_LABELS).map(([key, label]) => (
+                      <option key={key} value={key}>{label}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -671,6 +715,14 @@ export default function TransactionsPage() {
                   <label className="block text-sm font-medium text-gray-500">Catégorie</label>
                   <p className="text-sm text-gray-900">{showDetails.categorie}</p>
                 </div>
+                {showDetails.type === 'DEPENSE' && showDetails.categorieDepense && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">Catégorie de dépense</label>
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                      {CATEGORIE_DEPENSE_LABELS[showDetails.categorieDepense]}
+                    </span>
+                  </div>
+                )}
               </div>
               
               <div>

@@ -24,6 +24,15 @@ enum TransactionType {
   RECETTE
 }
 
+enum CategorieDepense {
+  MARCHANDISES      // Achats de stock, paiements fournisseurs
+  EXPLOITATION      // Loyer, électricité, salaires, etc.
+  MARKETING         // Publicité, promotion
+  TRANSPORT         // Livraison, déplacement
+  ADMINISTRATION    // Frais bancaires, assurance, etc.
+  AUTRE            // Autres dépenses non catégorisées
+}
+
 enum PaymentStatus {
   PAYE
   IMPAYE
@@ -202,16 +211,17 @@ model LigneVente {
 }
 
 model Transaction {
-  id              String          @id @default(cuid())
+  id              String            @id @default(cuid())
   type            TransactionType
   montant         Float
   description     String
+  categorieDepense CategorieDepense? // Catégorie pour les dépenses uniquement
   boutiqueId      String
-  boutique        Boutique        @relation(fields: [boutiqueId], references: [id], onDelete: Cascade)
+  boutique        Boutique          @relation(fields: [boutiqueId], references: [id], onDelete: Cascade)
   userId          String
-  user            User            @relation(fields: [userId], references: [id])
-  dateTransaction DateTime        @default(now())
-  createdAt       DateTime        @default(now())
+  user            User              @relation(fields: [userId], references: [id])
+  dateTransaction DateTime          @default(now())
+  createdAt       DateTime          @default(now())
 
   @@index([boutiqueId])
   @@index([userId])

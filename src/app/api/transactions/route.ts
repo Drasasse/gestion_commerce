@@ -10,8 +10,18 @@ const transactionSchema = z.object({
   montant: z.number().positive('Le montant doit être positif'),
   description: z.string().min(1, 'La description est requise'),
   categorie: z.string().min(1, 'La catégorie est requise'),
+  categorieDepense: z.enum(['MARCHANDISES', 'EXPLOITATION', 'MARKETING', 'TRANSPORT', 'ADMINISTRATION', 'AUTRE']).optional(),
   venteId: z.string().optional(),
   dateTransaction: z.string().optional(),
+}).refine((data) => {
+  // Si c'est une dépense, la catégorie de dépense est requise
+  if (data.type === 'DEPENSE' && !data.categorieDepense) {
+    return false;
+  }
+  return true;
+}, {
+  message: "La catégorie de dépense est requise pour les dépenses",
+  path: ["categorieDepense"],
 });
 
 export async function GET(request: NextRequest) {
@@ -203,6 +213,7 @@ export async function POST(request: NextRequest) {
         type: validatedData.type,
         montant: montantAjuste,
         description: validatedData.description,
+        categorieDepense: validatedData.categorieDepense,
         dateTransaction: validatedData.dateTransaction
           ? new Date(validatedData.dateTransaction)
           : new Date(),
