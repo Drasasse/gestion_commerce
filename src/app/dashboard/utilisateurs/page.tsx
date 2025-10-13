@@ -141,7 +141,7 @@ export default function UtilisateursPage() {
       email: user.email,
       password: '',
       role: user.role,
-      boutiqueId: user.boutiqueId || '',
+      boutiqueId: user.boutiqueId ?? '',
     });
     setShowModal(true);
   };

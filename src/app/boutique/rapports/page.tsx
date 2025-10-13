@@ -97,14 +97,16 @@ export default function RapportsPage() {
 
       const response = await fetch(`/api/rapports?${params}`)
       if (!response.ok) {
-        throw new Error('Erreur lors du chargement du rapport')
+        const errorData = await response.json().catch(() => ({ error: 'Erreur inconnue' }))
+        console.error('Erreur API:', response.status, errorData)
+        throw new Error(errorData.error || `Erreur ${response.status}: ${response.statusText}`)
       }
 
       const data = await response.json()
       setRapportData(data)
     } catch (error) {
       console.error('Erreur:', error)
-      setError('Erreur lors du chargement du rapport')
+      setError(error instanceof Error ? error.message : 'Erreur lors du chargement du rapport')
     } finally {
       setLoading(false)
     }

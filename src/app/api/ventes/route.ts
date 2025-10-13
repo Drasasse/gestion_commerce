@@ -16,6 +16,7 @@ const venteSchema = z.object({
   clientId: z.string().optional(),
   lignes: z.array(ligneVenteSchema).min(1, 'Au moins une ligne de vente est requise'),
   montantPaye: z.number().min(0, 'Le montant payé doit être positif').optional(),
+  dateVente: z.string().optional(), // Date personnalisée pour les ventes passées
 });
 
 export async function GET(request: NextRequest) {
@@ -223,6 +224,8 @@ export async function POST(request: NextRequest) {
       }
 
       // Créer la vente avec toutes les lignes et mouvements de stock
+      const dateVente = validatedData.dateVente ? new Date(validatedData.dateVente) : new Date();
+      
       const vente = await prisma.$transaction(async (tx: any) => {
         // Créer la vente
         const nouvelleVente = await tx.vente.create({
@@ -235,6 +238,8 @@ export async function POST(request: NextRequest) {
             montantPaye,
             montantRestant,
             statut,
+            dateVente,
+            createdAt: dateVente, // Utiliser la même date pour createdAt
           },
         });
 
@@ -269,6 +274,31 @@ export async function POST(request: NextRequest) {
               motif: `Vente ${numeroVente}`,
               venteId: nouvelleVente.id,
             },
+          });
+        }
+
+        // Créer un enregistrement de paiement si montantPaye > 0
+        if (montantPaye > 0) {
+          await tx.paiement.create({
+            data: {
+              venteId: nouvelleVente.id,
+              montant: montantPaye,
+              methodePaiement: 'ESPECES', // Méthode par défaut
+              notes: 'Paiement initial lors de la vente',
+              dateCreation: dateVente
+            }
+          });
+
+          // Créer une transaction financière pour le paiement
+          await tx.transaction.create({
+            data: {
+              boutiqueId: session.user.boutiqueId!,
+              userId: session.user.id!,
+              type: 'RECETTE',
+              montant: montantPaye,
+              description: `Paiement vente #${numeroVente}`,
+              dateTransaction: dateVente
+            }
           });
         }
 

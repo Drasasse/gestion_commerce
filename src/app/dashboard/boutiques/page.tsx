@@ -108,10 +108,10 @@ export default function BoutiquesPage() {
     setEditingBoutique(boutique);
     setFormData({
       nom: boutique.nom,
-      adresse: boutique.adresse || '',
-      telephone: boutique.telephone || '',
-      description: boutique.description || '',
-      capitalInitial: boutique.capitalInitial?.toString() || '0',
+      adresse: boutique.adresse ?? '',
+      telephone: boutique.telephone ?? '',
+      description: boutique.description ?? '',
+      capitalInitial: (boutique.capitalInitial ?? 0).toString(),
     });
     setShowModal(true);
   };

@@ -142,10 +142,18 @@ export default function StocksPage() {
       const url = editingStock ? `/api/stocks/${editingStock.id}` : '/api/stocks';
       const method = editingStock ? 'PUT' : 'POST';
       
+      // Pour la modification, on ne doit envoyer que quantite et seuilAlerte
+      const dataToSend = editingStock 
+        ? { 
+            quantite: formData.quantite, 
+            seuilAlerte: formData.seuilAlerte 
+          }
+        : formData;
+      
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(dataToSend),
       });
 
       if (response.ok) {

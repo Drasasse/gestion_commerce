@@ -73,6 +73,7 @@ interface VenteForm {
   clientId?: string;
   lignes: LigneVenteForm[];
   montantPaye: number;
+  dateVente?: string;
 }
 
 export default function VentesPage() {
@@ -92,6 +93,7 @@ export default function VentesPage() {
     clientId: '',
     lignes: [{ produitId: '', quantite: 1, prixUnitaire: 0 }],
     montantPaye: 0,
+    dateVente: new Date().toISOString().split('T')[0], // Date du jour par défaut
   });
 
   const loadVentes = useCallback(async () => {
@@ -205,6 +207,7 @@ export default function VentesPage() {
       clientId: '',
       lignes: [{ produitId: '', quantite: 1, prixUnitaire: 0 }],
       montantPaye: 0,
+      dateVente: new Date().toISOString().split('T')[0],
     });
     setEditingVente(null);
     setShowForm(false);
@@ -444,6 +447,24 @@ export default function VentesPage() {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              {/* Date de vente */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <Calendar className="w-4 h-4 inline mr-1" />
+                  Date de vente
+                </label>
+                <input
+                  type="date"
+                  value={formData.dateVente}
+                  onChange={(e) => setFormData(prev => ({ ...prev, dateVente: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Vous pouvez sélectionner une date passée pour enregistrer des ventes historiques
+                </p>
               </div>
 
               {/* Lignes de vente */}

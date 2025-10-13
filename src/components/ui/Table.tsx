@@ -6,21 +6,21 @@ interface Column {
   className?: string;
 }
 
-interface TableProps {
+interface TableProps<T = Record<string, unknown>> {
   columns: Column[];
-  data: any[];
-  renderRow: (item: any, index: number) => React.ReactNode;
+  data: T[];
+  renderRow: (item: T, index: number) => React.ReactNode;
   className?: string;
   emptyMessage?: string;
 }
 
-export function Table({ 
+export function Table<T = Record<string, unknown>>({ 
   columns, 
   data, 
   renderRow, 
   className = '',
   emptyMessage = 'Aucune donnée disponible'
-}: TableProps) {
+}: TableProps<T>) {
   return (
     <div className={`table-base rounded-lg shadow overflow-hidden ${className}`}>
       <table className="min-w-full divide-y divide-border">
@@ -48,7 +48,7 @@ export function Table({
             </tr>
           ) : (
             data.map((item, index) => (
-              <tr key={item.id || index} className="table-row">
+              <tr key={(item as any).id || index} className="table-row">
                 {renderRow(item, index)}
               </tr>
             ))

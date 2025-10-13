@@ -35,7 +35,7 @@ export default function CategoriesPage() {
 
   const loadCategories = useCallback(async () => {
     try {
-      const response = await fetch('/api/categories');
+      const response = await fetch('/api/categories?includeCount=true');
       if (response.ok) {
         const data = await response.json();
         // L'API retourne {categories: [...]}
@@ -107,7 +107,7 @@ export default function CategoriesPage() {
     setEditingCategory(categorie);
     setFormData({
       nom: categorie.nom,
-      description: categorie.description || '',
+      description: categorie.description ?? '',
     });
     setShowModal(true);
   };
@@ -194,7 +194,7 @@ export default function CategoriesPage() {
                 <div className="flex justify-between items-start mb-4">
                   <h3 className="text-lg font-semibold text-card-foreground">{categorie.nom}</h3>
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
-                    {categorie._count.produits} produit{categorie._count.produits !== 1 ? 's' : ''}
+                    {categorie._count?.produits || 0} produit{(categorie._count?.produits || 0) !== 1 ? 's' : ''}
                   </span>
                 </div>
                 
@@ -214,13 +214,13 @@ export default function CategoriesPage() {
                     Modifier
                   </button>
                   <button
-                    onClick={() => handleDelete(categorie.id, categorie.nom, categorie._count.produits)}
+                    onClick={() => handleDelete(categorie.id, categorie.nom, categorie._count?.produits || 0)}
                     className={`text-sm font-medium ${
-                      categorie._count.produits > 0 
+                      (categorie._count?.produits || 0) > 0 
                         ? 'text-muted-foreground cursor-not-allowed' 
                         : 'text-red-600 hover:text-red-800'
                     }`}
-                    disabled={categorie._count.produits > 0}
+                    disabled={(categorie._count?.produits || 0) > 0}
                   >
                     Supprimer
                   </button>

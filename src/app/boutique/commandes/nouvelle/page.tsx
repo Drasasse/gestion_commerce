@@ -25,8 +25,8 @@ interface Produit {
 
 interface LigneCommande {
   produitId: string;
-  quantite: number;
-  prixUnitaire: number;
+  quantite: number | string;
+  prixUnitaire: number | string;
 }
 
 export default function NouvelleCommandePage() {
@@ -42,6 +42,7 @@ export default function NouvelleCommandePage() {
     fournisseurId: '',
     dateEcheance: '',
     notes: '',
+    dateCommande: new Date().toISOString().split('T')[0], // Date actuelle par défaut
   });
 
   const [lignes, setLignes] = useState<LigneCommande[]>([]);
@@ -85,7 +86,7 @@ export default function NouvelleCommandePage() {
   };
 
   const ajouterLigne = () => {
-    setLignes([...lignes, { produitId: '', quantite: 1, prixUnitaire: 0 }]);
+    setLignes([...lignes, { produitId: '', quantite: '', prixUnitaire: '' }]);
   };
 
   const supprimerLigne = (index: number) => {
@@ -100,7 +101,7 @@ export default function NouvelleCommandePage() {
     if (field === 'produitId' && value) {
       const produit = produits.find((p) => p.id === value);
       if (produit) {
-        newLignes[index].prixUnitaire = produit.prixAchat;
+        newLignes[index].prixUnitaire = produit.prixAchat.toString();
       }
     }
 
@@ -109,7 +110,9 @@ export default function NouvelleCommandePage() {
 
   const calculerMontantTotal = () => {
     return lignes.reduce((total, ligne) => {
-      return total + ligne.quantite * ligne.prixUnitaire;
+      const quantite = typeof ligne.quantite === 'string' ? parseFloat(ligne.quantite) || 0 : ligne.quantite;
+      const prix = typeof ligne.prixUnitaire === 'string' ? parseFloat(ligne.prixUnitaire) || 0 : ligne.prixUnitaire;
+      return total + quantite * prix;
     }, 0);
   };
 
@@ -127,9 +130,11 @@ export default function NouvelleCommandePage() {
     }
 
     // Vérifier que toutes les lignes sont complètes
-    const lignesInvalides = lignes.some(
-      (ligne) => !ligne.produitId || ligne.quantite <= 0 || ligne.prixUnitaire <= 0
-    );
+    const lignesInvalides = lignes.some((ligne) => {
+      const quantite = typeof ligne.quantite === 'string' ? parseFloat(ligne.quantite) || 0 : ligne.quantite;
+      const prix = typeof ligne.prixUnitaire === 'string' ? parseFloat(ligne.prixUnitaire) || 0 : ligne.prixUnitaire;
+      return !ligne.produitId || quantite <= 0 || prix <= 0;
+    });
     if (lignesInvalides) {
       toast.error('Veuillez compléter toutes les lignes de la commande');
       return;
@@ -145,10 +150,11 @@ export default function NouvelleCommandePage() {
           fournisseurId: formData.fournisseurId,
           dateEcheance: formData.dateEcheance || null,
           notes: formData.notes || null,
+          dateCommande: formData.dateCommande,
           lignes: lignes.map((ligne) => ({
             produitId: ligne.produitId,
-            quantite: parseInt(ligne.quantite.toString()),
-            prixUnitaire: parseFloat(ligne.prixUnitaire.toString()),
+            quantite: typeof ligne.quantite === 'string' ? parseInt(ligne.quantite) || 0 : ligne.quantite,
+            prixUnitaire: typeof ligne.prixUnitaire === 'string' ? parseFloat(ligne.prixUnitaire) || 0 : ligne.prixUnitaire,
           })),
         }),
       });
@@ -223,6 +229,19 @@ export default function NouvelleCommandePage() {
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Date de la commande
+              </label>
+              <input
+                type="date"
+                value={formData.dateCommande}
+                onChange={(e) => setFormData({ ...formData, dateCommande: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                required
+              />
             </div>
 
             <div>
@@ -314,8 +333,8 @@ export default function NouvelleCommandePage() {
                       <input
                         type="number"
                         min="1"
-                        value={ligne.quantite}
-                        onChange={(e) => updateLigne(index, 'quantite', parseInt(e.target.value) || 1)}
+                        value={ligne.quantite || ''}
+                        onChange={(e) => updateLigne(index, 'quantite', e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                         required
                       />
@@ -329,10 +348,8 @@ export default function NouvelleCommandePage() {
                         type="number"
                         min="0"
                         step="0.01"
-                        value={ligne.prixUnitaire}
-                        onChange={(e) =>
-                          updateLigne(index, 'prixUnitaire', parseFloat(e.target.value) || 0)
-                        }
+                        value={ligne.prixUnitaire || ''}
+                        onChange={(e) => updateLigne(index, 'prixUnitaire', e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                         required
                       />
@@ -343,7 +360,11 @@ export default function NouvelleCommandePage() {
                         Sous-total
                       </label>
                       <div className="px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg font-semibold text-gray-900 dark:text-white">
-                        {(ligne.quantite * ligne.prixUnitaire).toLocaleString()} F
+                        {(() => {
+                          const quantite = typeof ligne.quantite === 'string' ? parseFloat(ligne.quantite) || 0 : ligne.quantite;
+                          const prix = typeof ligne.prixUnitaire === 'string' ? parseFloat(ligne.prixUnitaire) || 0 : ligne.prixUnitaire;
+                          return (quantite * prix).toLocaleString();
+                        })()} F
                       </div>
                     </div>
 

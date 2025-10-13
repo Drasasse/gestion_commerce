@@ -23,6 +23,7 @@ const commandeSchema = z.object({
   lignes: z.array(ligneCommandeSchema).min(1, 'Au moins une ligne de commande est requise'),
   dateEcheance: z.string().optional(),
   notes: z.string().optional(),
+  dateCommande: z.string().optional(), // Date personnalisée pour les commandes passées
 });
 
 export const GET = withErrorHandler(async (request: NextRequest) => {
@@ -128,6 +129,8 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   });
 
   // Créer la commande avec les lignes
+  const dateCommande = validatedData.dateCommande ? new Date(validatedData.dateCommande) : new Date();
+  
   const commande = await prisma.commande.create({
     data: {
       numeroCommande,
@@ -137,6 +140,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
       montantRestant: montantTotal,
       dateEcheance: validatedData.dateEcheance ? new Date(validatedData.dateEcheance) : null,
       notes: validatedData.notes,
+      createdAt: dateCommande, // Utiliser la date personnalisée pour createdAt
       lignes: {
         create: validatedData.lignes.map((ligne) => ({
           produitId: ligne.produitId,

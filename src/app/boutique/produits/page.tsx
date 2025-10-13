@@ -158,7 +158,7 @@ export default function ProduitsPage() {
     setEditingProduct(produit);
     setFormData({
       nom: produit.nom,
-      description: produit.description || '',
+      description: produit.description ?? '',
       prixAchat: produit.prixAchat.toString(),
       prixVente: produit.prixVente.toString(),
       seuilAlerte: produit.seuilAlerte.toString(),
@@ -306,8 +306,8 @@ export default function ProduitsPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <div>Achat: {produit.prixAchat.toFixed(2)} €</div>
-                    <div>Vente: {produit.prixVente.toFixed(2)} €</div>
+                    <div>Achat: {produit.prixAchat.toFixed(2)} FCFA</div>
+                    <div>Vente: {produit.prixVente.toFixed(2)} FCFA</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${

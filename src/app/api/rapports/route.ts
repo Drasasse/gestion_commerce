@@ -259,7 +259,7 @@ async function genererRapportVentes(boutiqueId: string, dateDebut: Date, dateFin
   return {
     type: 'ventes',
     resume: {
-      totalVentes: ventes._sum.montantTotal || 0,
+      totalVentes: ventes._count || 0,
       chiffreAffaires: ventes._sum.montantTotal || 0,
       ventesParJour: ventesParJour.map((v: any) => ({
         date: v.dateVente.toISOString().split('T')[0],
@@ -463,7 +463,10 @@ async function genererRapportStocks(boutiqueId: string) {
     type: 'stocks',
     resume: {
       totalProduits: stocks.length,
-      valeurTotaleStock: analyse.valeurTotale
+      valeurTotaleStock: analyse.valeurTotale,
+      valeurTotale: analyse.valeurTotale,
+      enRupture: analyse.enRupture.length,
+      stockFaible: analyse.stockFaible.length
     },
     analyse: {
       enRupture: analyse.enRupture.map((s: any) => ({

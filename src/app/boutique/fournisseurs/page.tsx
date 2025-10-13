@@ -108,9 +108,26 @@ export default function FournisseursPage() {
         await loadFournisseurs();
         resetForm();
         setShowModal(false);
+        // Message de succès (optionnel - peut être ajouté avec un toast)
+        console.log('Fournisseur sauvegardé avec succès');
+      } else {
+        // Gestion des erreurs de réponse
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.message || `Erreur ${response.status}: ${response.statusText}`;
+        console.error('Erreur lors de la sauvegarde:', errorMessage);
+        
+        // Afficher l'erreur à l'utilisateur
+        if (errorData.errors && typeof errorData.errors === 'object') {
+          // Erreurs de validation spécifiques
+          setErrors(errorData.errors);
+        } else {
+          // Erreur générale
+          setErrors({ general: errorMessage });
+        }
       }
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
+      setErrors({ general: 'Erreur de connexion. Veuillez réessayer.' });
     }
   };
 
@@ -118,14 +135,14 @@ export default function FournisseursPage() {
     setEditingFournisseur(fournisseur);
     setFormData({
       nom: fournisseur.nom,
-      prenom: fournisseur.prenom || '',
-      entreprise: fournisseur.entreprise || '',
-      telephone: fournisseur.telephone || '',
-      email: fournisseur.email || '',
-      adresse: fournisseur.adresse || '',
-      ville: fournisseur.ville || '',
-      pays: fournisseur.pays || '',
-      notes: fournisseur.notes || '',
+      prenom: fournisseur.prenom ?? '',
+      entreprise: fournisseur.entreprise ?? '',
+      telephone: fournisseur.telephone ?? '',
+      email: fournisseur.email ?? '',
+      adresse: fournisseur.adresse ?? '',
+      ville: fournisseur.ville ?? '',
+      pays: fournisseur.pays ?? '',
+      notes: fournisseur.notes ?? '',
     });
     setShowModal(true);
   };
@@ -420,6 +437,13 @@ export default function FournisseursPage() {
                   />
                 </div>
               </div>
+
+              {/* Affichage de l'erreur générale */}
+              {errors.general && (
+                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-red-600 text-sm">{errors.general}</p>
+                </div>
+              )}
 
               <div className="flex justify-end gap-3 mt-6">
                 <button

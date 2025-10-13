@@ -6,7 +6,6 @@ import { z } from 'zod';
 
 const stockUpdateSchema = z.object({
   quantite: z.number().min(0, 'La quantité doit être positive').optional(),
-  seuilAlerte: z.number().min(0, 'Le seuil d\'alerte doit être positif').optional(),
 });
 
 export async function GET(

@@ -159,10 +159,10 @@ export default function ClientsPage() {
   const openEditModal = (client: Client) => {
     setFormData({
       nom: client.nom,
-      prenom: client.prenom || '',
-      telephone: client.telephone || '',
-      adresse: client.adresse || '',
-      email: client.email || '',
+      prenom: client.prenom ?? '',
+      telephone: client.telephone ?? '',
+      adresse: client.adresse ?? '',
+      email: client.email ?? '',
     });
     setEditingClient(client);
     setShowModal(true);

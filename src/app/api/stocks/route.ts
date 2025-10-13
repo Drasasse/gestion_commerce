@@ -8,7 +8,6 @@ import { checkRateLimit, apiRateLimiter, sensitiveApiRateLimiter } from '@/lib/r
 const stockSchema = z.object({
   produitId: z.string().min(1, 'Le produit est requis'),
   quantite: z.number().min(0, 'La quantité doit être positive'),
-  seuilAlerte: z.number().min(0, 'Le seuil d\'alerte doit être positif'),
 });
 
 
