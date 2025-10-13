@@ -9,8 +9,17 @@ import {
   Download,
   AlertTriangle,
   ShoppingCart,
-  Target
+  Target,
+  BarChart3,
+  PieChart,
+  Activity
 } from 'lucide-react'
+import { formatMontant } from '@/lib/utils'
+import ExportButton from '@/components/ExportButton'
+import { exportRapportsToExcel, exportRapportsToCSV } from '@/lib/export'
+import LoadingSkeleton from '@/components/LoadingSkeleton'
+import MobileStatsCard from '@/components/MobileStatsCard'
+import ResponsiveTable, { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from '@/components/ResponsiveTable'
 
 interface RapportData {
   type: string
@@ -80,22 +89,49 @@ export default function RapportsPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  // Initialiser les dates par défaut
+  useEffect(() => {
+    const today = new Date()
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1)
+    setDateDebut(firstDay.toISOString().split('T')[0])
+    setDateFin(today.toISOString().split('T')[0])
+  }, [])
+
   const loadRapport = useCallback(async () => {
     setLoading(true)
     setError('')
 
     try {
-      const params = new URLSearchParams({
-        type: rapportType,
-        periode: periode
-      })
+      // Construction plus robuste des paramètres
+      const params = new URLSearchParams()
+      
+      // Toujours inclure le type et la période
+      params.append('type', rapportType)
+      params.append('periode', periode)
 
+      // Ajouter les dates si elles sont définies
       if (dateDebut && dateFin) {
         params.append('dateDebut', dateDebut)
         params.append('dateFin', dateFin)
       }
 
-      const response = await fetch(`/api/rapports?${params}`)
+      console.log('Paramètres envoyés:', {
+        type: rapportType,
+        periode: periode,
+        dateDebut: dateDebut,
+        dateFin: dateFin
+      })
+
+      const url = `/api/rapports?${params.toString()}`
+      console.log('URL complète:', url)
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Erreur inconnue' }))
         console.error('Erreur API:', response.status, errorData)
@@ -103,9 +139,10 @@ export default function RapportsPage() {
       }
 
       const data = await response.json()
+      console.log('Données reçues:', data)
       setRapportData(data)
     } catch (error) {
-      console.error('Erreur:', error)
+      console.error('Erreur complète:', error)
       setError(error instanceof Error ? error.message : 'Erreur lors du chargement du rapport')
     } finally {
       setLoading(false)
@@ -113,27 +150,20 @@ export default function RapportsPage() {
   }, [rapportType, periode, dateDebut, dateFin])
 
   useEffect(() => {
-    loadRapport()
-  }, [loadRapport])
+    // Ne charger que si les dates sont initialisées
+    if (dateDebut && dateFin) {
+      loadRapport()
+    }
+  }, [loadRapport, dateDebut, dateFin])
 
-  const exporterRapport = () => {
+  const exporterExcel = () => {
     if (!rapportData) return
-
-    const dataStr = JSON.stringify(rapportData, null, 2)
-    const dataBlob = new Blob([dataStr], { type: 'application/json' })
-    const url = URL.createObjectURL(dataBlob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `rapport-${rapportType}-${new Date().toISOString().split('T')[0]}.json`
-    link.click()
-    URL.revokeObjectURL(url)
+    exportRapportsToExcel([rapportData] as unknown as Record<string, unknown>[])
   }
 
-  const formatMontant = (montant: number) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'XOF'
-    }).format(montant)
+  const exporterCSV = () => {
+    if (!rapportData) return
+    exportRapportsToCSV([rapportData] as unknown as Record<string, unknown>[])
   }
 
   const formatDate = (date: string) => {
@@ -627,6 +657,15 @@ export default function RapportsPage() {
     )
   }
 
+  if (loading) {
+    return (
+      <div className="p-6">
+        <LoadingSkeleton type="stat" count={4} />
+        <LoadingSkeleton type="table" />
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
@@ -634,80 +673,99 @@ export default function RapportsPage() {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Rapports et Analyses</h1>
-              <p className="text-gray-600 mt-2">Tableaux de bord et analyses de performance</p>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Rapports Détaillés</h1>
+              <p className="text-gray-600 dark:text-gray-300 mt-2">Analysez les performances de votre boutique en détail</p>
             </div>
-            <button
-              onClick={exporterRapport}
-              disabled={!rapportData}
-              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Download size={20} />
-              Exporter
-            </button>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={loadRapport}
+                disabled={loading}
+                className="flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors"
+              >
+                <TrendingUp size={20} />
+                {loading ? 'Chargement...' : 'Actualiser'}
+              </button>
+              <ExportButton
+                onExportExcel={exporterExcel}
+                onExportCSV={exporterCSV}
+                disabled={!rapportData}
+              />
+            </div>
           </div>
         </div>
 
         {/* Filtres */}
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 mb-8">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700 mb-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Type de rapport
               </label>
               <select
                 value={rapportType}
                 onChange={(e) => setRapportType(e.target.value as 'ventes' | 'produits' | 'clients' | 'stocks' | 'financier')}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
-                <option value="ventes">Ventes</option>
-                <option value="produits">Produits</option>
-                <option value="clients">Clients</option>
-                <option value="stocks">Stocks</option>
-                <option value="financier">Financier</option>
+                <option value="ventes">📊 Ventes</option>
+                <option value="produits">📦 Produits</option>
+                <option value="clients">👥 Clients</option>
+                <option value="stocks">📋 Stocks</option>
+                <option value="financier">💰 Financier</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Période
               </label>
               <select
                 value={periode}
                 onChange={(e) => setPeriode(e.target.value as 'jour' | 'semaine' | 'mois' | 'trimestre' | 'annee')}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
-                <option value="jour">Aujourd&apos;hui</option>
-                <option value="semaine">Cette semaine</option>
-                <option value="mois">Ce mois</option>
-                <option value="trimestre">Ce trimestre</option>
-                <option value="annee">Cette année</option>
+                <option value="jour">📅 Aujourd&apos;hui</option>
+                <option value="semaine">📅 Cette semaine</option>
+                <option value="mois">📅 Ce mois</option>
+                <option value="trimestre">📅 Ce trimestre</option>
+                <option value="annee">📅 Cette année</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Date début
               </label>
               <input
                 type="date"
                 value={dateDebut}
                 onChange={(e) => setDateDebut(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Date fin
               </label>
               <input
                 type="date"
                 value={dateFin}
                 onChange={(e) => setDateFin(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
             </div>
+          </div>
+          
+          {/* Bouton d'actualisation dans les filtres */}
+          <div className="mt-4 flex justify-end">
+            <button
+              onClick={loadRapport}
+              disabled={loading}
+              className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            >
+              <Activity size={16} />
+              {loading ? 'Chargement...' : 'Appliquer les filtres'}
+            </button>
           </div>
         </div>
 
