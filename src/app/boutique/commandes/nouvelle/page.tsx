@@ -131,12 +131,12 @@ export default function NouvelleCommandePage() {
 
     // Vérifier que toutes les lignes sont complètes
     const lignesInvalides = lignes.some((ligne) => {
-      const quantite = typeof ligne.quantite === 'string' ? parseFloat(ligne.quantite) || 0 : ligne.quantite;
-      const prix = typeof ligne.prixUnitaire === 'string' ? parseFloat(ligne.prixUnitaire) || 0 : ligne.prixUnitaire;
-      return !ligne.produitId || quantite <= 0 || prix <= 0;
+      const quantite = typeof ligne.quantite === 'string' ? parseFloat(ligne.quantite) : ligne.quantite;
+      const prix = typeof ligne.prixUnitaire === 'string' ? parseFloat(ligne.prixUnitaire) : ligne.prixUnitaire;
+      return !ligne.produitId || isNaN(quantite) || quantite <= 0 || isNaN(prix) || prix < 0;
     });
     if (lignesInvalides) {
-      toast.error('Veuillez compléter toutes les lignes de la commande');
+      toast.error('Veuillez compléter toutes les lignes de la commande avec des valeurs valides');
       return;
     }
 
@@ -151,11 +151,15 @@ export default function NouvelleCommandePage() {
           dateEcheance: formData.dateEcheance || null,
           notes: formData.notes || null,
           dateCommande: formData.dateCommande,
-          lignes: lignes.map((ligne) => ({
-            produitId: ligne.produitId,
-            quantite: typeof ligne.quantite === 'string' ? parseInt(ligne.quantite) || 0 : ligne.quantite,
-            prixUnitaire: typeof ligne.prixUnitaire === 'string' ? parseFloat(ligne.prixUnitaire) || 0 : ligne.prixUnitaire,
-          })),
+          lignes: lignes.map((ligne) => {
+            const quantite = typeof ligne.quantite === 'string' ? parseFloat(ligne.quantite) : ligne.quantite;
+            const prixUnitaire = typeof ligne.prixUnitaire === 'string' ? parseFloat(ligne.prixUnitaire) : ligne.prixUnitaire;
+            return {
+              produitId: ligne.produitId,
+              quantite: quantite,
+              prixUnitaire: prixUnitaire,
+            };
+          }),
         }),
       });
 

@@ -13,9 +13,9 @@ import {
 } from '@/lib/error-handler';
 
 const ligneCommandeSchema = z.object({
-  produitId: z.string(),
-  quantite: z.number().min(1, 'La quantité doit être supérieure à 0'),
-  prixUnitaire: z.number().min(0, 'Le prix unitaire doit être positif'),
+  produitId: z.string().min(1, 'Le produit est requis'),
+  quantite: z.number().positive('La quantité doit être supérieure à 0'),
+  prixUnitaire: z.number().nonnegative('Le prix unitaire doit être positif ou nul'),
 });
 
 const commandeSchema = z.object({
@@ -85,10 +85,12 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   }
 
   const body = await request.json();
+  console.log('Données reçues pour création de commande:', body);
 
   // Validate with Zod
   const result = commandeSchema.safeParse(body);
   if (!result.success) {
+    console.error('Erreur de validation commande:', result.error.issues);
     throw new ValidationError('Données invalides', formatZodErrors(result.error.issues));
   }
 

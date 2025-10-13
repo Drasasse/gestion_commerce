@@ -5,8 +5,12 @@ import { prisma } from "@/lib/prisma"
 import { z } from "zod"
 
 const rapportQuerySchema = z.object({
-  type: z.enum(['ventes', 'produits', 'clients', 'stocks', 'financier']),
-  periode: z.enum(['jour', 'semaine', 'mois', 'trimestre', 'annee']).optional(),
+  type: z.string().refine((val) => ['ventes', 'produits', 'clients', 'stocks', 'financier'].includes(val), {
+    message: "Le type doit être l'un de: ventes, produits, clients, stocks, financier"
+  }),
+  periode: z.string().refine((val) => ['jour', 'semaine', 'mois', 'trimestre', 'annee'].includes(val), {
+    message: "La période doit être l'une de: jour, semaine, mois, trimestre, annee"
+  }).optional(),
   dateDebut: z.string().optional(),
   dateFin: z.string().optional(),
 })
@@ -80,44 +84,39 @@ interface RapportFinancier extends RapportBase {
 
 type RapportType = RapportVentes | RapportProduits | RapportClients | RapportStocks | RapportFinancier;
 
-export async function GET(request: NextRequest) {
+export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+    }
+
+    const boutiqueId = session.user.boutiqueId
+    if (!boutiqueId) {
+      return NextResponse.json({ error: 'Boutique non trouvée' }, { status: 404 })
     }
 
     const { searchParams } = new URL(request.url)
-    const boutiqueIdParam = searchParams.get('boutiqueId')
-
-    let query;
-    try {
-      query = rapportQuerySchema.parse({
-        type: searchParams.get('type'),
-        periode: searchParams.get('periode'),
-        dateDebut: searchParams.get('dateDebut'),
-        dateFin: searchParams.get('dateFin'),
-      });
-    } catch (error) {
-      console.error('Validation error in query params:', error);
-      return NextResponse.json(
-        { error: "Paramètres invalides. Le paramètre 'type' est requis et doit être l'un de: ventes, produits, clients, stocks, financier" },
-        { status: 400 }
-      );
+    const queryParams = {
+      type: searchParams.get('type'),
+      periode: searchParams.get('periode'),
+      dateDebut: searchParams.get('dateDebut'),
+      dateFin: searchParams.get('dateFin')
     }
 
-    // Déterminer le boutiqueId à utiliser
-    let boutiqueId: string;
-    if (session.user.role === 'ADMIN' && boutiqueIdParam) {
-      boutiqueId = boutiqueIdParam;
-    } else if (session.user.boutiqueId) {
-      boutiqueId = session.user.boutiqueId;
-    } else {
-      return NextResponse.json(
-        { error: 'Boutique non spécifiée' },
-        { status: 400 }
-      );
+    console.log('Paramètres reçus pour rapport:', queryParams)
+    console.log('URL complète:', request.url)
+
+    const validation = rapportQuerySchema.safeParse(queryParams)
+    if (!validation.success) {
+      console.error('Erreur de validation:', validation.error.issues)
+      return NextResponse.json({ 
+        error: `Paramètres invalides. Le paramètre 'type' est requis et doit être l'un de: ventes, produits, clients, stocks, financier`,
+        details: validation.error.issues
+      }, { status: 400 })
     }
+
+    const query = validation.data
     const now = new Date()
     let dateDebut: Date
     let dateFin: Date = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59)
@@ -169,6 +168,10 @@ export async function GET(request: NextRequest) {
       case 'financier':
         rapport = await genererRapportFinancier(boutiqueId, dateDebut, dateFin)
         break
+      default:
+        return NextResponse.json({ 
+          error: `Type de rapport non supporté: ${query.type}` 
+        }, { status: 400 })
     }
 
     return NextResponse.json({
