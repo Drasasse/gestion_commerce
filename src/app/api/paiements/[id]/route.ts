@@ -150,7 +150,7 @@ export async function PUT(
       })
 
       if (vente) {
-         const montantTotalPaye = vente.paiements.reduce((sum: number, p) => sum + p.montant, 0)
+         const montantTotalPaye = vente.paiements.reduce((sum: number, p: Paiement) => sum + p.montant, 0)
         const montantRestant = vente.montantTotal - montantTotalPaye
 
         let nouveauStatut: 'PAYE' | 'IMPAYE' | 'PARTIEL'

@@ -7,18 +7,18 @@ import { z } from "zod"
 // Interfaces TypeScript pour les données de rapport
 interface ProduitVendu {
   produitId: string
-  _sum: { quantite: number | null; montantTotal: number | null }
-  _count: number
+  _sum: { quantite: number | null; sousTotal: number | null }
 }
 
 interface ProduitDetail {
   id: string
   nom: string
   prixVente: number
+  categorie?: { nom: string } | null
 }
 
 interface VenteParJour {
-  date: Date
+  dateVente: Date
   _sum: { montantTotal: number | null }
   _count: number
 }
@@ -36,9 +36,14 @@ interface ProduitPopulaire {
 
 interface StockProduit {
   id: string
+  boutiqueId: string
+  createdAt: Date
+  updatedAt: Date
   quantite: number
+  derniereEntree: Date | null
+  derniereSortie: Date | null
+  produitId: string
   produit: {
-    id: string
     nom: string
     prixVente: number
     seuilAlerte: number
@@ -94,11 +99,13 @@ interface RapportBase {
 interface RapportVentes extends RapportBase {
   resume: {
     totalVentes: number;
+    nombreVentes: number;
+    venteMoyenne: number;
     chiffreAffaires: number;
-    ventesParJour: Array<{ date: string; nombre: number; montant: number }>;
   };
-  produitsPopulaires: Array<{ produit: { nom: string }; _sum: { quantite: number } }>;
-  statutsVente: Array<{ statut: string; _count: number }>;
+  ventesParJour: Array<{ date: Date; montant: number; nombre: number }>;
+  produitsVendus: Array<{ produitId: string; nom: string; quantiteVendue: number; chiffreAffaires: number }>;
+  methodesVente: Array<{ methode: string; nombre: number; montant: number }>;
 }
 
 interface RapportProduits extends RapportBase {
@@ -340,7 +347,7 @@ async function genererRapportVentes(boutiqueId: string, dateDebut: Date, dateFin
       chiffreAffaires: totalVentes
     },
     ventesParJour: (ventesParJour as VenteParJour[]).map(v => ({
-      date: v.date,
+      date: v.dateVente,
       montant: v._sum.montantTotal || 0,
       nombre: v._count
     })),
@@ -562,14 +569,10 @@ async function genererRapportStocks(boutiqueId: string) {
       valeurTotale: analyse.valeurTotale
     },
     mouvementsRecents: mouvementsRecents.map((m: any) => ({
-      id: m.id,
       type: m.type,
       quantite: m.quantite,
       motif: m.motif || '',
-      dateCreation: m.createdAt,
-      produit: {
-        nom: m.stock?.produit?.nom || 'Produit inconnu'
-      }
+      createdAt: m.createdAt
     }))
   }
 }
