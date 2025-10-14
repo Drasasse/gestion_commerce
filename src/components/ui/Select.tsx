@@ -17,8 +17,6 @@ interface SelectProps {
   className?: string;
 }
 
-export interface SelectContentProps extends React.HTMLAttributes<HTMLDivElement> {}
-
 export interface SelectItemProps extends React.OptionHTMLAttributes<HTMLOptionElement> {
   value: string;
 }
@@ -63,7 +61,7 @@ export function Select({
   );
 }
 
-const SelectContent = React.forwardRef<HTMLDivElement, SelectContentProps>(
+const SelectContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, children, ...props }, ref) => {
     return (
       <div

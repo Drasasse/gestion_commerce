@@ -48,7 +48,7 @@ export function Table<T = Record<string, unknown>>({
             </tr>
           ) : (
             data.map((item, index) => (
-              <tr key={(item as any).id || index} className="table-row">
+              <tr key={('id' in item && typeof item.id === 'string') ? item.id : index} className="table-row">
                 {renderRow(item, index)}
               </tr>
             ))
