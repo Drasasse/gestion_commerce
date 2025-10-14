@@ -1,16 +1,18 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Label } from '@/components/ui/Label';
+import { Textarea } from '@/components/ui/Textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/Select';
+import { Checkbox } from '@/components/ui/Checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/RadioGroup';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Separator } from '@/components/ui/separator';
 import { Plus, Minus, Save, X } from 'lucide-react';
+
+type FormFieldValue = string | number | boolean | Date | null | undefined;
 
 export interface FormField {
   name: string;
@@ -19,8 +21,8 @@ export interface FormField {
   required?: boolean;
   placeholder?: string;
   options?: { value: string; label: string }[];
-  validation?: (value: any) => string | null;
-  defaultValue?: any;
+  validation?: (value: FormFieldValue) => string | null;
+  defaultValue?: FormFieldValue;
   description?: string;
 }
 
@@ -32,9 +34,9 @@ export interface FormSection {
 
 export interface AdvancedFormProps {
   sections: FormSection[];
-  onSubmit?: (data: Record<string, any>) => Promise<void>;
+  onSubmit?: (data: Record<string, FormFieldValue>) => Promise<void>;
   onCancel?: () => void;
-  initialData?: Record<string, any>;
+  initialData?: Record<string, FormFieldValue>;
   submitLabel?: string;
   cancelLabel?: string;
   className?: string;
@@ -51,12 +53,12 @@ export default function AdvancedForm({
   className = '',
   allowDynamicFields = false
 }: AdvancedFormProps) {
-  const [formData, setFormData] = useState<Record<string, any>>(initialData);
+  const [formData, setFormData] = useState<Record<string, FormFieldValue>>(initialData);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [dynamicFields, setDynamicFields] = useState<Record<string, FormField[]>>({});
 
-  const updateField = useCallback((name: string, value: any) => {
+  const updateField = useCallback((name: string, value: FormFieldValue) => {
     setFormData(prev => ({ ...prev, [name]: value }));
     
     // Clear error when field is updated

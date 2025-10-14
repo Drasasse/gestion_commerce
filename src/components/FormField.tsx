@@ -18,7 +18,9 @@ export interface FormFieldProps extends Omit<React.InputHTMLAttributes<HTMLInput
   size?: 'sm' | 'md' | 'lg';
 }
 
-const FormField = forwardRef<HTMLInputElement, FormFieldProps>(
+type FormFieldElement = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+
+const FormField = forwardRef<FormFieldElement, FormFieldProps>(
   ({
     label,
     error,
@@ -42,54 +44,83 @@ const FormField = forwardRef<HTMLInputElement, FormFieldProps>(
     const [showPassword, setShowPassword] = useState(false);
     const [isFocused, setIsFocused] = useState(false);
 
-    const inputType = type === 'password' && showPassword ? 'text' : type;
-    const hasError = !!error;
-    const hasSuccess = !!success && !hasError;
+    const hasError = Boolean(error);
+    const hasSuccess = Boolean(success);
 
-    // Classes de base
     const baseClasses = `
-      w-full transition-all duration-200 ease-in-out
-      border rounded-lg
+      w-full px-3 py-2 border rounded-md transition-colors duration-200
       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
       disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed
-      ${hasError ? 'border-red-500 focus:ring-red-500' : ''}
-      ${hasSuccess ? 'border-green-500 focus:ring-green-500' : ''}
-      ${!hasError && !hasSuccess ? 'border-gray-300 hover:border-gray-400' : ''}
     `;
 
-    // Classes selon la variante
     const variantClasses = {
-      default: 'bg-white',
-      filled: 'bg-gray-50 border-transparent focus:bg-white',
-      outlined: 'bg-transparent border-2'
+      default: 'bg-white border-gray-300',
+      filled: 'bg-gray-50 border-gray-200',
+      outlined: 'bg-transparent border-2 border-gray-300'
     };
 
-    // Classes selon la taille
     const sizeClasses = {
-      sm: 'px-3 py-2 text-sm',
-      md: 'px-4 py-3 text-base',
-      lg: 'px-5 py-4 text-lg'
+      sm: 'px-2 py-1 text-sm',
+      md: 'px-3 py-2',
+      lg: 'px-4 py-3 text-lg'
     };
+
+    const stateClasses = hasError
+      ? 'border-red-500 focus:ring-red-500'
+      : hasSuccess
+      ? 'border-green-500 focus:ring-green-500'
+      : isFocused
+      ? 'border-blue-500'
+      : '';
 
     const inputClasses = `
       ${baseClasses}
       ${variantClasses[variant]}
       ${sizeClasses[size]}
+      ${stateClasses}
       ${leftIcon ? 'pl-10' : ''}
-      ${rightIcon || showPasswordToggle || hasError || hasSuccess ? 'pr-10' : ''}
+      ${rightIcon || (type === 'password' && showPasswordToggle) ? 'pr-10' : ''}
       ${className}
     `;
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       onChange?.(e);
       if (onValidate && 'value' in e.target) {
         onValidate(e.target.value);
       }
     };
 
-    const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      // Cast to match the expected type for onChange prop
+      onChange?.(e as any);
+      if (onValidate && 'value' in e.target) {
+        onValidate(e.target.value);
+      }
+    };
+
+    const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+      // Cast to match the expected type for onChange prop
+      onChange?.(e as any);
+      if (onValidate && 'value' in e.target) {
+        onValidate(e.target.value);
+      }
+    };
+
+    const handleInputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
       setIsFocused(false);
       onBlur?.(e);
+    };
+
+    const handleTextareaBlur = (e: React.FocusEvent<HTMLTextAreaElement>) => {
+      setIsFocused(false);
+      // Cast to match the expected type for onBlur prop
+      onBlur?.(e as any);
+    };
+
+    const handleSelectBlur = (e: React.FocusEvent<HTMLSelectElement>) => {
+      setIsFocused(false);
+      // Cast to match the expected type for onBlur prop
+      onBlur?.(e as any);
     };
 
     const handleFocus = () => {
@@ -97,31 +128,57 @@ const FormField = forwardRef<HTMLInputElement, FormFieldProps>(
     };
 
     const renderInput = () => {
-      const commonProps = {
-        ...props,
-        className: inputClasses,
-        onChange: handleChange,
-        onBlur: handleBlur,
-        onFocus: handleFocus,
-        'aria-invalid': hasError,
-        'aria-describedby': `${props.id}-hint ${props.id}-error`,
-      };
-
       if (type === 'textarea') {
+        // Extract only compatible props for textarea
+        const { 
+          onCopy, onCut, onPaste, onCompositionEnd, onCompositionStart, onCompositionUpdate, 
+          onSelect, onBeforeInput, onInput, onCopyCapture, onCutCapture, onPasteCapture,
+          onCompositionEndCapture, onCompositionStartCapture, onCompositionUpdateCapture,
+          onSelectCapture, onBeforeInputCapture, onInputCapture,
+          ...compatibleProps 
+        } = props;
+        const textareaProps = {
+          ...compatibleProps,
+          className: inputClasses,
+          onChange: handleTextareaChange,
+          onBlur: handleTextareaBlur,
+          onFocus: handleFocus,
+          'aria-invalid': hasError,
+          'aria-describedby': `${props.id}-hint ${props.id}-error`,
+          rows,
+        };
+
         return (
           <textarea
             ref={ref as React.Ref<HTMLTextAreaElement>}
-            rows={rows}
-            {...commonProps}
+            {...textareaProps}
           />
         );
       }
 
       if (type === 'select') {
+        // Extract only compatible props for select
+        const { 
+          onCopy, onCut, onPaste, onCompositionEnd, onCompositionStart, onCompositionUpdate, 
+          onSelect, onBeforeInput, onInput, onCopyCapture, onCutCapture, onPasteCapture,
+          onCompositionEndCapture, onCompositionStartCapture, onCompositionUpdateCapture,
+          onSelectCapture, onBeforeInputCapture, onInputCapture,
+          ...compatibleProps 
+        } = props;
+        const selectProps = {
+          ...compatibleProps,
+          className: inputClasses,
+          onChange: handleSelectChange,
+          onBlur: handleSelectBlur,
+          onFocus: handleFocus,
+          'aria-invalid': hasError,
+          'aria-describedby': `${props.id}-hint ${props.id}-error`,
+        };
+
         return (
           <select
             ref={ref as React.Ref<HTMLSelectElement>}
-            {...commonProps}
+            {...selectProps}
           >
             {options.map((option) => (
               <option key={option.value} value={option.value}>
@@ -132,95 +189,83 @@ const FormField = forwardRef<HTMLInputElement, FormFieldProps>(
         );
       }
 
+      // Default input
+      const inputProps = {
+        ...props,
+        type: type === 'password' && showPassword ? 'text' : type,
+        className: inputClasses,
+        onChange: handleInputChange,
+        onBlur: handleInputBlur,
+        onFocus: handleFocus,
+        'aria-invalid': hasError,
+        'aria-describedby': `${props.id}-hint ${props.id}-error`,
+      };
+
       return (
         <input
           ref={ref as React.Ref<HTMLInputElement>}
-          type={inputType}
-          {...commonProps}
+          {...inputProps}
         />
       );
     };
 
     return (
-      <div className="space-y-2">
-        {/* Label */}
+      <div className="space-y-1">
         <label
           htmlFor={props.id}
           className={`
-            block text-sm font-medium transition-colors duration-200
-            ${hasError ? 'text-red-700' : 'text-gray-700'}
-            ${isFocused ? 'text-blue-600' : ''}
+            block text-sm font-medium
+            ${hasError ? 'text-red-700' : hasSuccess ? 'text-green-700' : 'text-gray-700'}
           `}
         >
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
         </label>
 
-        {/* Input Container */}
         <div className="relative">
-          {/* Left Icon */}
           {leftIcon && (
-            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-              {leftIcon}
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <div className="text-gray-400">{leftIcon}</div>
             </div>
           )}
 
-          {/* Input */}
           {renderInput()}
 
-          {/* Right Icons */}
-          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center space-x-1">
-            {/* Password Toggle */}
-            {type === 'password' && showPasswordToggle && (
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="text-gray-400 hover:text-gray-600 focus:outline-none"
-                tabIndex={-1}
-              >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-            )}
-
-            {/* Success Icon */}
-            {hasSuccess && (
-              <CheckCircle size={20} className="text-green-500" />
-            )}
-
-            {/* Error Icon */}
-            {hasError && (
-              <AlertCircle size={20} className="text-red-500" />
-            )}
-
-            {/* Custom Right Icon */}
-            {rightIcon && !hasError && !hasSuccess && (
-              <div className="text-gray-400">
-                {rightIcon}
-              </div>
-            )}
-          </div>
+          {(rightIcon || (type === 'password' && showPasswordToggle)) && (
+            <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+              {type === 'password' && showPasswordToggle ? (
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="text-gray-400 hover:text-gray-600 focus:outline-none"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              ) : (
+                <div className="text-gray-400">{rightIcon}</div>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Hint */}
         {hint && !error && !success && (
           <p id={`${props.id}-hint`} className="text-sm text-gray-500">
             {hint}
           </p>
         )}
 
-        {/* Success Message */}
-        {success && (
-          <p className="text-sm text-green-600 flex items-center space-x-1">
-            <CheckCircle size={16} />
-            <span>{success}</span>
+        {error && (
+          <p id={`${props.id}-error`} className="text-sm text-red-600 flex items-center gap-1">
+            <AlertCircle size={16} />
+            {error}
           </p>
         )}
 
-        {/* Error Message */}
-        {error && (
-          <p id={`${props.id}-error`} className="text-sm text-red-600 flex items-center space-x-1">
-            <AlertCircle size={16} />
-            <span>{error}</span>
+        {success && (
+          <p className="text-sm text-green-600 flex items-center gap-1">
+            <CheckCircle size={16} />
+            {success}
           </p>
         )}
       </div>

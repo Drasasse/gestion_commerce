@@ -169,18 +169,55 @@ export async function checkRateLimit(
   );
 }
 
+// Types pour les données de cache
+interface UserSessionData {
+  id: string;
+  email: string;
+  role: string;
+  boutiqueId?: string;
+  [key: string]: unknown;
+}
+
+interface ProductData {
+  id: string;
+  nom: string;
+  prix: number;
+  [key: string]: unknown;
+}
+
+interface ClientData {
+  id: string;
+  nom: string;
+  email: string;
+  [key: string]: unknown;
+}
+
+interface OrderData {
+  id: string;
+  clientId: string;
+  total: number;
+  [key: string]: unknown;
+}
+
+interface StatsData {
+  totalVentes: number;
+  totalClients: number;
+  totalProduits: number;
+  [key: string]: unknown;
+}
+
 /**
  * Cache pour les sessions utilisateur
  */
 export async function setUserSession(
   userId: string, 
-  sessionData: any, 
+  sessionData: UserSessionData, 
   ttlSeconds: number = 86400 // 24h par défaut
 ): Promise<boolean> {
   return setCache(`session:${userId}`, sessionData, ttlSeconds);
 }
 
-export async function getUserSession<T>(userId: string): Promise<T | null> {
+export async function getUserSession<T = UserSessionData>(userId: string): Promise<T | null> {
   return getCache<T>(`session:${userId}`);
 }
 
@@ -194,29 +231,29 @@ export async function deleteUserSession(userId: string): Promise<boolean> {
 export const AppCache = {
   // Cache des produits
   products: {
-    set: (data: any, ttl = 1800) => setCache('app:products', data, ttl), // 30 min
-    get: () => getCache('app:products'),
+    set: (data: ProductData[], ttl = 1800) => setCache('app:products', data, ttl), // 30 min
+    get: () => getCache<ProductData[]>('app:products'),
     delete: () => deleteCache('app:products')
   },
   
   // Cache des clients
   clients: {
-    set: (data: any, ttl = 3600) => setCache('app:clients', data, ttl), // 1h
-    get: () => getCache('app:clients'),
+    set: (data: ClientData[], ttl = 3600) => setCache('app:clients', data, ttl), // 1h
+    get: () => getCache<ClientData[]>('app:clients'),
     delete: () => deleteCache('app:clients')
   },
   
   // Cache des commandes
   orders: {
-    set: (data: any, ttl = 900) => setCache('app:orders', data, ttl), // 15 min
-    get: () => getCache('app:orders'),
+    set: (data: OrderData[], ttl = 900) => setCache('app:orders', data, ttl), // 15 min
+    get: () => getCache<OrderData[]>('app:orders'),
     delete: () => deleteCache('app:orders')
   },
   
   // Cache des statistiques
   stats: {
-    set: (data: any, ttl = 1800) => setCache('app:stats', data, ttl), // 30 min
-    get: () => getCache('app:stats'),
+    set: (data: StatsData, ttl = 1800) => setCache('app:stats', data, ttl), // 30 min
+    get: () => getCache<StatsData>('app:stats'),
     delete: () => deleteCache('app:stats')
   },
   

@@ -41,10 +41,13 @@ export function Form<T extends FieldValues>({
     } catch (error) {
       if (error instanceof z.ZodError) {
         error.issues.forEach((err) => {
-          methods.setError(err.path.join('.') as Path<T>, {
-            type: 'manual',
-            message: err.message,
-          });
+          const fieldPath = err.path.join('.') as Path<T>;
+          if (fieldPath) {
+            methods.setError(fieldPath, {
+              type: 'manual',
+              message: err.message,
+            });
+          }
         });
       }
     }

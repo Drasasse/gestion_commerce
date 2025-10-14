@@ -287,29 +287,41 @@ export const semanticTokens = {
   },
 } as const;
 
-// Utilitaires pour utiliser les tokens
-export const getColor = (path: string) => {
-  const keys = path.split('.');
-  let value: any = colors;
-  
-  for (const key of keys) {
-    value = value[key];
-    if (value === undefined) return undefined;
-  }
-  
-  return value;
+// Types pour les utilitaires de couleurs
+type ColorValue = string;
+type NestedColorObject = {
+  [key: string]: ColorValue | NestedColorObject;
 };
 
-export const getSemanticColor = (path: string) => {
+// Utilitaires pour utiliser les tokens
+export const getColor = (path: string): ColorValue | undefined => {
   const keys = path.split('.');
-  let value: any = semanticTokens.colors;
+  let value: ColorValue | NestedColorObject = colors;
   
   for (const key of keys) {
-    value = value[key];
-    if (value === undefined) return undefined;
+    if (typeof value === 'object' && value !== null && key in value) {
+      value = value[key];
+    } else {
+      return undefined;
+    }
   }
   
-  return value;
+  return typeof value === 'string' ? value : undefined;
+};
+
+export const getSemanticColor = (path: string): ColorValue | undefined => {
+  const keys = path.split('.');
+  let value: ColorValue | NestedColorObject = semanticTokens.colors;
+  
+  for (const key of keys) {
+    if (typeof value === 'object' && value !== null && key in value) {
+      value = value[key];
+    } else {
+      return undefined;
+    }
+  }
+  
+  return typeof value === 'string' ? value : undefined;
 };
 
 export type ColorPath = keyof typeof colors;

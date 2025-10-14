@@ -283,7 +283,10 @@ export default function DashboardPage() {
               <XAxis dataKey="date" />
               <YAxis />
               <Tooltip
-                formatter={(value: number) => formatMontant(value)}
+                formatter={(value: string | number | (string | number)[]) => {
+                  const numValue = typeof value === 'number' ? value : Number(value);
+                  return formatMontant(numValue);
+                }}
                 contentStyle={{ background: '#fff', border: '1px solid #ddd', borderRadius: '8px' }}
               />
               <Legend />
@@ -304,9 +307,10 @@ export default function DashboardPage() {
               <XAxis dataKey="nom" />
               <YAxis />
               <Tooltip
-                formatter={(value: number, name: string) =>
-                  name === 'ca' ? formatMontant(value) : value
-                }
+                formatter={(value: string | number | (string | number)[], name: string | number) => {
+                  const numValue = typeof value === 'number' ? value : Number(value);
+                  return name === 'ca' ? formatMontant(numValue) : numValue;
+                }}
                 contentStyle={{ background: '#fff', border: '1px solid #ddd', borderRadius: '8px' }}
               />
               <Legend />

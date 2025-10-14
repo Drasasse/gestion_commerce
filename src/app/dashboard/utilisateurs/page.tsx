@@ -6,9 +6,10 @@ import { redirect } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/Button';
-import { Modal } from '@/components/ui/Modal';
+import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
+import { Modal } from '@/components/ui/Modal';
 import { Table, TableCell } from '@/components/ui/Table';
 import { Edit, Trash2 } from 'lucide-react';
 
