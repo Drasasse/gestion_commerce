@@ -238,55 +238,59 @@ export default function CategoriesPage() {
 
           {/* Modal */}
           {showModal && (
-            <div className="modal-overlay fixed inset-0 flex items-center justify-center z-50">
-              <div className="modal-content rounded-lg p-6 w-full max-w-md mx-4">
-                <h2 className="text-lg font-semibold mb-4 text-card-foreground">
-                  {editingCategory ? 'Modifier la catégorie' : 'Ajouter une catégorie'}
-                </h2>
-                
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <label className="form-label">
-                      Nom *
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.nom}
-                      onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
-                      className={`form-input ${errors.nom ? 'error' : ''}`}
-                    />
-                    {errors.nom && <p className="text-red-500 text-xs mt-1">{errors.nom}</p>}
-                  </div>
+            <div className="fixed inset-0 bg-black bg-opacity-75 overflow-y-auto h-full w-full z-50">
+              <div className="relative top-20 mx-auto p-5 border w-96 shadow-xl rounded-lg bg-white dark:bg-gray-800">
+                <div className="mt-3">
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
+                    {editingCategory ? 'Modifier la catégorie' : 'Ajouter une catégorie'}
+                  </h3>
+                  
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
+                        Nom *
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.nom}
+                        onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
+                        className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm ${
+                          errors.nom ? 'border-red-500 bg-red-50 dark:bg-red-900/20' : 'border-gray-300 dark:border-gray-600'
+                        }`}
+                      />
+                      {errors.nom && <p className="text-red-500 text-xs mt-1">{errors.nom}</p>}
+                    </div>
 
-                  <div>
-                    <label className="form-label">
-                      Description
-                    </label>
-                    <textarea
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      rows={3}
-                      className="form-input resize-none"
-                      placeholder="Description optionnelle de la catégorie..."
-                    />
-                  </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
+                        Description
+                      </label>
+                      <textarea
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        rows={3}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm resize-none"
+                        placeholder="Description optionnelle de la catégorie..."
+                      />
+                    </div>
 
-                  <div className="flex justify-end space-x-3 pt-4">
-                    <button
-                      type="button"
-                      onClick={() => setShowModal(false)}
-                      className="btn-secondary px-4 py-2 rounded-md transition-colors"
-                    >
-                      Annuler
-                    </button>
-                    <button
-                      type="submit"
-                      className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
-                    >
-                      {editingCategory ? 'Modifier' : 'Ajouter'}
-                    </button>
-                  </div>
-                </form>
+                    <div className="flex justify-end space-x-3 pt-4">
+                      <button
+                        type="button"
+                        onClick={() => setShowModal(false)}
+                        className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-600 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
+                      >
+                        Annuler
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        {editingCategory ? 'Modifier' : 'Ajouter'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
               </div>
             </div>
           )}
