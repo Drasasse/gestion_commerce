@@ -5,6 +5,9 @@ import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
 import ExportButton from '@/components/ExportButton';
 import { exportProduitsToExcel, exportProduitsToCSV } from '@/lib/export';
+import FormField from '@/components/FormField';
+import { useRealtimeValidation } from '@/hooks/useFormValidation';
+import { z } from 'zod';
 
 interface Categorie {
   id: string;
@@ -35,6 +38,36 @@ interface FormData {
   categorieId: string;
 }
 
+// Schéma de validation pour les produits
+const validationSchema = z.object({
+  nom: z.string()
+    .min(1, 'Le nom est requis')
+    .min(2, 'Le nom doit contenir au moins 2 caractères')
+    .max(100, 'Le nom ne peut pas dépasser 100 caractères'),
+  description: z.string()
+    .max(500, 'La description ne peut pas dépasser 500 caractères')
+    .optional(),
+  prixAchat: z.string()
+    .min(1, 'Le prix d\'achat est requis')
+    .refine((val) => {
+      const num = parseFloat(val);
+      return !isNaN(num) && num > 0;
+    }, 'Le prix d\'achat doit être un nombre positif'),
+  prixVente: z.string()
+    .min(1, 'Le prix de vente est requis')
+    .refine((val) => {
+      const num = parseFloat(val);
+      return !isNaN(num) && num > 0;
+    }, 'Le prix de vente doit être un nombre positif'),
+  seuilAlerte: z.string()
+    .refine((val) => {
+      const num = parseInt(val);
+      return !isNaN(num) && num >= 0;
+    }, 'Le seuil d\'alerte doit être un nombre positif ou zéro'),
+  categorieId: z.string()
+    .min(1, 'La catégorie est requise')
+});
+
 export default function ProduitsPage() {
   const { data: session, status } = useSession();
   const [produits, setProduits] = useState<Produit[]>([]);
@@ -53,6 +86,14 @@ export default function ProduitsPage() {
     categorieId: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Hook de validation en temps réel
+  const { 
+    errors: validationErrors, 
+    validateField, 
+    validateForm, 
+    isValid 
+  } = useRealtimeValidation(validationSchema);
 
   // Charger les données
   useEffect(() => {
@@ -106,19 +147,9 @@ export default function ProduitsPage() {
     e.preventDefault();
     setErrors({});
 
-    // Validation
-    const newErrors: Record<string, string> = {};
-    if (!formData.nom.trim()) newErrors.nom = 'Le nom est requis';
-    if (!formData.prixAchat || parseFloat(formData.prixAchat) <= 0) {
-      newErrors.prixAchat = 'Le prix d\'achat doit être positif';
-    }
-    if (!formData.prixVente || parseFloat(formData.prixVente) <= 0) {
-      newErrors.prixVente = 'Le prix de vente doit être positif';
-    }
-    if (!formData.categorieId) newErrors.categorieId = 'La catégorie est requise';
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
+    // Validation avec le hook de validation en temps réel
+    const isFormValid = validateForm(formData);
+    if (!isFormValid) {
       return;
     }
 
@@ -354,98 +385,96 @@ export default function ProduitsPage() {
             </h2>
             
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
-                  Nom *
-                </label>
-                <input
-                  type="text"
-                  value={formData.nom}
-                  onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
-                  className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm ${
-                    errors.nom ? 'border-red-500 bg-red-50 dark:bg-red-900/20' : 'border-gray-300 dark:border-gray-600'
-                  }`}
-                />
-                {errors.nom && <p className="text-red-500 text-xs mt-1">{errors.nom}</p>}
-              </div>
+              <FormField
+                label="Nom du produit"
+                type="text"
+                value={formData.nom}
+                onChange={(value) => {
+                  setFormData({ ...formData, nom: value });
+                  validateField('nom', value);
+                }}
+                error={validationErrors.nom}
+                required
+                leftIcon="📦"
+                placeholder="Nom du produit"
+              />
 
-              <div>
-                <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
-                  Description
-                </label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+              <FormField
+                label="Description"
+                type="textarea"
+                value={formData.description}
+                onChange={(value) => {
+                  setFormData({ ...formData, description: value });
+                  validateField('description', value);
+                }}
+                error={validationErrors.description}
+                leftIcon="📝"
+                placeholder="Description du produit (optionnel)"
+                rows={3}
+              />
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  label="Prix d'achat"
+                  type="number"
+                  value={formData.prixAchat}
+                  onChange={(value) => {
+                    setFormData({ ...formData, prixAchat: value });
+                    validateField('prixAchat', value);
+                  }}
+                  error={validationErrors.prixAchat}
+                  required
+                  leftIcon="💰"
+                  placeholder="0.00"
+                  step="0.01"
+                />
+
+                <FormField
+                  label="Prix de vente"
+                  type="number"
+                  value={formData.prixVente}
+                  onChange={(value) => {
+                    setFormData({ ...formData, prixVente: value });
+                    validateField('prixVente', value);
+                  }}
+                  error={validationErrors.prixVente}
+                  required
+                  leftIcon="💵"
+                  placeholder="0.00"
+                  step="0.01"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
-                    Prix d&apos;achat *
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.prixAchat}
-                    onChange={(e) => setFormData({ ...formData, prixAchat: e.target.value })}
-                    className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm ${
-                      errors.prixAchat ? 'border-red-500 bg-red-50 dark:bg-red-900/20' : 'border-gray-300 dark:border-gray-600'
-                    }`}
-                  />
-                  {errors.prixAchat && <p className="text-red-500 text-xs mt-1">{errors.prixAchat}</p>}
-                </div>
+                <FormField
+                  label="Seuil d'alerte"
+                  type="number"
+                  value={formData.seuilAlerte}
+                  onChange={(value) => {
+                    setFormData({ ...formData, seuilAlerte: value });
+                    validateField('seuilAlerte', value);
+                  }}
+                  error={validationErrors.seuilAlerte}
+                  leftIcon="⚠️"
+                  placeholder="5"
+                />
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
-                    Prix de vente *
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.prixVente}
-                    onChange={(e) => setFormData({ ...formData, prixVente: e.target.value })}
-                    className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm ${
-                      errors.prixVente ? 'border-red-500 bg-red-50 dark:bg-red-900/20' : 'border-gray-300 dark:border-gray-600'
-                    }`}
-                  />
-                  {errors.prixVente && <p className="text-red-500 text-xs mt-1">{errors.prixVente}</p>}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
-                    Seuil d&apos;alerte
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.seuilAlerte}
-                    onChange={(e) => setFormData({ ...formData, seuilAlerte: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
-                    Catégorie *
-                  </label>
-                  <select
-                    value={formData.categorieId}
-                    onChange={(e) => setFormData({ ...formData, categorieId: e.target.value })}
-                    className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm ${
-                      errors.categorieId ? 'border-red-500 bg-red-50 dark:bg-red-900/20' : 'border-gray-300 dark:border-gray-600'
-                    }`}
-                  >
-                    <option value="">Sélectionner...</option>
-                    {categories.map(cat => (
-                      <option key={cat.id} value={cat.id}>{cat.nom}</option>
-                    ))}
-                  </select>
-                  {errors.categorieId && <p className="text-red-500 text-xs mt-1">{errors.categorieId}</p>}
-                </div>
+                <FormField
+                  label="Catégorie"
+                  type="select"
+                  value={formData.categorieId}
+                  onChange={(value) => {
+                    setFormData({ ...formData, categorieId: value });
+                    validateField('categorieId', value);
+                  }}
+                  error={validationErrors.categorieId}
+                  required
+                  leftIcon="🏷️"
+                  options={[
+                    { value: '', label: 'Sélectionner...' },
+                    ...categories.map(cat => ({ value: cat.id, label: cat.nom }))
+                  ]}
+                />
               </div>
 
               <div className="flex justify-end space-x-3 pt-4">

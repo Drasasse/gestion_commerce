@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+import { getCache, setCache, cached } from '@/lib/cache';
 
 const boutiqueSchema = z.object({
   nom: z.string().min(1, 'Le nom est requis'),
@@ -15,7 +15,7 @@ const boutiqueSchema = z.object({
 // GET - Récupérer toutes les boutiques (Admin uniquement)
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
 
     if (!session || session.user.role !== 'ADMIN') {
       return NextResponse.json(
@@ -27,25 +27,39 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const includeStats = searchParams.get('includeStats') === 'true';
 
-    const boutiques = await prisma.boutique.findMany({
-      orderBy: { createdAt: 'desc' },
-      include: includeStats ? {
-        _count: {
-          select: {
-            users: true,
-            produits: true,
-            ventes: true,
-            clients: true,
-          },
-        },
-        ventes: {
-          select: {
-            montantTotal: true,
-            montantRestant: true,
-          },
-        },
-      } : undefined,
-    });
+    // Clé de cache basée sur les paramètres
+    const cacheKey = `boutiques:${includeStats ? 'with-stats' : 'basic'}`;
+
+    // Utiliser le cache pour optimiser les performances
+    const boutiques = await cached(
+      cacheKey,
+      async () => {
+        return await prisma.boutique.findMany({
+          orderBy: { createdAt: 'desc' },
+          include: includeStats ? {
+            _count: {
+              select: {
+                users: true,
+                produits: true,
+                ventes: true,
+                clients: true,
+              },
+            },
+            ventes: {
+              select: {
+                montantTotal: true,
+                montantRestant: true,
+              },
+            },
+          } : undefined,
+        });
+      },
+      { 
+        ttl: includeStats ? 300 : 600, // 5 min avec stats, 10 min sans stats
+        prefix: 'api',
+        tags: ['boutiques']
+      }
+    );
 
     // Si stats demandées, calculer les totaux
     if (includeStats) {
@@ -95,7 +109,7 @@ export async function GET(request: NextRequest) {
 // POST - Créer une nouvelle boutique (Admin uniquement)
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
 
     if (!session || session.user.role !== 'ADMIN') {
       return NextResponse.json(

@@ -8,7 +8,7 @@
 import { nanoid } from 'nanoid';
 import { redis } from './redis';
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { auth } from '@/lib/auth';
 import { authOptions } from './auth';
 
 const CSRF_TOKEN_LENGTH = 32;
@@ -84,7 +84,7 @@ export async function checkCsrf(request: NextRequest): Promise<{
 
   try {
     // Récupérer la session
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user?.id) {
       return {
         valid: false,

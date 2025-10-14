@@ -1,24 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { checkRateLimit, apiRateLimiter, sensitiveApiRateLimiter } from '@/lib/rate-limit'
 import { invalidateByTag } from '@/lib/cache'
-
 // Interfaces TypeScript
 interface Paiement {
   id: string;
   montant: number;
 }
-
 interface VenteAvecPaiements {
   id: string;
   montantTotal: number;
   dateEcheance: Date | null;
   paiements: Paiement[];
 }
-
 const paiementSchema = z.object({
   venteId: z.string(),
   montant: z.number().positive(),
@@ -26,7 +22,6 @@ const paiementSchema = z.object({
   reference: z.string().optional(),
   notes: z.string().optional(),
 })
-
 const creanceQuerySchema = z.object({
   statut: z.enum(['PAYE', 'IMPAYE', 'PARTIEL']).optional(),
   clientId: z.string().optional(),
@@ -35,18 +30,14 @@ const creanceQuerySchema = z.object({
   page: z.string().optional(),
   limit: z.string().optional(),
 })
-
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-
+    const session = await auth()
     if (!session?.user) {
-      return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
+      return NextResponse.json({ error: "Non autoris�" }, { status: 401 })
     }
-
     const { searchParams } = new URL(request.url)
     const boutiqueIdParam = searchParams.get('boutiqueId')
-
     let query;
     try {
       query = creanceQuerySchema.parse({
@@ -69,28 +60,25 @@ export async function GET(request: NextRequest) {
         limit: '10',
       };
     }
-
-    // Déterminer le boutiqueId à utiliser
+    // D�terminer le boutiqueId � utiliser
     let boutiqueId: string;
     if (session.user.role === 'ADMIN' && boutiqueIdParam) {
-      // Admin peut spécifier une boutique
+      // Admin peut sp�cifier une boutique
       boutiqueId = boutiqueIdParam;
     } else if (session.user.boutiqueId) {
       // Gestionnaire utilise sa boutique
       boutiqueId = session.user.boutiqueId;
     } else {
       return NextResponse.json(
-        { error: 'Boutique non spécifiée' },
+        { error: 'Boutique non sp�cifi�e' },
         { status: 400 }
       );
     }
     const page = parseInt(query.page || '1')
     const limit = parseInt(query.limit || '10')
     const skip = (page - 1) * limit
-
     // Construire les filtres
     type PaymentStatus = 'PAYE' | 'IMPAYE' | 'PARTIEL';
-
     const where: {
       boutiqueId: string;
       statut?: PaymentStatus | { not: PaymentStatus };
@@ -98,17 +86,14 @@ export async function GET(request: NextRequest) {
       dateVente?: { gte?: Date; lte?: Date };
     } = {
       boutiqueId,
-      statut: { not: 'PAYE' } // Par défaut, afficher les créances non payées
+      statut: { not: 'PAYE' } // Par d�faut, afficher les cr�ances non pay�es
     }
-
     if (query.statut && (query.statut === 'PAYE' || query.statut === 'IMPAYE' || query.statut === 'PARTIEL')) {
       where.statut = query.statut as PaymentStatus
     }
-
     if (query.clientId) {
       where.clientId = query.clientId
     }
-
     if (query.dateDebut || query.dateFin) {
       where.dateVente = {}
       if (query.dateDebut) {
@@ -118,8 +103,7 @@ export async function GET(request: NextRequest) {
         where.dateVente.lte = new Date(query.dateFin)
       }
     }
-
-    // Récupérer les créances
+    // R�cup�rer les cr�ances
     const [creances, total] = await Promise.all([
       prisma.vente.findMany({
         where,
@@ -143,14 +127,12 @@ export async function GET(request: NextRequest) {
       }),
       prisma.vente.count({ where })
     ])
-
-    // Calculer les montants pour chaque créance
+    // Calculer les montants pour chaque cr�ance
     const creancesAvecMontants = (creances as VenteAvecPaiements[]).map((vente) => {
       const montantPaye = vente.paiements.reduce((sum: number, p) => sum + p.montant, 0)
       const montantRestant = vente.montantTotal - montantPaye
       const joursRetard = vente.dateEcheance ? 
         Math.max(0, Math.floor((new Date().getTime() - new Date(vente.dateEcheance).getTime()) / (1000 * 60 * 60 * 24))) : 0
-
       return {
         ...vente,
         montantPaye,
@@ -159,21 +141,18 @@ export async function GET(request: NextRequest) {
         enRetard: vente.dateEcheance ? new Date() > new Date(vente.dateEcheance) : false
       }
     })
-
     // Statistiques globales
     const stats = await prisma.vente.aggregate({
       where: { boutiqueId },
       _sum: { montantTotal: true },
       _count: true
     })
-
     const statsCreances = await prisma.vente.groupBy({
       by: ['statut'],
       where: { boutiqueId },
       _sum: { montantTotal: true },
       _count: true
     })
-
     // Calculer le total des paiements
     const totalPaiements = await prisma.paiement.aggregate({
       where: {
@@ -181,11 +160,9 @@ export async function GET(request: NextRequest) {
       },
       _sum: { montant: true }
     })
-
     const montantTotalCreances = stats._sum.montantTotal || 0
     const montantTotalPaye = totalPaiements._sum.montant || 0
     const montantTotalRestant = montantTotalCreances - montantTotalPaye
-
     return NextResponse.json({
       creances: creancesAvecMontants,
       pagination: {
@@ -206,36 +183,31 @@ export async function GET(request: NextRequest) {
         }))
       }
     })
-
   } catch (error) {
-    console.error('Erreur lors de la récupération des créances:', error)
+    console.error('Erreur lors de la r�cup�ration des cr�ances:', error)
     return NextResponse.json(
-      { error: "Erreur lors de la récupération des créances" },
+      { error: "Erreur lors de la r�cup�ration des cr�ances" },
       { status: 500 }
     )
   }
 }
-
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await auth()
     if (!session?.user) {
-      return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
+      return NextResponse.json({ error: "Non autoris�" }, { status: 401 })
     }
-
     const body = await request.json()
     const data = paiementSchema.parse(body)
-
-    // Déterminer le boutiqueId
+    // D�terminer le boutiqueId
     const boutiqueId = session.user.boutiqueId || body.boutiqueId;
     if (!boutiqueId) {
       return NextResponse.json(
-        { error: 'Boutique non spécifiée' },
+        { error: 'Boutique non sp�cifi�e' },
         { status: 400 }
       );
     }
-
-    // Vérifier que la vente existe et appartient à la boutique
+    // V�rifier que la vente existe et appartient � la boutique
     const vente = await prisma.vente.findFirst({
       where: {
         id: data.venteId,
@@ -245,29 +217,25 @@ export async function POST(request: NextRequest) {
         paiements: true
       }
     })
-
     if (!vente) {
       return NextResponse.json(
-        { error: "Vente non trouvée" },
+        { error: "Vente non trouv�e" },
         { status: 404 }
       )
     }
-
-    // Calculer le montant déjà payé
+    // Calculer le montant d�j� pay�
     const montantPaye = vente.paiements.reduce((sum: number, p) => sum + p.montant, 0)
     const montantRestant = vente.montantTotal - montantPaye
-
-    // Vérifier que le montant du paiement ne dépasse pas le montant restant
+    // V�rifier que le montant du paiement ne d�passe pas le montant restant
     if (data.montant > montantRestant) {
       return NextResponse.json(
-        { error: "Le montant du paiement dépasse le montant restant" },
+        { error: "Le montant du paiement d�passe le montant restant" },
         { status: 400 }
       )
     }
-
-    // Créer le paiement et mettre à jour le statut de la vente
+    // Cr�er le paiement et mettre � jour le statut de la vente
     const result = await prisma.$transaction(async (tx) => {
-      // Créer le paiement
+      // Cr�er le paiement
       const paiement = await tx.paiement.create({
         data: {
           venteId: data.venteId,
@@ -278,12 +246,10 @@ export async function POST(request: NextRequest) {
           dateCreation: new Date()
         }
       })
-
-      // Calculer le nouveau montant payé
+      // Calculer le nouveau montant pay�
       const nouveauMontantPaye = montantPaye + data.montant
       const nouveauMontantRestant = vente.montantTotal - nouveauMontantPaye
-
-      // Déterminer le nouveau statut
+      // D�terminer le nouveau statut
       let nouveauStatut: 'PAYE' | 'IMPAYE' | 'PARTIEL'
       if (nouveauMontantRestant === 0) {
         nouveauStatut = 'PAYE'
@@ -292,14 +258,12 @@ export async function POST(request: NextRequest) {
       } else {
         nouveauStatut = 'IMPAYE'
       }
-
-      // Mettre à jour le statut de la vente
+      // Mettre � jour le statut de la vente
       const venteUpdated = await tx.vente.update({
         where: { id: data.venteId },
         data: { statut: nouveauStatut }
       })
-
-      // Créer une transaction financière pour le paiement
+      // Cr�er une transaction financi�re pour le paiement
       await tx.transaction.create({
         data: {
           boutiqueId,
@@ -310,16 +274,13 @@ export async function POST(request: NextRequest) {
           dateTransaction: new Date()
         }
       })
-
       return { paiement, vente: venteUpdated }
     })
-
     return NextResponse.json(result.paiement, { status: 201 })
-
   } catch (error) {
-    console.error('Erreur lors de la création du paiement:', error)
+    console.error('Erreur lors de la cr�ation du paiement:', error)
     return NextResponse.json(
-      { error: "Erreur lors de la création du paiement" },
+      { error: "Erreur lors de la cr�ation du paiement" },
       { status: 500 }
     )
   }

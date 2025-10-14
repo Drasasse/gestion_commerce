@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { auth } from "@/lib/auth"
 import { Package, ShoppingCart, Users, TrendingUp, AlertCircle, FolderOpen, DollarSign, CreditCard } from "lucide-react"
 import Link from "next/link"
 
@@ -61,7 +60,7 @@ async function getRecentVentes(boutiqueId: string) {
 }
 
 export default async function BoutiquePage() {
-  const session = await getServerSession(authOptions)
+  const session = await auth()
   const boutiqueId = session?.user?.boutiqueId
 
   if (!boutiqueId) {

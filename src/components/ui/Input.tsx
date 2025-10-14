@@ -75,7 +75,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
             {label}
             {required && <span className="text-red-500 ml-1">*</span>}
@@ -84,7 +84,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
         <div className="relative">
           {leftIcon && (
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
               {leftIcon}
             </div>
           )}
@@ -109,7 +109,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           />
 
           {rightIcon && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
               {rightIcon}
             </div>
           )}
@@ -118,7 +118,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         {error && (
           <p
             id={`${inputId}-error`}
-            className="mt-1 text-sm text-red-600"
+            className="mt-1 text-sm text-red-600 dark:text-red-400"
             role="alert"
           >
             {error}
@@ -128,7 +128,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         {helperText && !error && (
           <p
             id={`${inputId}-helper`}
-            className="mt-1 text-sm text-muted-foreground"
+            className="mt-1 text-sm text-gray-500 dark:text-gray-400"
           >
             {helperText}
           </p>

@@ -57,50 +57,52 @@ export function Sidebar() {
 
   const SidebarContent = () => (
     <>
-      <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-start justify-between mb-2">
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">Gestion Commerce</h1>
+      <div className="p-6 border-b border-border">
+        <div className="flex items-start justify-between mb-3">
+          <h1 className="text-xl font-bold text-foreground">Gestion Commerce</h1>
           <ThemeToggle />
         </div>
-        <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+        <p className="text-sm text-muted-foreground mt-1">
           {session?.user?.name}
         </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
+        <p className="text-xs text-muted-foreground">
           {isAdmin ? "Administrateur" : session?.user?.boutique?.nom || "Gestionnaire"}
         </p>
       </div>
 
-      <nav className="flex-1 overflow-y-auto p-4 space-y-1">
+      <nav className="flex-1 overflow-y-auto p-4 flex flex-col gap-1">
         {links.map((link) => {
+          const isActive = pathname === link.href
           const Icon = link.icon
-          const isActive = pathname === link.href || pathname.startsWith(link.href + "/")
+          
           return (
             <Link
               key={link.href}
               href={link.href}
-              onClick={() => setMobileOpen(false)}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                isActive
-                  ? "bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-medium"
-                  : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-              }`}
+              className={`
+                flex items-center gap-3 px-4 py-2 rounded-lg transition-all
+                ${isActive 
+                  ? 'bg-primary/10 text-primary font-medium' 
+                  : 'text-foreground hover:bg-accent hover:text-accent-foreground'
+                }
+              `}
             >
-              <Icon size={20} />
-              <span>{link.label}</span>
+              <Icon className="h-5 w-5" />
+              {link.label}
             </Link>
           )
         })}
+        
+        <div className="mt-auto pt-4">
+          <button
+            onClick={() => signOut()}
+            className="flex items-center gap-3 px-4 py-2 rounded-lg text-destructive hover:bg-destructive/10 transition-all w-full"
+          >
+            <LogOut className="h-5 w-5" />
+            Déconnexion
+          </button>
+        </div>
       </nav>
-
-      <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-        <button
-          onClick={() => signOut({ callbackUrl: "/login" })}
-          className="flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors w-full"
-        >
-          <LogOut size={20} />
-          <span>Déconnexion</span>
-        </button>
-      </div>
     </>
   )
 
@@ -109,32 +111,34 @@ export function Sidebar() {
       {/* Mobile menu button */}
       <button
         onClick={() => setMobileOpen(!mobileOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg shadow-lg"
+        className="fixed top-4 left-4 z-50 p-2 bg-background text-foreground rounded-lg shadow-lg border md:hidden"
       >
-        {mobileOpen ? <X size={24} /> : <Menu size={24} />}
+        {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
       </button>
 
-      {/* Mobile sidebar */}
+      {/* Mobile overlay */}
       {mobileOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}
-      <aside
-        className={`lg:hidden fixed top-0 left-0 bottom-0 w-64 bg-white dark:bg-gray-900 shadow-xl z-40 transform transition-transform ${
-          mobileOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+
+      {/* Mobile sidebar */}
+      <div
+        className={`
+          fixed top-0 left-0 bottom-0 w-64 bg-background shadow-xl z-40 md:hidden
+          transform transition-transform duration-300 ease-in-out
+          ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}
+        `}
       >
-        <div className="flex flex-col h-full">
-          <SidebarContent />
-        </div>
-      </aside>
+        <SidebarContent />
+      </div>
 
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex flex-col w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 h-screen sticky top-0">
+      <div className="hidden md:flex w-64 bg-background border-r border-border h-screen sticky top-0 flex-col">
         <SidebarContent />
-      </aside>
+      </div>
     </>
   )
 }

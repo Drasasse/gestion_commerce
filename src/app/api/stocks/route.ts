@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 import { checkRateLimit, apiRateLimiter, sensitiveApiRateLimiter } from '@/lib/rate-limit';
@@ -10,8 +9,6 @@ const stockSchema = z.object({
   quantite: z.number().min(0, 'La quantité doit être positive'),
 });
 
-
-
 export async function GET(request: NextRequest) {
   try {
     // Rate limiting
@@ -20,7 +17,7 @@ export async function GET(request: NextRequest) {
       return rateLimitCheck.response!;
     }
 
-    const session = await getServerSession(authOptions);
+    const session = await auth();
 
     if (!session?.user) {
       return NextResponse.json(
@@ -141,7 +138,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     
     if (!session?.user?.boutiqueId) {
       return NextResponse.json(

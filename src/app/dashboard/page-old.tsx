@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { auth } from "@/lib/auth"
 import { Store, Package, ShoppingCart, TrendingUp, AlertCircle } from "lucide-react"
 
 async function getDashboardStats() {
@@ -56,7 +55,7 @@ async function getLowStock() {
 }
 
 export default async function DashboardPage() {
-  const session = await getServerSession(authOptions)
+  const session = await auth()
   const stats = await getDashboardStats()
   const boutiques = await getRecentBoutiques()
   const lowStock = await getLowStock()

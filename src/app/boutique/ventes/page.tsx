@@ -18,6 +18,9 @@ import {
 } from 'lucide-react';
 import ExportButton from '@/components/ExportButton';
 import { exportVentesToExcel, exportVentesToCSV } from '@/lib/export';
+import FormField from '@/components/FormField';
+import { useRealtimeValidation } from '@/hooks/useFormValidation';
+import { z } from 'zod';
 
 interface Produit {
   id: string;
@@ -76,6 +79,30 @@ interface VenteForm {
   dateVente?: string;
 }
 
+// Schéma de validation pour les ventes
+const validationSchema = z.object({
+  clientId: z.string().optional(),
+  dateVente: z.string()
+    .min(1, 'La date de vente est requise')
+    .refine((date) => {
+      const selectedDate = new Date(date);
+      const today = new Date();
+      today.setHours(23, 59, 59, 999); // Fin de journée
+      return selectedDate <= today;
+    }, 'La date ne peut pas être dans le futur'),
+  montantPaye: z.string()
+    .min(1, 'Le montant payé est requis')
+    .refine((val) => {
+      const num = parseFloat(val);
+      return !isNaN(num) && num >= 0;
+    }, 'Le montant payé doit être positif ou zéro'),
+  lignes: z.array(z.object({
+    produitId: z.string().min(1, 'Veuillez sélectionner un produit'),
+    quantite: z.number().min(1, 'La quantité doit être au moins 1'),
+    prixUnitaire: z.number().min(0, 'Le prix unitaire doit être positif')
+  })).min(1, 'Au moins un produit est requis')
+});
+
 export default function VentesPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -95,6 +122,14 @@ export default function VentesPage() {
     montantPaye: 0,
     dateVente: new Date().toISOString().split('T')[0], // Date du jour par défaut
   });
+
+  // Hook de validation en temps réel
+  const { 
+    errors: validationErrors, 
+    validateField, 
+    validateForm, 
+    isValid 
+  } = useRealtimeValidation(validationSchema);
 
   const loadVentes = useCallback(async () => {
     try {
@@ -431,41 +466,39 @@ export default function VentesPage() {
             
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
               {/* Client */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Client (optionnel)
-                </label>
-                <select
-                  value={formData.clientId}
-                  onChange={(e) => setFormData(prev => ({ ...prev, clientId: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="">Sélectionner un client</option>
-                  {clients.map((client) => (
-                    <option key={client.id} value={client.id}>
-                      {client.nom} {client.prenom || ''} {client.email ? `(${client.email})` : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <FormField
+                label="Client (optionnel)"
+                type="select"
+                value={formData.clientId || ''}
+                onChange={(value) => {
+                  setFormData(prev => ({ ...prev, clientId: value }));
+                  validateField('clientId', value);
+                }}
+                error={validationErrors.clientId}
+                leftIcon="👤"
+                options={[
+                  { value: '', label: 'Sélectionner un client' },
+                  ...clients.map((client) => ({
+                    value: client.id,
+                    label: `${client.nom} ${client.prenom || ''} ${client.email ? `(${client.email})` : ''}`
+                  }))
+                ]}
+              />
 
               {/* Date de vente */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Calendar className="w-4 h-4 inline mr-1" />
-                  Date de vente
-                </label>
-                <input
-                  type="date"
-                  value={formData.dateVente}
-                  onChange={(e) => setFormData(prev => ({ ...prev, dateVente: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Vous pouvez sélectionner une date passée pour enregistrer des ventes historiques
-                </p>
-              </div>
+              <FormField
+                label="Date de vente"
+                type="date"
+                value={formData.dateVente || ''}
+                onChange={(value) => {
+                  setFormData(prev => ({ ...prev, dateVente: value }));
+                  validateField('dateVente', value);
+                }}
+                error={validationErrors.dateVente}
+                required
+                leftIcon="📅"
+                helpText="Vous pouvez sélectionner une date passée pour enregistrer des ventes historiques"
+              />
 
               {/* Lignes de vente */}
               <div>
@@ -554,20 +587,22 @@ export default function VentesPage() {
                   </span>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Montant payé
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={formData.montantPaye}
-                    onChange={(e) => setFormData(prev => ({ ...prev, montantPaye: parseFloat(e.target.value) || 0 }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                  />
-                </div>
+                <FormField
+                  label="Montant payé"
+                  type="number"
+                  value={formData.montantPaye.toString()}
+                  onChange={(value) => {
+                    const montant = parseFloat(value) || 0;
+                    setFormData(prev => ({ ...prev, montantPaye: montant }));
+                    validateField('montantPaye', value);
+                  }}
+                  error={validationErrors.montantPaye}
+                  required
+                  leftIcon="💰"
+                  placeholder="0.00"
+                  step="0.01"
+                  min="0"
+                />
               </div>
 
               <div className="flex justify-end gap-3 pt-4 border-t">

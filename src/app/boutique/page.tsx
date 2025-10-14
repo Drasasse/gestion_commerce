@@ -4,7 +4,20 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { LineChart, Line, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { 
+  LazyLineChart as LineChart,
+  LazyLine as Line,
+  LazyPieChart as PieChart,
+  LazyPie as Pie,
+  LazyCell as Cell,
+  LazyResponsiveContainer as ResponsiveContainer,
+  LazyXAxis as XAxis,
+  LazyYAxis as YAxis,
+  LazyCartesianGrid as CartesianGrid,
+  LazyTooltip as Tooltip,
+  LazyLegend as Legend,
+  LazyChartWrapper
+} from '@/components/charts/LazyCharts';
 import { Package, ShoppingCart, Users, TrendingUp, AlertCircle, DollarSign, CreditCard, ArrowUpRight, ArrowDownRight, Calendar } from 'lucide-react';
 import { formatMontant, formatMontantCompact, formatDate } from '@/lib/utils';
 import { PageLoadingSkeleton } from '@/components/LoadingSkeleton';
@@ -337,8 +350,8 @@ export default function BoutiquePage() {
               <XAxis dataKey="date" />
               <YAxis />
               <Tooltip
-                formatter={(value: number, name: string) =>
-                  name === 'montant' ? formatMontant(value) : value
+                formatter={(value: any, name: string) =>
+                  name === 'montant' ? formatMontant(Number(value)) : value
                 }
                 contentStyle={{ background: '#fff', border: '1px solid #ddd', borderRadius: '8px' }}
               />
@@ -372,7 +385,7 @@ export default function BoutiquePage() {
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(value: number, name: string, props: { payload?: StatutVentesData }) => [
+                  formatter={(value: any, name: string, props: any) => [
                     `${value} ventes (${formatMontant(props.payload?.montant || 0)})`,
                     name,
                   ]}

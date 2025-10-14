@@ -16,6 +16,11 @@ import {
 } from 'lucide-react';
 import ExportButton from '@/components/ExportButton';
 import { exportClientsToExcel, exportClientsToCSV } from '@/lib/export';
+import AccessibleTable from '@/components/AccessibleTable';
+import { PageLoading, ButtonLoading, ModalLoading } from '@/components/GlobalLoading';
+import { useLoadingState, useCrudLoadingState } from '@/hooks/useLoadingState';
+import { useRealtimeValidation, ValidationSchema } from '@/hooks/useFormValidation';
+import FormField from '@/components/FormField';
 
 interface Client {
   id: string;
@@ -42,7 +47,6 @@ export default function ClientsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [clients, setClients] = useState<Client[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
@@ -54,10 +58,46 @@ export default function ClientsPage() {
     email: '',
   });
 
+  // États de chargement standardisés
+  const { isLoading: pageLoading, setLoading: setPageLoading } = useLoadingState({ isLoading: true });
+  const { creating, updating, deleting, setCreating, setUpdating, setDeleting, error: crudError, setError: setCrudError } = useCrudLoadingState();
+
+  // Schéma de validation
+  const validationSchema: ValidationSchema = {
+    nom: {
+      required: true,
+      minLength: 2,
+      maxLength: 50,
+    },
+    prenom: {
+      maxLength: 50,
+    },
+    telephone: {
+      phone: true,
+    },
+    email: {
+      email: true,
+    },
+    adresse: {
+      maxLength: 200,
+    },
+  };
+
+  // Validation en temps réel
+  const {
+    errors,
+    validateFieldRealtime,
+    markFieldAsTouched,
+    getFieldError,
+    validateForm,
+    clearErrors,
+  } = useRealtimeValidation(validationSchema);
+
 
 
   const loadClients = useCallback(async () => {
     try {
+      setPageLoading(true);
       const params = new URLSearchParams();
       if (searchTerm) params.append('search', searchTerm);
       
@@ -68,10 +108,11 @@ export default function ClientsPage() {
       }
     } catch (error) {
       console.error('Erreur lors du chargement des clients:', error);
+      setCrudError('Erreur lors du chargement des clients');
     } finally {
-      setLoading(false);
+      setPageLoading(false);
     }
-  }, [searchTerm]);
+  }, [searchTerm, setPageLoading, setCrudError]);
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -83,11 +124,7 @@ export default function ClientsPage() {
   }, [session, status, router, searchTerm, loadClients]);
 
   if (status === 'loading') {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    return <PageLoading text="Vérification de l'authentification..." />;
   }
 
   if (!session) {
@@ -97,7 +134,19 @@ export default function ClientsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validation du formulaire
+    if (!validateForm(formData)) {
+      return;
+    }
+    
     try {
+      const isEditing = !!editingClient;
+      if (isEditing) {
+        setUpdating(true);
+      } else {
+        setCreating(true);
+      }
+
       const url = editingClient ? `/api/clients/${editingClient.id}` : '/api/clients';
       const method = editingClient ? 'PUT' : 'POST';
       
@@ -113,13 +162,17 @@ export default function ClientsPage() {
         await loadClients();
         resetForm();
         setShowModal(false);
+        clearErrors();
       } else {
-        const error = await response.json();
-        alert(error.error || 'Une erreur est survenue');
+        const errorData = await response.json();
+        setCrudError(errorData.message || 'Erreur lors de la sauvegarde');
       }
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
-      alert('Une erreur est survenue');
+      setCrudError('Erreur de connexion');
+    } finally {
+      setCreating(false);
+      setUpdating(false);
     }
   };
 
@@ -173,7 +226,7 @@ export default function ClientsPage() {
     setShowModal(true);
   };
 
-  if (loading) {
+  if (pageLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
@@ -204,136 +257,110 @@ export default function ClientsPage() {
         </div>
       </div>
 
-      {/* Barre de recherche */}
-      <div className="mb-6">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-          <input
-            type="text"
-            placeholder="Rechercher un client..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-        </div>
-      </div>
+
 
       {/* Liste des clients */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Client
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Contact
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Ventes
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date d&apos;ajout
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {clients.map((client) => (
-                <tr key={client.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 h-10 w-10">
-                        <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                          <User className="h-5 w-5 text-blue-600" />
-                        </div>
-                      </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">
-                          {client.nom} {client.prenom}
-                        </div>
-                        {client.adresse && (
-                          <div className="text-sm text-gray-500 flex items-center gap-1">
-                            <MapPin className="h-3 w-3" />
-                            {client.adresse}
-                          </div>
-                        )}
-                      </div>
+      <AccessibleTable
+        data={clients}
+        columns={[
+          {
+            key: 'client',
+            header: 'Client',
+            sortable: true,
+            render: (client: Client) => (
+              <div className="flex items-center">
+                <div className="flex-shrink-0 h-10 w-10">
+                  <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                    <User className="h-5 w-5 text-blue-600" />
+                  </div>
+                </div>
+                <div className="ml-4">
+                  <div className="text-sm font-medium text-gray-900">
+                    {client.nom} {client.prenom}
+                  </div>
+                  {client.adresse && (
+                    <div className="text-sm text-gray-500 flex items-center gap-1">
+                      <MapPin className="h-3 w-3" />
+                      {client.adresse}
                     </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="space-y-1">
-                      {client.telephone && (
-                        <div className="text-sm text-gray-900 flex items-center gap-1">
-                          <Phone className="h-3 w-3" />
-                          {client.telephone}
-                        </div>
-                      )}
-                      {client.email && (
-                        <div className="text-sm text-gray-500 flex items-center gap-1">
-                          <Mail className="h-3 w-3" />
-                          {client.email}
-                        </div>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-1">
-                      <ShoppingCart className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm font-medium text-gray-900">
-                        {client._count.ventes}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(client.createdAt).toLocaleDateString('fr-FR')}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        onClick={() => openEditModal(client)}
-                        className="text-blue-600 hover:text-blue-900 p-1 rounded"
-                        title="Modifier"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(client)}
-                        className="text-red-600 hover:text-red-900 p-1 rounded"
-                        title="Supprimer"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {clients.length === 0 && (
-          <div className="text-center py-12">
-            <User className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">Aucun client</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Commencez par ajouter votre premier client.
-            </p>
-            <div className="mt-6">
-              <button
-                onClick={openCreateModal}
-                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Nouveau Client
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
+                  )}
+                </div>
+              </div>
+            )
+          },
+          {
+            key: 'contact',
+            header: 'Contact',
+            render: (client: Client) => (
+              <div className="space-y-1">
+                {client.telephone && (
+                  <div className="text-sm text-gray-900 flex items-center gap-1">
+                    <Phone className="h-3 w-3" />
+                    {client.telephone}
+                  </div>
+                )}
+                {client.email && (
+                  <div className="text-sm text-gray-500 flex items-center gap-1">
+                    <Mail className="h-3 w-3" />
+                    {client.email}
+                  </div>
+                )}
+              </div>
+            )
+          },
+          {
+            key: 'ventes',
+            header: 'Ventes',
+            sortable: true,
+            render: (client: Client) => (
+              <div className="flex items-center gap-1">
+                <ShoppingCart className="h-4 w-4 text-gray-400" />
+                <span className="text-sm font-medium text-gray-900">
+                  {client._count.ventes}
+                </span>
+              </div>
+            )
+          },
+          {
+            key: 'createdAt',
+            header: 'Date d\'ajout',
+            sortable: true,
+            render: (client: Client) => (
+              <span className="text-sm text-gray-500">
+                {new Date(client.createdAt).toLocaleDateString('fr-FR')}
+              </span>
+            )
+          },
+          {
+            key: 'actions',
+            header: 'Actions',
+            render: (client: Client) => (
+              <div className="flex items-center justify-end gap-2">
+                <button
+                  onClick={() => openEditModal(client)}
+                  className="text-blue-600 hover:text-blue-900 p-1 rounded"
+                  title="Modifier"
+                >
+                  <Edit className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => handleDelete(client)}
+                  className="text-red-600 hover:text-red-900 p-1 rounded"
+                  title="Supprimer"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            )
+          }
+        ]}
+        loading={pageLoading}
+        searchable={true}
+        onSearch={setSearchTerm}
+        emptyMessage="Aucun client trouvé"
+        ariaLabel="Liste des clients"
+        caption="Tableau des clients avec leurs informations de contact et historique des ventes"
+      />
 
       {/* Modal de création/édition */}
       {showModal && (
@@ -344,75 +371,115 @@ export default function ClientsPage() {
                 {editingClient ? 'Modifier le client' : 'Nouveau client'}
               </h3>
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
-                    Nom *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.nom}
-                    onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
-                    Prénom
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.prenom}
-                    onChange={(e) => setFormData({ ...formData, prenom: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
-                    Téléphone
-                  </label>
-                  <input
-                    type="tel"
-                    value={formData.telephone}
-                    onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
-                    Adresse
-                  </label>
-                  <textarea
-                    value={formData.adresse}
-                    onChange={(e) => setFormData({ ...formData, adresse: e.target.value })}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
-                  />
-                </div>
+                <FormField
+                  id="nom"
+                  label="Nom"
+                  type="text"
+                  required
+                  value={formData.nom}
+                  error={getFieldError('nom')}
+                  leftIcon={<User size={20} />}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setFormData({ ...formData, nom: value });
+                    validateFieldRealtime('nom', value);
+                  }}
+                  onBlur={() => markFieldAsTouched('nom')}
+                  placeholder="Entrez le nom du client"
+                />
+
+                <FormField
+                  id="prenom"
+                  label="Prénom"
+                  type="text"
+                  value={formData.prenom}
+                  error={getFieldError('prenom')}
+                  leftIcon={<User size={20} />}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setFormData({ ...formData, prenom: value });
+                    validateFieldRealtime('prenom', value);
+                  }}
+                  onBlur={() => markFieldAsTouched('prenom')}
+                  placeholder="Entrez le prénom du client"
+                />
+
+                <FormField
+                  id="telephone"
+                  label="Téléphone"
+                  type="tel"
+                  value={formData.telephone}
+                  error={getFieldError('telephone')}
+                  leftIcon={<Phone size={20} />}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setFormData({ ...formData, telephone: value });
+                    validateFieldRealtime('telephone', value);
+                  }}
+                  onBlur={() => markFieldAsTouched('telephone')}
+                  placeholder="Ex: +33 1 23 45 67 89"
+                  hint="Format: +33 ou 0 suivi de 9 chiffres"
+                />
+
+                <FormField
+                  id="email"
+                  label="Email"
+                  type="email"
+                  value={formData.email}
+                  error={getFieldError('email')}
+                  leftIcon={<Mail size={20} />}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setFormData({ ...formData, email: value });
+                    validateFieldRealtime('email', value);
+                  }}
+                  onBlur={() => markFieldAsTouched('email')}
+                  placeholder="client@exemple.com"
+                />
+
+                <FormField
+                  id="adresse"
+                  label="Adresse"
+                  type="textarea"
+                  rows={3}
+                  value={formData.adresse}
+                  error={getFieldError('adresse')}
+                  leftIcon={<MapPin size={20} />}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setFormData({ ...formData, adresse: value });
+                    validateFieldRealtime('adresse', value);
+                  }}
+                  onBlur={() => markFieldAsTouched('adresse')}
+                  placeholder="Adresse complète du client"
+                />
+                {/* Affichage des erreurs CRUD */}
+                {crudError && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-600">{crudError}</p>
+                  </div>
+                )}
+
                 <div className="flex justify-end gap-3 pt-4">
                   <button
                     type="button"
-                    onClick={() => setShowModal(false)}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 rounded-lg"
+                    onClick={() => {
+                      setShowModal(false);
+                      clearErrors();
+                      setCrudError(null);
+                    }}
+                    disabled={creating || updating}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Annuler
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg"
+                    disabled={creating || updating}
+                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
                   >
-                    {editingClient ? 'Modifier' : 'Créer'}
+                    {(creating || updating) && <ButtonLoading size="sm">Chargement...</ButtonLoading>}
+                    <span>{editingClient ? 'Modifier' : 'Créer'}</span>
                   </button>
                 </div>
               </form>

@@ -7,6 +7,7 @@
 import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
+import { useDesignTokens } from '@/hooks/useDesignTokens';
 
 const badgeVariants = cva(
   'inline-flex items-center rounded-full font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2',
@@ -47,23 +48,37 @@ export interface BadgeProps
 
 const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
   ({ className, variant, size, showDot, children, ...props }, ref) => {
+    const tokens = useDesignTokens();
+
+    const getDotColor = () => {
+      const colorMap = {
+        default: tokens.colors.gray[500],
+        primary: tokens.colors.primary[600],
+        success: tokens.colors.success[600],
+        warning: tokens.colors.warning[600],
+        danger: tokens.colors.error[600],
+        info: tokens.colors.info[600],
+        outline: tokens.semanticColors.text.primary,
+        solid: tokens.semanticColors.background.primary,
+      };
+      return colorMap[variant || 'default'];
+    };
+
     return (
       <span
         ref={ref}
-        className={cn(badgeVariants({ variant, size, dot: showDot, className }))}
+        className={cn(badgeVariants({ variant, size, dot: showDot }), className)}
         {...props}
       >
         {showDot && (
           <span
-            className={cn(
-              'mr-1.5 h-1.5 w-1.5 rounded-full',
-              variant === 'success' && 'bg-green-600',
-              variant === 'warning' && 'bg-orange-600',
-              variant === 'danger' && 'bg-red-600',
-              variant === 'primary' && 'bg-blue-600',
-              variant === 'info' && 'bg-cyan-600',
-              (variant === 'default' || !variant) && 'bg-gray-600'
-            )}
+            style={{
+              marginRight: tokens.spacing[2],
+              height: '6px',
+              width: '6px',
+              borderRadius: '50%',
+              backgroundColor: getDotColor(),
+            }}
             aria-hidden="true"
           />
         )}

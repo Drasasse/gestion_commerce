@@ -4,7 +4,19 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { LineChart, Line, BarChart, Bar, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { 
+  LazyLineChart as LineChart,
+  LazyLine as Line,
+  LazyBarChart as BarChart,
+  LazyBar as Bar,
+  LazyResponsiveContainer as ResponsiveContainer,
+  LazyXAxis as XAxis,
+  LazyYAxis as YAxis,
+  LazyCartesianGrid as CartesianGrid,
+  LazyTooltip as Tooltip,
+  LazyLegend as Legend,
+  LazyChartWrapper
+} from '@/components/charts/LazyCharts';
 import { Store, ShoppingCart, TrendingUp, AlertCircle, DollarSign, Users } from 'lucide-react';
 import { formatMontant, formatMontantCompact } from '@/lib/utils';
 import { PageLoadingSkeleton } from '@/components/LoadingSkeleton';
