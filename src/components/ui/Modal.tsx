@@ -31,29 +31,32 @@ export function Modal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 modal-overlay flex items-center justify-center z-50 p-4">
-      <div className={`modal-content rounded-lg w-full ${sizeClasses[size]} ${className}`}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0, 0, 0, 0.75)' }}>
+      <div 
+        className={`bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full ${sizeClasses[size]} ${className} border border-gray-200 dark:border-gray-700`}
+        style={{ backgroundColor: 'var(--card)', color: 'var(--card-foreground)' }}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-border">
-          <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 rounded-t-lg">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h2>
           <Button
             variant="outline"
             size="sm"
             onClick={onClose}
-            className="p-2"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             <X size={16} />
           </Button>
         </div>
 
         {/* Content */}
-        <div className="p-6">
+        <div className="p-6 bg-white dark:bg-gray-800">
           {children}
         </div>
 
         {/* Footer */}
         {footer && (
-          <div className="flex items-center justify-end gap-3 p-6 border-t border-border">
+          <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 rounded-b-lg">
             {footer}
           </div>
         )}

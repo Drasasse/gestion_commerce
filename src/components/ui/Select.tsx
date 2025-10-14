@@ -30,10 +30,10 @@ export function Select({
       onChange={(e) => onChange(e.target.value)}
       disabled={disabled}
       className={`
-        w-full px-3 py-2 border rounded-md bg-background text-foreground
-        focus:ring-2 focus:ring-ring focus:border-ring
-        disabled:bg-muted disabled:cursor-not-allowed disabled:opacity-50
-        ${error ? 'border-red-500' : 'border-input'}
+        w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+        focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm
+        disabled:bg-gray-100 dark:disabled:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50
+        ${error ? 'border-red-500 bg-red-50 dark:bg-red-900/20' : 'border-gray-300 dark:border-gray-600'}
         ${className}
       `}
     >

@@ -262,7 +262,7 @@ export default function UtilisateursPage() {
       >
         <form id="user-form" onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nom *</label>
+            <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Nom *</label>
             <Input
               type="text"
               value={formData.name}
@@ -273,7 +273,7 @@ export default function UtilisateursPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+            <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Email *</label>
             <Input
               type="email"
               value={formData.email}
@@ -284,7 +284,7 @@ export default function UtilisateursPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
               Mot de passe {editingUser ? '(laisser vide pour ne pas changer)' : '*'}
             </label>
             <Input
@@ -297,7 +297,7 @@ export default function UtilisateursPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Rôle *</label>
+            <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Rôle *</label>
             <Select
               value={formData.role}
               onChange={(value) => setFormData({ ...formData, role: value as 'ADMIN' | 'GESTIONNAIRE' })}
@@ -311,7 +311,7 @@ export default function UtilisateursPage() {
 
           {formData.role === 'GESTIONNAIRE' && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Boutique *</label>
+              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Boutique *</label>
               <Select
                 value={formData.boutiqueId}
                 onChange={(value) => setFormData({ ...formData, boutiqueId: value })}
