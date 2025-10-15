@@ -6,7 +6,7 @@ interface Column {
   className?: string;
 }
 
-interface TableProps<T = Record<string, unknown>> {
+interface TableProps<T extends Record<string, unknown> = Record<string, unknown>> {
   columns: Column[];
   data: T[];
   renderRow: (item: T, index: number) => React.ReactNode;
@@ -14,7 +14,7 @@ interface TableProps<T = Record<string, unknown>> {
   emptyMessage?: string;
 }
 
-export function Table<T = Record<string, unknown>>({ 
+export function Table<T extends Record<string, unknown> = Record<string, unknown>>({ 
   columns, 
   data, 
   renderRow, 

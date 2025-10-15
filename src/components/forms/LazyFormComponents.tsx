@@ -4,7 +4,7 @@
  */
 
 import dynamic from 'next/dynamic';
-import { LoadingSkeleton } from '@/components/LoadingSkeleton';
+import LoadingSkeleton from '@/components/LoadingSkeleton';
 
 // Skeleton spécifique pour les formulaires
 const FormSkeleton = () => (
@@ -37,11 +37,17 @@ const ComplexFormSkeleton = () => (
   </div>
 );
 
-// Date Picker avec lazy loading (si vous utilisez react-datepicker ou similar)
+// Date Picker avec composant natif HTML5
 export const LazyDatePicker = dynamic(
-  () => import('react-datepicker').then((mod) => ({ default: mod.default })).catch(() => ({ 
-    default: () => <input type="date" className="w-full px-3 py-2 border border-gray-300 rounded-md" />
-  })),
+  () => Promise.resolve({ 
+    default: ({ className = "", ...props }: React.InputHTMLAttributes<HTMLInputElement>) => (
+      <input 
+        type="date" 
+        className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${className}`}
+        {...props}
+      />
+    )
+  }),
   {
     loading: () => <DatePickerSkeleton />,
     ssr: false,
