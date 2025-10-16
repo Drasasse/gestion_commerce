@@ -9,7 +9,7 @@ import { Select } from '@/components/ui/Select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Separator } from '@/components/ui/separator';
+
 import { Plus, Minus, Save, X } from 'lucide-react';
 
 type FormFieldValue = string | number | boolean | Date | null | undefined;
@@ -236,7 +236,7 @@ export default function AdvancedForm({
 
   return (
     <form onSubmit={handleSubmit} className={`space-y-6 ${className}`}>
-      {sections.map((section, sectionIndex) => (
+      {sections.map((section) => (
         <Card key={section.title}>
           <CardHeader>
             <div className="flex items-center justify-between">

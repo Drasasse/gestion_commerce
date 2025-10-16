@@ -9,7 +9,6 @@ import {
   List, 
   ListOrdered, 
   Link,
-  Type,
   AlignLeft,
   AlignCenter,
   AlignRight
@@ -52,7 +51,7 @@ export default function RichTextEditor({
   }, [execCommand]);
 
   const insertLink = useCallback(() => {
-    const url = prompt('Entrez l\'URL du lien:');
+    const url = prompt("Entrez l'URL du lien:");
     if (url) {
       execCommand('createLink', url);
     }

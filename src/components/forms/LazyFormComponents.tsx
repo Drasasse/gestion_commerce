@@ -4,7 +4,6 @@
  */
 
 import dynamic from 'next/dynamic';
-import LoadingSkeleton from '@/components/LoadingSkeleton';
 
 // Skeleton spécifique pour les formulaires
 const FormSkeleton = () => (
@@ -142,7 +141,7 @@ export const LazyFormWrapper: React.FC<LazyFormWrapperProps> = ({
 };
 
 // Export par défaut avec tous les composants
-export default {
+const LazyFormComponents = {
   DatePicker: LazyDatePicker,
   RichTextEditor: LazyRichTextEditor,
   AdvancedForm: LazyAdvancedForm,
@@ -151,3 +150,5 @@ export default {
   AutoComplete: LazyAutoComplete,
   FormWrapper: LazyFormWrapper,
 };
+
+export default LazyFormComponents;

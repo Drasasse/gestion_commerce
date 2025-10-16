@@ -3,7 +3,7 @@
 import React, { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@/components/ui/Badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ChevronDown, X, Search } from 'lucide-react';
 
@@ -97,7 +97,7 @@ export default function MultiSelect({
               {displayedLabels.map((label, index) => (
                 <Badge
                   key={index}
-                  variant="secondary"
+                  variant="default"
                   className="text-xs"
                   onClick={(e) => {
                     e.stopPropagation();

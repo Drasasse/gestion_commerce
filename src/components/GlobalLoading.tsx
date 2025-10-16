@@ -143,8 +143,7 @@ export function ButtonLoading({
   loadingText?: string;
   disabled?: boolean;
   className?: string;
-  [key: string]: any;
-}) {
+} & React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
       disabled={disabled || isLoading}
@@ -167,10 +166,8 @@ export function ButtonLoading({
  * Composant de chargement pour les cartes
  */
 export function CardLoading({
-  title = 'Chargement...',
   className = '',
 }: {
-  title?: string;
   className?: string;
 }) {
   return (

@@ -115,7 +115,7 @@ export const LazyChartWrapper: React.FC<LazyChartWrapperProps> = ({
   );
 };
 
-export default {
+const LazyCharts = {
   LineChart: LazyLineChart,
   BarChart: LazyBarChart,
   PieChart: LazyPieChart,
@@ -130,3 +130,5 @@ export default {
   Tooltip: LazyTooltip,
   ChartWrapper: LazyChartWrapper,
 };
+
+export default LazyCharts;

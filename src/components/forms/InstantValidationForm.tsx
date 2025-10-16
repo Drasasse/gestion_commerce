@@ -45,13 +45,7 @@ const userSchema = {
     .min(1, 'Le rôle est requis'),
 };
 
-// Validation personnalisée pour la confirmation du mot de passe
-const confirmPasswordValidator = async (value: string, formData: Record<string, string>): Promise<string | null> => {
-  if (value !== formData.password) {
-    return 'Les mots de passe ne correspondent pas';
-  }
-  return null;
-};
+// Validation personnalisée pour la confirmation du mot de passe supprimée car non utilisée
 
 // Validation asynchrone pour l'email (simulation d'une vérification côté serveur)
 const emailAsyncValidator = async (email: string): Promise<string | null> => {
@@ -104,7 +98,7 @@ export const InstantValidationForm: React.FC<InstantValidationFormProps> = ({
     if (initialData) {
       validation.setFormData(initialData);
     }
-  }, [initialData]);
+  }, [initialData, validation]);
 
   // Validation personnalisée pour la confirmation du mot de passe
   const confirmPasswordProps = validation.getFieldProps('confirmPassword');
@@ -118,7 +112,7 @@ export const InstantValidationForm: React.FC<InstantValidationFormProps> = ({
         validation.clearFieldError('confirmPassword');
       }
     }
-  }, [confirmPasswordProps.value, passwordValue]);
+  }, [confirmPasswordProps.value, passwordValue, validation]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -148,7 +142,7 @@ export const InstantValidationForm: React.FC<InstantValidationFormProps> = ({
       
       // Réinitialiser le formulaire après succès
       validation.resetForm();
-    } catch (error) {
+    } catch {
       setSubmitMessage({
         type: 'error',
         message: 'Erreur lors de la soumission du formulaire'

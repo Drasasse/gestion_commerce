@@ -36,6 +36,7 @@ interface ProductFormData {
   prixVente: string;
   seuilAlerte: string;
   categorieId: string;
+  [key: string]: string;
 }
 
 // Schéma de validation pour les produits

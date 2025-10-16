@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { ResponsiveTable, Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from '../ResponsiveTable';
+import ResponsiveTable from '../ResponsiveTable';
 import { ChevronUp, ChevronDown, ArrowUpDown } from 'lucide-react';
 
 interface DataItem {
@@ -91,79 +91,78 @@ export function AccessibleDataTable({
       </div>
 
       <ResponsiveTable ariaLabel={`${title} avec ${data.length} éléments`}>
-        <Table 
+        <table 
           role="grid" 
-          ariaLabel={title}
+          aria-label={title}
+          className="min-w-full divide-y divide-gray-200 dark:divide-gray-700"
         >
-          <TableHead>
-            <TableRow>
-              <TableHeader
-                sortable
-                onSort={() => handleSort('name')}
-                sortDirection={sortField === 'name' ? sortDirection : null}
-                ariaLabel="Trier par nom"
-                className="flex items-center gap-2"
+          <thead className="bg-gray-50 dark:bg-gray-800">
+            <tr>
+              <th
+                onClick={() => handleSort('name')}
+                aria-label="Trier par nom"
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
               >
                 Nom {getSortIcon('name')}
-              </TableHeader>
-              <TableHeader
-                sortable
-                onSort={() => handleSort('email')}
-                sortDirection={sortField === 'email' ? sortDirection : null}
-                ariaLabel="Trier par email"
-                className="flex items-center gap-2"
+              </th>
+              <th
+                onClick={() => handleSort('email')}
+                aria-label="Trier par email"
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
               >
                 Email {getSortIcon('email')}
-              </TableHeader>
-              <TableHeader
-                sortable
-                onSort={() => handleSort('role')}
-                sortDirection={sortField === 'role' ? sortDirection : null}
-                ariaLabel="Trier par rôle"
-                className="flex items-center gap-2"
+              </th>
+              <th
+                onClick={() => handleSort('role')}
+                aria-label="Trier par rôle"
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
               >
                 Rôle {getSortIcon('role')}
-              </TableHeader>
-              <TableHeader
-                sortable
-                onSort={() => handleSort('status')}
-                sortDirection={sortField === 'status' ? sortDirection : null}
-                ariaLabel="Trier par statut"
-                className="flex items-center gap-2"
+              </th>
+              <th
+                onClick={() => handleSort('status')}
+                aria-label="Trier par statut"
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
               >
                 Statut {getSortIcon('status')}
-              </TableHeader>
-            </TableRow>
-          </TableHead>
-          <TableBody>
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
             {sortedData.map((item) => (
-              <TableRow
+              <tr
                 key={item.id}
                 onClick={selectable ? () => handleRowSelect(item) : undefined}
-                selected={selectedRows.has(item.id)}
-                ariaLabel={`${item.name}, ${item.email}, ${item.role}, ${item.status}`}
+                className={`cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 ${
+                  selectedRows.has(item.id) ? 'bg-blue-50 dark:bg-blue-900' : ''
+                }`}
+                aria-label={`${item.name}, ${item.email}, ${item.role}, ${item.status}`}
               >
-                <TableCell 
+                <td 
                   role="gridcell"
-                  ariaLabel={`Nom: ${item.name}`}
+                  aria-label={`Nom: ${item.name}`}
+                  className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100"
                 >
                   {item.name}
-                </TableCell>
-                <TableCell 
+                </td>
+                <td 
                   role="gridcell"
-                  ariaLabel={`Email: ${item.email}`}
+                  aria-label={`Email: ${item.email}`}
+                  className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400"
                 >
                   {item.email}
-                </TableCell>
-                <TableCell 
+                </td>
+                <td 
                   role="gridcell"
-                  ariaLabel={`Rôle: ${item.role}`}
+                  aria-label={`Rôle: ${item.role}`}
+                  className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400"
                 >
                   {item.role}
-                </TableCell>
-                <TableCell 
+                </td>
+                <td 
                   role="gridcell"
-                  ariaLabel={`Statut: ${item.status}`}
+                  aria-label={`Statut: ${item.status}`}
+                  className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400"
                 >
                   <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
                     item.status === 'active' 
@@ -172,11 +171,11 @@ export function AccessibleDataTable({
                   }`}>
                     {item.status === 'active' ? 'Actif' : 'Inactif'}
                   </span>
-                </TableCell>
-              </TableRow>
+                </td>
+              </tr>
             ))}
-          </TableBody>
-        </Table>
+          </tbody>
+        </table>
       </ResponsiveTable>
 
       {/* Instructions d'accessibilité pour les utilisateurs de lecteurs d'écran */}

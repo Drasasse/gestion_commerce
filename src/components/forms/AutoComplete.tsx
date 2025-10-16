@@ -216,7 +216,7 @@ export default function AutoComplete({
                         setIsOpen(false);
                       }}
                     >
-                      Utiliser "{searchTerm}"
+                      Utiliser &quot;{searchTerm}&quot;
                     </Button>
                   </div>
                 )}
@@ -261,7 +261,7 @@ export default function AutoComplete({
                     }}
                   >
                     <div className="font-medium text-gray-900 dark:text-gray-100">
-                      Utiliser "{searchTerm}"
+                      Utiliser &quot;{searchTerm}&quot;
                     </div>
                     <div className="text-sm text-gray-500 dark:text-gray-400">
                       Créer une nouvelle entrée

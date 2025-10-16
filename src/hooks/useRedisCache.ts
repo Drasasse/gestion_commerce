@@ -5,7 +5,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { getCacheOrFetch, deleteCache, AppCache } from '@/lib/redis';
-import type { Produit, Client } from '@/types';
 
 // Import types from redis.ts
 type ProductData = {

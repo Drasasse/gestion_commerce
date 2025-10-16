@@ -49,7 +49,7 @@ const VirtualTableSkeleton = () => (
 
 // Table accessible avec lazy loading
 export const LazyAccessibleDataTable = dynamic(
-  () => import('@/components/tables/AccessibleDataTable').then((mod) => ({ default: mod.default })).catch(() => ({
+  () => import('@/components/tables/AccessibleDataTable').then((mod) => ({ default: mod.AccessibleDataTable })).catch(() => ({
     default: () => <div className="p-4 text-center text-gray-500">Table accessible non disponible</div>
   })),
   {

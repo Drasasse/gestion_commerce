@@ -23,7 +23,7 @@ export interface InstantValidationFieldProps extends Omit<React.InputHTMLAttribu
   name: string;
   type?: 'text' | 'email' | 'password' | 'tel' | 'number' | 'url' | 'textarea' | 'select';
   validation?: ValidationRule;
-  zodSchema?: z.ZodType<any>;
+  zodSchema?: z.ZodType<unknown>;
   options?: { value: string; label: string }[];
   rows?: number;
   showPasswordToggle?: boolean;
@@ -206,7 +206,7 @@ export const InstantValidationField: React.FC<InstantValidationFieldProps> = ({
         }
       }
     }, debounceMs);
-  }, [validateValue, validation, debounceMs, onValidationComplete]);
+  }, [validateValue, debounceMs, onValidationComplete]);
 
   // Gérer les changements de valeur
   const handleChange = useCallback((newValue: string) => {

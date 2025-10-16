@@ -74,7 +74,7 @@ export default function EditableTable({
   }, [onDelete]);
 
   const renderCell = (row: Record<string, unknown>, column: EditableTableColumn): React.ReactNode => {
-    const rowId = row[idField];
+    const rowId = row[idField] as string | number;
     const value = String(row[column.key] || '');
     const isEditing = editingCell?.rowId === rowId && editingCell?.field === column.key;
     const isLoading = loading === `${rowId}-${column.key}`;
@@ -154,7 +154,7 @@ export default function EditableTable({
         </thead>
         <tbody>
           {data.map((row, index) => {
-            const rowId = row[idField];
+            const rowId = row[idField] as string | number;
             return (
               <tr key={String(rowId || index)} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                 {columns.map((column) => (
@@ -169,7 +169,7 @@ export default function EditableTable({
                   <td className="border border-gray-200 dark:border-gray-700 px-4 py-2">
                     <Button
                       size="sm"
-                      variant="destructive"
+                      variant="danger"
                       onClick={() => handleDelete(rowId)}
                       disabled={loading === `delete-${rowId}`}
                     >

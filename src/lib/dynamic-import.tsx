@@ -49,21 +49,9 @@ export const DynamicChart = dynamicImport(
   { ssr: false }
 );
 
-/**
- * Import dynamique pour les composants de formulaires lourds
- */
-export const DynamicFormComponents = dynamicImport(
-  () => import('@/components/forms/LazyFormComponents'),
-  { ssr: false }
-);
 
-/**
- * Import dynamique pour les tables virtualisées
- */
-export const DynamicTableComponents = dynamicImport(
-  () => import('@/components/tables/LazyTableComponents'),
-  { ssr: false }
-);
+
+
 
 /**
  * Import dynamique pour React Query DevTools (dev seulement)
@@ -75,13 +63,7 @@ export const DynamicReactQueryDevtools = dynamicImport(
   { ssr: false }
 );
 
-/**
- * Import dynamique pour les composants de date
- */
-export const DynamicDateUtils = dynamicImport(
-  () => import('date-fns').then((mod) => ({ default: mod })),
-  { ssr: false }
-);
+
 
 
 

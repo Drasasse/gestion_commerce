@@ -1,7 +1,7 @@
 import React, { forwardRef, useState } from 'react';
 import { Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
 
-export interface FormFieldProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
+export interface FormFieldProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size' | 'onChange' | 'onBlur'> {
   label: string;
   error?: string;
   success?: string;
@@ -16,6 +16,8 @@ export interface FormFieldProps extends Omit<React.InputHTMLAttributes<HTMLInput
   onValidate?: (value: string) => void;
   variant?: 'default' | 'filled' | 'outlined';
   size?: 'sm' | 'md' | 'lg';
+  onChange?: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
+  onBlur?: (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
 }
 
 type FormFieldElement = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
@@ -91,16 +93,14 @@ const FormField = forwardRef<FormFieldElement, FormFieldProps>(
     };
 
     const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      // Cast to match the expected type for onChange prop
-      onChange?.(e as any);
+      onChange?.(e);
       if (onValidate && 'value' in e.target) {
         onValidate(e.target.value);
       }
     };
 
     const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-      // Cast to match the expected type for onChange prop
-      onChange?.(e as any);
+      onChange?.(e);
       if (onValidate && 'value' in e.target) {
         onValidate(e.target.value);
       }
@@ -113,14 +113,12 @@ const FormField = forwardRef<FormFieldElement, FormFieldProps>(
 
     const handleTextareaBlur = (e: React.FocusEvent<HTMLTextAreaElement>) => {
       setIsFocused(false);
-      // Cast to match the expected type for onBlur prop
-      onBlur?.(e as any);
+      onBlur?.(e);
     };
 
     const handleSelectBlur = (e: React.FocusEvent<HTMLSelectElement>) => {
       setIsFocused(false);
-      // Cast to match the expected type for onBlur prop
-      onBlur?.(e as any);
+      onBlur?.(e);
     };
 
     const handleFocus = () => {

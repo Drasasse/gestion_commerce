@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, X, Clock, TrendingUp } from 'lucide-react';
 
@@ -33,7 +33,7 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
   }, []);
 
   // Pages prédéfinies
-  const pages: SearchResult[] = [
+  const pages: SearchResult[] = useMemo(() => [
     { id: 'ventes', title: 'Ventes', type: 'page', url: '/boutique/ventes' },
     { id: 'produits', title: 'Produits', type: 'page', url: '/boutique/produits' },
     { id: 'clients', title: 'Clients', type: 'page', url: '/boutique/clients' },
@@ -42,7 +42,7 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
     { id: 'rapports', title: 'Rapports', type: 'page', url: '/boutique/rapports' },
     { id: 'categories', title: 'Catégories', type: 'page', url: '/boutique/categories' },
     { id: 'paiements', title: 'Paiements', type: 'page', url: '/boutique/paiements' },
-  ];
+  ], []);
 
   // Recherche
   const performSearch = useCallback(

@@ -26,6 +26,7 @@ interface User {
   boutiqueId: string | null;
   boutique?: Boutique | null;
   createdAt: string;
+  [key: string]: unknown;
 }
 
 interface FormData {
