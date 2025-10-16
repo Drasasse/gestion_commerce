@@ -9,12 +9,10 @@ import { nanoid } from 'nanoid';
 import { redis } from './redis';
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { authOptions } from './auth';
 
 const CSRF_TOKEN_LENGTH = 32;
 const CSRF_TOKEN_TTL = 3600; // 1 heure
 const CSRF_HEADER_NAME = 'x-csrf-token';
-const CSRF_COOKIE_NAME = '__Host-csrf-token';
 
 /**
  * Générer un nouveau token CSRF

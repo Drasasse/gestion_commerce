@@ -129,16 +129,18 @@ const FormField = forwardRef<FormFieldElement, FormFieldProps>(
 
     const renderInput = () => {
       if (type === 'textarea') {
-        // Extract only compatible props for textarea
-        const { 
-          onCopy, onCut, onPaste, onCompositionEnd, onCompositionStart, onCompositionUpdate, 
-          onSelect, onBeforeInput, onInput, onCopyCapture, onCutCapture, onPasteCapture,
-          onCompositionEndCapture, onCompositionStartCapture, onCompositionUpdateCapture,
-          onSelectCapture, onBeforeInputCapture, onInputCapture,
-          ...compatibleProps 
-        } = props;
+        // Create textarea-specific props manually to avoid type conflicts
         const textareaProps = {
-          ...compatibleProps,
+          id: props.id,
+          name: props.name,
+          value: props.value,
+          defaultValue: props.defaultValue,
+          placeholder: props.placeholder,
+          disabled: props.disabled,
+          readOnly: props.readOnly,
+          required: required,
+          autoFocus: props.autoFocus,
+          tabIndex: props.tabIndex,
           className: inputClasses,
           onChange: handleTextareaChange,
           onBlur: handleTextareaBlur,
@@ -157,16 +159,16 @@ const FormField = forwardRef<FormFieldElement, FormFieldProps>(
       }
 
       if (type === 'select') {
-        // Extract only compatible props for select
-        const { 
-          onCopy, onCut, onPaste, onCompositionEnd, onCompositionStart, onCompositionUpdate, 
-          onSelect, onBeforeInput, onInput, onCopyCapture, onCutCapture, onPasteCapture,
-          onCompositionEndCapture, onCompositionStartCapture, onCompositionUpdateCapture,
-          onSelectCapture, onBeforeInputCapture, onInputCapture,
-          ...compatibleProps 
-        } = props;
+        // Create select-specific props manually to avoid type conflicts
         const selectProps = {
-          ...compatibleProps,
+          id: props.id,
+          name: props.name,
+          value: props.value,
+          defaultValue: props.defaultValue,
+          disabled: props.disabled,
+          required: required,
+          autoFocus: props.autoFocus,
+          tabIndex: props.tabIndex,
           className: inputClasses,
           onChange: handleSelectChange,
           onBlur: handleSelectBlur,

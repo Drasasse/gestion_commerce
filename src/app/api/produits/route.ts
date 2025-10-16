@@ -12,6 +12,7 @@ import {
 } from '@/lib/error-handler';
 import { checkRateLimit, apiRateLimiter, sensitiveApiRateLimiter } from '@/lib/rate-limit';
 import { cached, invalidateByTag, CachePrefix, CacheTTL, CacheTag } from '@/lib/cache';
+import type { PrismaClient } from '@prisma/client';
 
 // Schema de validation pour les produits
 const produitSchema = z.object({
@@ -94,7 +95,7 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
       ]);
 
       // Ajouter la quantité en stock à chaque produit
-      const produitsAvecStock = produits.map((produit: any) => ({
+      const produitsAvecStock = produits.map((produit) => ({
         ...produit,
         quantiteStock: produit.stocks[0]?.quantite || 0,
         stocks: undefined,
@@ -162,7 +163,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   });
 
   // Créer le produit et son stock initial
-  const produit = await prisma.$transaction(async (tx: any) => {
+  const produit = await prisma.$transaction(async (tx) => {
     const nouveauProduit = await tx.produit.create({
       data: {
         ...validatedData,

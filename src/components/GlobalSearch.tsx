@@ -71,6 +71,20 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
     return () => clearTimeout(timer);
   }, [query, performSearch]);
 
+  const handleSelect = useCallback((result: SearchResult) => {
+    // Sauvegarder dans les recherches récentes
+    const newRecent = [
+      result.title,
+      ...recentSearches.filter((r) => r !== result.title),
+    ].slice(0, 5);
+    setRecentSearches(newRecent);
+    localStorage.setItem('recentSearches', JSON.stringify(newRecent));
+
+    // Naviguer
+    router.push(result.url);
+    onClose();
+  }, [recentSearches, router, onClose]);
+
   // Gestion du clavier
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -92,7 +106,7 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, results, selectedIndex, onClose]);
+  }, [isOpen, results, selectedIndex, onClose, handleSelect]);
 
   // Réinitialiser lors de l'ouverture
   useEffect(() => {
@@ -102,20 +116,6 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
       setSelectedIndex(0);
     }
   }, [isOpen]);
-
-  const handleSelect = (result: SearchResult) => {
-    // Sauvegarder dans les recherches récentes
-    const newRecent = [
-      result.title,
-      ...recentSearches.filter((r) => r !== result.title),
-    ].slice(0, 5);
-    setRecentSearches(newRecent);
-    localStorage.setItem('recentSearches', JSON.stringify(newRecent));
-
-    // Naviguer
-    router.push(result.url);
-    onClose();
-  };
 
   if (!isOpen) return null;
 

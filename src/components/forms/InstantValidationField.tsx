@@ -18,7 +18,7 @@ export interface ValidationRule {
   custom?: (value: string) => Promise<string | null> | string | null;
 }
 
-export interface InstantValidationFieldProps extends Omit<React.InputHTMLAttributes<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>, 'onChange'> {
+export interface InstantValidationFieldProps extends Omit<React.InputHTMLAttributes<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>, 'onChange' | 'size'> {
   label: string;
   name: string;
   type?: 'text' | 'email' | 'password' | 'tel' | 'number' | 'url' | 'textarea' | 'select';
@@ -73,8 +73,8 @@ export const InstantValidationField: React.FC<InstantValidationFieldProps> = ({
   const [isFocused, setIsFocused] = useState(false);
   const [isTouched, setIsTouched] = useState(false);
   
-  const debounceRef = useRef<NodeJS.Timeout>();
-  const validationRef = useRef<AbortController>();
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const validationRef = useRef<AbortController | null>(null);
 
   // Fonction de validation
   const validateValue = useCallback(async (val: string): Promise<{ isValid: boolean; error?: string }> => {
@@ -93,7 +93,7 @@ export const InstantValidationField: React.FC<InstantValidationFieldProps> = ({
           return { isValid: true };
         } catch (err) {
           if (err instanceof z.ZodError) {
-            return { isValid: false, error: err.errors[0]?.message || 'Valeur invalide' };
+            return { isValid: false, error: err.issues[0]?.message || 'Valeur invalide' };
           }
         }
       }
@@ -206,7 +206,7 @@ export const InstantValidationField: React.FC<InstantValidationFieldProps> = ({
         }
       }
     }, debounceMs);
-  }, [validateValue, debounceMs, onValidationComplete]);
+  }, [validateValue, validation, debounceMs, onValidationComplete]);
 
   // Gérer les changements de valeur
   const handleChange = useCallback((newValue: string) => {
@@ -226,14 +226,14 @@ export const InstantValidationField: React.FC<InstantValidationFieldProps> = ({
     setIsTouched(true);
     
     if (!isTouched) {
-      debouncedValidate(value);
+      debouncedValidate(String(value || ''));
     }
   }, [isTouched, debouncedValidate, value]);
 
   // Validation au montage si demandée
   useEffect(() => {
     if (validateOnMount && value) {
-      debouncedValidate(value);
+      debouncedValidate(String(value || ''));
     }
   }, [validateOnMount, debouncedValidate, value]);
 
@@ -445,3 +445,5 @@ export const InstantValidationField: React.FC<InstantValidationFieldProps> = ({
     </div>
   );
 };
+
+export default InstantValidationField;

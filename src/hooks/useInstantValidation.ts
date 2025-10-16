@@ -16,7 +16,7 @@ export interface FormValidationState {
 }
 
 export interface ValidationSchema {
-  [fieldName: string]: z.ZodType<any> | ((value: string) => Promise<string | null> | string | null);
+  [fieldName: string]: z.ZodType<unknown> | ((value: string) => Promise<string | null> | string | null);
 }
 
 export interface UseInstantValidationOptions {
@@ -193,12 +193,7 @@ export const useInstantValidation = ({
         isTouched: true,
       }
     }));
-
-    // Trigger validation if not already validating
-    if (!fields[fieldName]?.isValidating) {
-      validateField(fieldName);
-    }
-  }, [fields]);
+  }, []);
 
   // Validate field immediately
   const validateField = useCallback(async (fieldName: string) => {

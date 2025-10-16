@@ -29,7 +29,7 @@ interface Produit {
   updatedAt: string;
 }
 
-interface FormData {
+interface ProductFormData {
   nom: string;
   description: string;
   prixAchat: string;
@@ -39,34 +39,48 @@ interface FormData {
 }
 
 // Schéma de validation pour les produits
-const validationSchema = z.object({
-  nom: z.string()
-    .min(1, 'Le nom est requis')
-    .min(2, 'Le nom doit contenir au moins 2 caractères')
-    .max(100, 'Le nom ne peut pas dépasser 100 caractères'),
-  description: z.string()
-    .max(500, 'La description ne peut pas dépasser 500 caractères')
-    .optional(),
-  prixAchat: z.string()
-    .min(1, 'Le prix d\'achat est requis')
-    .refine((val) => {
-      const num = parseFloat(val);
-      return !isNaN(num) && num > 0;
-    }, 'Le prix d\'achat doit être un nombre positif'),
-  prixVente: z.string()
-    .min(1, 'Le prix de vente est requis')
-    .refine((val) => {
-      const num = parseFloat(val);
-      return !isNaN(num) && num > 0;
-    }, 'Le prix de vente doit être un nombre positif'),
-  seuilAlerte: z.string()
-    .refine((val) => {
-      const num = parseInt(val);
-      return !isNaN(num) && num >= 0;
-    }, 'Le seuil d\'alerte doit être un nombre positif ou zéro'),
-  categorieId: z.string()
-    .min(1, 'La catégorie est requise')
-});
+const validationSchema = {
+  nom: {
+    required: true,
+    minLength: 2,
+    maxLength: 100,
+  },
+  description: {
+    maxLength: 500,
+  },
+  prixAchat: {
+    required: true,
+    custom: (value: unknown) => {
+      const strValue = String(value || '');
+      if (!strValue) return 'Le prix d\'achat est requis';
+      const num = parseFloat(strValue);
+      if (isNaN(num) || num <= 0) return 'Le prix d\'achat doit être un nombre positif';
+      return null;
+    }
+  },
+  prixVente: {
+    required: true,
+    custom: (value: unknown) => {
+      const strValue = String(value || '');
+      if (!strValue) return 'Le prix de vente est requis';
+      const num = parseFloat(strValue);
+      if (isNaN(num) || num <= 0) return 'Le prix de vente doit être un nombre positif';
+      return null;
+    }
+  },
+  seuilAlerte: {
+    custom: (value: unknown) => {
+      const strValue = String(value || '');
+      if (!strValue) return null;
+      const num = parseInt(strValue);
+      if (isNaN(num) || num < 0) return 'Le seuil d\'alerte doit être un nombre positif ou zéro';
+      return null;
+    }
+  },
+  categorieId: {
+    required: true,
+  }
+};
 
 export default function ProduitsPage() {
   const { data: session, status } = useSession();
@@ -77,7 +91,7 @@ export default function ProduitsPage() {
   const [editingProduct, setEditingProduct] = useState<Produit | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<ProductFormData>({
     nom: '',
     description: '',
     prixAchat: '',
@@ -389,7 +403,8 @@ export default function ProduitsPage() {
                 label="Nom du produit"
                 type="text"
                 value={formData.nom}
-                onChange={(value) => {
+                onChange={(e) => {
+                  const value = e.target.value;
                   setFormData({ ...formData, nom: value });
                   validateField('nom', value);
                 }}
@@ -403,7 +418,8 @@ export default function ProduitsPage() {
                 label="Description"
                 type="textarea"
                 value={formData.description}
-                onChange={(value) => {
+                onChange={(e) => {
+                  const value = e.target.value;
                   setFormData({ ...formData, description: value });
                   validateField('description', value);
                 }}
@@ -418,7 +434,8 @@ export default function ProduitsPage() {
                   label="Prix d'achat"
                   type="number"
                   value={formData.prixAchat}
-                  onChange={(value) => {
+                  onChange={(e) => {
+                    const value = e.target.value;
                     setFormData({ ...formData, prixAchat: value });
                     validateField('prixAchat', value);
                   }}
@@ -433,7 +450,8 @@ export default function ProduitsPage() {
                   label="Prix de vente"
                   type="number"
                   value={formData.prixVente}
-                  onChange={(value) => {
+                  onChange={(e) => {
+                    const value = e.target.value;
                     setFormData({ ...formData, prixVente: value });
                     validateField('prixVente', value);
                   }}
@@ -450,7 +468,8 @@ export default function ProduitsPage() {
                   label="Seuil d'alerte"
                   type="number"
                   value={formData.seuilAlerte}
-                  onChange={(value) => {
+                  onChange={(e) => {
+                    const value = e.target.value;
                     setFormData({ ...formData, seuilAlerte: value });
                     validateField('seuilAlerte', value);
                   }}
@@ -463,7 +482,8 @@ export default function ProduitsPage() {
                   label="Catégorie"
                   type="select"
                   value={formData.categorieId}
-                  onChange={(value) => {
+                  onChange={(e) => {
+                    const value = e.target.value;
                     setFormData({ ...formData, categorieId: value });
                     validateField('categorieId', value);
                   }}

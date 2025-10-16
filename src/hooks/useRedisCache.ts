@@ -4,7 +4,30 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { getCacheOrFetch, setCache, deleteCache, AppCache } from '@/lib/redis';
+import { getCacheOrFetch, deleteCache, AppCache } from '@/lib/redis';
+import type { Produit, Client } from '@/types';
+
+// Import types from redis.ts
+type ProductData = {
+  id: string;
+  nom: string;
+  prix: number;
+  [key: string]: unknown;
+};
+
+type ClientData = {
+  id: string;
+  nom: string;
+  email: string;
+  [key: string]: unknown;
+};
+
+type StatsData = {
+  totalVentes: number;
+  totalClients: number;
+  totalProduits: number;
+  [key: string]: unknown;
+};
 
 interface UseCacheOptions {
   ttl?: number;
@@ -109,7 +132,7 @@ export function useProductsCache() {
     }
   }, []);
 
-  const setProducts = useCallback(async (products: any) => {
+  const setProducts = useCallback(async (products: ProductData[]) => {
     try {
       await AppCache.products.set(products);
       return true;
@@ -159,7 +182,7 @@ export function useClientsCache() {
     }
   }, []);
 
-  const setClients = useCallback(async (clients: any) => {
+  const setClients = useCallback(async (clients: ClientData[]) => {
     try {
       await AppCache.clients.set(clients);
       return true;
@@ -209,7 +232,7 @@ export function useStatsCache() {
     }
   }, []);
 
-  const setStats = useCallback(async (stats: any) => {
+  const setStats = useCallback(async (stats: StatsData) => {
     try {
       await AppCache.stats.set(stats);
       return true;
@@ -250,7 +273,7 @@ export function useCacheManager() {
       await AppCache.invalidateAll();
       setLoading(false);
       return true;
-    } catch (err) {
+    } catch {
       setLoading(false);
       return false;
     }

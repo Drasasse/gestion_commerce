@@ -3,11 +3,11 @@
 import React, { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Label } from '@/components/ui/Label';
-import { Textarea } from '@/components/ui/Textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/Select';
-import { Checkbox } from '@/components/ui/Checkbox';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/RadioGroup';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select } from '@/components/ui/Select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Separator } from '@/components/ui/separator';
 import { Plus, Minus, Save, X } from 'lucide-react';
@@ -145,7 +145,7 @@ export default function AdvancedForm({
         case 'textarea':
           return (
             <Textarea
-              value={value}
+              value={String(value || '')}
               onChange={(e) => updateField(field.name, e.target.value)}
               placeholder={field.placeholder}
               className={error ? 'border-red-500' : ''}
@@ -154,25 +154,20 @@ export default function AdvancedForm({
 
         case 'select':
           return (
-            <Select value={value} onValueChange={(val) => updateField(field.name, val)}>
-              <SelectTrigger className={error ? 'border-red-500' : ''}>
-                <SelectValue placeholder={field.placeholder} />
-              </SelectTrigger>
-              <SelectContent>
-                {field.options?.map(option => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Select 
+              value={String(value || '')} 
+              onChange={(val) => updateField(field.name, val)}
+              options={field.options || []}
+              placeholder={field.placeholder}
+              className={error ? 'border-red-500' : ''}
+            />
           );
 
         case 'checkbox':
           return (
             <div className="flex items-center space-x-2">
               <Checkbox
-                checked={value}
+                checked={Boolean(value)}
                 onCheckedChange={(checked) => updateField(field.name, checked)}
               />
               <Label>{field.label}</Label>
@@ -181,7 +176,7 @@ export default function AdvancedForm({
 
         case 'radio':
           return (
-            <RadioGroup value={value} onValueChange={(val) => updateField(field.name, val)}>
+            <RadioGroup value={String(value || '')} onValueChange={(val) => updateField(field.name, val)}>
               {field.options?.map(option => (
                 <div key={option.value} className="flex items-center space-x-2">
                   <RadioGroupItem value={option.value} />
@@ -195,7 +190,7 @@ export default function AdvancedForm({
           return (
             <Input
               type={field.type}
-              value={value}
+              value={String(value || '')}
               onChange={(e) => updateField(field.name, e.target.value)}
               placeholder={field.placeholder}
               className={error ? 'border-red-500' : ''}

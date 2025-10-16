@@ -80,28 +80,33 @@ interface VenteForm {
 }
 
 // Schéma de validation pour les ventes
-const validationSchema = z.object({
-  clientId: z.string().optional(),
-  dateVente: z.string()
-    .min(1, 'La date de vente est requise')
-    .refine((date) => {
-      const selectedDate = new Date(date);
+const validationSchema = {
+  clientId: {
+    // Optionnel, pas de validation requise
+  },
+  dateVente: {
+    required: true,
+    custom: (value: unknown) => {
+      const strValue = String(value || '');
+      if (!strValue) return 'La date de vente est requise';
+      const selectedDate = new Date(strValue);
       const today = new Date();
       today.setHours(23, 59, 59, 999); // Fin de journée
-      return selectedDate <= today;
-    }, 'La date ne peut pas être dans le futur'),
-  montantPaye: z.string()
-    .min(1, 'Le montant payé est requis')
-    .refine((val) => {
-      const num = parseFloat(val);
-      return !isNaN(num) && num >= 0;
-    }, 'Le montant payé doit être positif ou zéro'),
-  lignes: z.array(z.object({
-    produitId: z.string().min(1, 'Veuillez sélectionner un produit'),
-    quantite: z.number().min(1, 'La quantité doit être au moins 1'),
-    prixUnitaire: z.number().min(0, 'Le prix unitaire doit être positif')
-  })).min(1, 'Au moins un produit est requis')
-});
+      if (selectedDate > today) return 'La date ne peut pas être dans le futur';
+      return null;
+    }
+  },
+  montantPaye: {
+    required: true,
+    custom: (value: unknown) => {
+      const strValue = String(value || '');
+      if (!strValue) return 'Le montant payé est requis';
+      const num = parseFloat(strValue);
+      if (isNaN(num) || num < 0) return 'Le montant payé doit être positif ou zéro';
+      return null;
+    }
+  }
+};
 
 export default function VentesPage() {
   const { data: session, status } = useSession();
@@ -470,7 +475,8 @@ export default function VentesPage() {
                 label="Client (optionnel)"
                 type="select"
                 value={formData.clientId || ''}
-                onChange={(value) => {
+                onChange={(e) => {
+                  const value = e.target.value;
                   setFormData(prev => ({ ...prev, clientId: value }));
                   validateField('clientId', value);
                 }}
@@ -488,9 +494,10 @@ export default function VentesPage() {
               {/* Date de vente */}
               <FormField
                 label="Date de vente"
-                type="date"
+                type="text"
                 value={formData.dateVente || ''}
-                onChange={(value) => {
+                onChange={(e) => {
+                  const value = e.target.value;
                   setFormData(prev => ({ ...prev, dateVente: value }));
                   validateField('dateVente', value);
                 }}
@@ -498,6 +505,7 @@ export default function VentesPage() {
                 required
                 leftIcon="📅"
                 helpText="Vous pouvez sélectionner une date passée pour enregistrer des ventes historiques"
+                {...({ type: 'date' } as any)}
               />
 
               {/* Lignes de vente */}
@@ -591,7 +599,8 @@ export default function VentesPage() {
                   label="Montant payé"
                   type="number"
                   value={formData.montantPaye.toString()}
-                  onChange={(value) => {
+                  onChange={(e) => {
+                    const value = e.target.value;
                     const montant = parseFloat(value) || 0;
                     setFormData(prev => ({ ...prev, montantPaye: montant }));
                     validateField('montantPaye', value);

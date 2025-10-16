@@ -2,9 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
-import { checkRateLimit, sensitiveApiRateLimiter } from '@/lib/rate-limit';
-import { invalidateByTag } from '@/lib/cache';
-
+import type { PrismaClient } from '@prisma/client';
 // Interfaces TypeScript
 interface LigneCommande {
   id: string;
@@ -12,12 +10,6 @@ interface LigneCommande {
   quantite: number;
   quantiteRecue: number;
   prixUnitaire: number;
-}
-
-interface Commande {
-  id: string;
-  statut: string;
-  lignes: LigneCommande[];
 }
 
 const recevoirCommandeSchema = z.object({
@@ -79,7 +71,7 @@ export async function POST(
     }
 
     // Utiliser une transaction pour garantir la cohérence
-    const result = await prisma.$transaction(async (tx: any) => {
+    const result = await prisma.$transaction(async (tx) => {
       // Mettre à jour les lignes de commande et les stocks
        for (const ligneRecue of validatedData.lignesRecues) {
          const ligne = commande.lignes.find(l => l.id === ligneRecue.ligneId);

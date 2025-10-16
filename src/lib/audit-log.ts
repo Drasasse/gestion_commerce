@@ -4,8 +4,6 @@
  * Système de logs pour tracer les actions importantes des utilisateurs
  */
 
-import { prisma } from './prisma';
-
 /**
  * Types d'actions auditables
  */

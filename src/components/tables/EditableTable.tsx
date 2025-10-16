@@ -13,9 +13,9 @@ export interface EditableTableColumn {
 }
 
 export interface EditableTableProps {
-  data: Record<string, any>[];
+  data: Record<string, unknown>[];
   columns: EditableTableColumn[];
-  onUpdate?: (id: string | number, field: string, value: any) => Promise<void>;
+  onUpdate?: (id: string | number, field: string, value: unknown) => Promise<void>;
   onDelete?: (id: string | number) => Promise<void>;
   idField?: string;
   className?: string;
@@ -33,7 +33,7 @@ export default function EditableTable({
   const [editValue, setEditValue] = useState<string>('');
   const [loading, setLoading] = useState<string | null>(null);
 
-  const startEdit = useCallback((rowId: string | number, field: string, currentValue: any) => {
+  const startEdit = useCallback((rowId: string | number, field: string, currentValue: unknown) => {
     setEditingCell({ rowId, field });
     setEditValue(String(currentValue || ''));
   }, []);
@@ -73,9 +73,9 @@ export default function EditableTable({
     }
   }, [onDelete]);
 
-  const renderCell = (row: Record<string, any>, column: EditableTableColumn) => {
+  const renderCell = (row: Record<string, unknown>, column: EditableTableColumn): React.ReactNode => {
     const rowId = row[idField];
-    const value = row[column.key];
+    const value = String(row[column.key] || '');
     const isEditing = editingCell?.rowId === rowId && editingCell?.field === column.key;
     const isLoading = loading === `${rowId}-${column.key}`;
 
@@ -153,10 +153,10 @@ export default function EditableTable({
           </tr>
         </thead>
         <tbody>
-          {data.map((row) => {
+          {data.map((row, index) => {
             const rowId = row[idField];
             return (
-              <tr key={rowId} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+              <tr key={String(rowId || index)} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                 {columns.map((column) => (
                   <td
                     key={column.key}

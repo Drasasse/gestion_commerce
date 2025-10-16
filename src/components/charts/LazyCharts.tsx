@@ -4,7 +4,6 @@
  */
 
 import dynamic from 'next/dynamic';
-import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 
 // Skeleton spécifique pour les graphiques
 const ChartSkeleton = () => (
@@ -15,9 +14,7 @@ const ChartSkeleton = () => (
 
 // LineChart avec lazy loading
 export const LazyLineChart = dynamic(
-  () => import('recharts').then((mod) => ({ 
-    default: mod.LineChart 
-  })),
+  () => import('recharts').then((mod) => mod.LineChart),
   {
     loading: () => <ChartSkeleton />,
     ssr: false, // Les graphiques n'ont pas besoin du SSR
@@ -26,9 +23,7 @@ export const LazyLineChart = dynamic(
 
 // BarChart avec lazy loading
 export const LazyBarChart = dynamic(
-  () => import('recharts').then((mod) => ({ 
-    default: mod.BarChart 
-  })),
+  () => import('recharts').then((mod) => mod.BarChart),
   {
     loading: () => <ChartSkeleton />,
     ssr: false,
@@ -37,9 +32,7 @@ export const LazyBarChart = dynamic(
 
 // PieChart avec lazy loading
 export const LazyPieChart = dynamic(
-  () => import('recharts').then((mod) => ({ 
-    default: mod.PieChart 
-  })),
+  () => import('recharts').then((mod) => mod.PieChart),
   {
     loading: () => <ChartSkeleton />,
     ssr: false,
@@ -48,9 +41,7 @@ export const LazyPieChart = dynamic(
 
 // ResponsiveContainer avec lazy loading
 export const LazyResponsiveContainer = dynamic(
-  () => import('recharts').then((mod) => ({ 
-    default: mod.ResponsiveContainer 
-  })),
+  () => import('recharts').then((mod) => mod.ResponsiveContainer),
   {
     loading: () => <div className="w-full h-64" />,
     ssr: false,
@@ -59,69 +50,46 @@ export const LazyResponsiveContainer = dynamic(
 
 // Autres composants recharts couramment utilisés
 export const LazyLine = dynamic(
-  () => import('recharts').then((mod) => ({ 
-    default: mod.Line 
-  })),
+  () => import('recharts').then((mod) => mod.Line),
   { ssr: false }
 );
 
 export const LazyBar = dynamic(
-  () => import('recharts').then((mod) => ({ 
-    default: mod.Bar 
-  })),
+  () => import('recharts').then((mod) => mod.Bar),
   { ssr: false }
 );
 
 export const LazyPie = dynamic(
-  () => import('recharts').then((mod) => ({ 
-    default: mod.Pie 
-  })),
+  () => import('recharts').then((mod) => mod.Pie),
   { ssr: false }
 );
 
 export const LazyCell = dynamic(
-  () => import('recharts').then((mod) => ({ 
-    default: mod.Cell 
-  })),
+  () => import('recharts').then((mod) => mod.Cell),
   { ssr: false }
 );
 
 export const LazyXAxis = dynamic(
-  () => import('recharts').then((mod) => ({ 
-    default: mod.XAxis 
-  })),
+  () => import('recharts').then((mod) => mod.XAxis),
   { ssr: false }
 );
 
 export const LazyYAxis = dynamic(
-  () => import('recharts').then((mod) => ({ 
-    default: mod.YAxis 
-  })),
+  () => import('recharts').then((mod) => mod.YAxis),
   { ssr: false }
 );
 
 export const LazyCartesianGrid = dynamic(
-  () => import('recharts').then((mod) => ({ 
-    default: mod.CartesianGrid 
-  })),
+  () => import('recharts').then((mod) => mod.CartesianGrid),
   { ssr: false }
 );
 
 export const LazyTooltip = dynamic(
-  () => import('recharts').then((mod) => ({ 
-    default: mod.Tooltip 
-  })),
+  () => import('recharts').then((mod) => mod.Tooltip),
   { ssr: false }
 );
 
-export const LazyLegend = dynamic(
-  () => import('recharts').then((mod) => ({ 
-    default: mod.Legend 
-  })),
-  { ssr: false }
-);
-
-// Composant wrapper pour un graphique complet avec gestion d'erreur
+// Wrapper pour faciliter l'utilisation un graphique complet avec gestion d'erreur
 interface LazyChartWrapperProps {
   children: React.ReactNode;
   title?: string;
@@ -160,6 +128,5 @@ export default {
   YAxis: LazyYAxis,
   CartesianGrid: LazyCartesianGrid,
   Tooltip: LazyTooltip,
-  Legend: LazyLegend,
   ChartWrapper: LazyChartWrapper,
 };

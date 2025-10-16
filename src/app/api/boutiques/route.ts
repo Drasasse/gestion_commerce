@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
-import { getCache, setCache, cached } from '@/lib/cache';
+import { cached } from '@/lib/cache';
 
 const boutiqueSchema = z.object({
   nom: z.string().min(1, 'Le nom est requis'),

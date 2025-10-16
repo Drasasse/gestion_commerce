@@ -14,9 +14,9 @@ import {
   LazyYAxis as YAxis,
   LazyCartesianGrid as CartesianGrid,
   LazyTooltip as Tooltip,
-  LazyLegend as Legend,
   LazyChartWrapper
 } from '@/components/charts/LazyCharts';
+import { Legend } from 'recharts';
 import { Store, ShoppingCart, TrendingUp, AlertCircle, DollarSign, Users } from 'lucide-react';
 import { formatMontant, formatMontantCompact } from '@/lib/utils';
 import { PageLoadingSkeleton } from '@/components/LoadingSkeleton';

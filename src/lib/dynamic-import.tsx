@@ -32,7 +32,7 @@ export const DefaultLoader = () => (
  */
 export function dynamicImport(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  importFn: () => Promise<{ default: any }>,
+  importFn: () => Promise<{ default: ComponentType<any> }>,
   options: DynamicOptions = {}
 ) {
   return dynamic(importFn, {
@@ -90,7 +90,7 @@ export const DynamicDateUtils = dynamicImport(
  */
 export function useLazyLoad<T>(
   loader: () => Promise<T>,
-  dependencies: unknown[] = []
+  dependencies: React.DependencyList = []
 ) {
   const [data, setData] = React.useState<T | null>(null);
   const [loading, setLoading] = React.useState(false);
@@ -124,7 +124,7 @@ export function useLazyLoad<T>(
     return () => {
       cancelled = true;
     };
-  }, dependencies);
+  }, [loader, dependencies]);
 
   return { data, loading, error };
 }

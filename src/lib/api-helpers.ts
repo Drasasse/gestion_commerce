@@ -74,7 +74,7 @@ export function generateCacheKey(
   params: Record<string, string | number | boolean | undefined>
 ): string {
   const cleanParams = Object.entries(params)
-    .filter(([_, value]) => value !== undefined && value !== '')
+    .filter(([, value]) => value !== undefined && value !== '')
     .map(([key, value]) => `${key}:${value}`)
     .join(':');
   return cleanParams ? `${prefix}:${cleanParams}` : prefix;

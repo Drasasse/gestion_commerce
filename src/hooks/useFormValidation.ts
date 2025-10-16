@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 
 export interface ValidationRule {
   required?: boolean;
@@ -7,7 +7,7 @@ export interface ValidationRule {
   pattern?: RegExp;
   email?: boolean;
   phone?: boolean;
-  custom?: (value: any) => string | null;
+  custom?: (value: unknown) => string | null;
 }
 
 export interface ValidationSchema {
@@ -22,14 +22,14 @@ export interface FormValidationResult {
   errors: ValidationErrors;
   isValid: boolean;
   hasErrors: boolean;
-  validateField: (field: string, value: any) => string | null;
-  validateForm: (data: any) => boolean;
+  validateField: (field: string, value: unknown) => string | null;
+  validateForm: (data: Record<string, unknown>) => boolean;
   clearErrors: () => void;
   clearFieldError: (field: string) => void;
   setFieldError: (field: string, error: string) => void;
 }
 
-const validateValue = (value: any, rules: ValidationRule): string | null => {
+const validateValue = (value: unknown, rules: ValidationRule): string | null => {
   // Vérification required
   if (rules.required && (!value || (typeof value === 'string' && value.trim() === ''))) {
     return 'Ce champ est requis';
@@ -84,7 +84,7 @@ const validateValue = (value: any, rules: ValidationRule): string | null => {
 export const useFormValidation = (schema: ValidationSchema): FormValidationResult => {
   const [errors, setErrors] = useState<ValidationErrors>({});
 
-  const validateField = useCallback((field: string, value: any): string | null => {
+  const validateField = useCallback((field: string, value: unknown): string | null => {
     const rules = schema[field];
     if (!rules) return null;
 
@@ -103,7 +103,7 @@ export const useFormValidation = (schema: ValidationSchema): FormValidationResul
     return error;
   }, [schema]);
 
-  const validateForm = useCallback((data: any): boolean => {
+  const validateForm = useCallback((data: Record<string, unknown>): boolean => {
     const newErrors: ValidationErrors = {};
     let isValid = true;
 
@@ -154,7 +154,7 @@ export const useFormValidation = (schema: ValidationSchema): FormValidationResul
 };
 
 // Hook spécialisé pour les formulaires avec validation en temps réel
-export const useRealtimeValidation = (schema: ValidationSchema, debounceMs: number = 300) => {
+export const useRealtimeValidation = (schema: ValidationSchema) => {
   const validation = useFormValidation(schema);
   const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
 
@@ -162,13 +162,13 @@ export const useRealtimeValidation = (schema: ValidationSchema, debounceMs: numb
     setTouchedFields(prev => new Set(prev).add(field));
   }, []);
 
-  const validateFieldRealtime = useCallback((field: string, value: any) => {
+  const validateFieldRealtime = useCallback((field: string, value: unknown) => {
     // Valider seulement si le champ a été touché
     if (touchedFields.has(field)) {
       return validation.validateField(field, value);
     }
     return null;
-  }, [validation.validateField, touchedFields]);
+  }, [validation, touchedFields]);
 
   const getFieldError = useCallback((field: string) => {
     return touchedFields.has(field) ? validation.errors[field] : undefined;

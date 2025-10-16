@@ -2,9 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
-import { checkRateLimit, sensitiveApiRateLimiter } from '@/lib/rate-limit'
-import { invalidateByTag } from '@/lib/cache'
-
+import type { PrismaClient } from '@prisma/client'
 // Interfaces TypeScript
 interface Paiement {
   id: string;
@@ -15,12 +13,6 @@ interface Vente {
   id: string;
   montantTotal: number;
   paiements: Paiement[];
-}
-
-interface PaiementExistant {
-  id: string;
-  montant: number;
-  vente: Vente;
 }
 
 const paiementUpdateSchema = z.object({
@@ -135,7 +127,7 @@ export async function PUT(
     }
 
     // Mettre à jour le paiement et recalculer le statut de la vente
-    const result = await prisma.$transaction(async (tx: any) => {
+    const result = await prisma.$transaction(async (tx) => {
       // Mettre à jour le paiement
       const paiementUpdated = await tx.paiement.update({
         where: { id: paiementId },
@@ -232,7 +224,7 @@ export async function DELETE(
     }
 
     // Supprimer le paiement et recalculer le statut de la vente
-    await prisma.$transaction(async (tx: any) => {
+    await prisma.$transaction(async (tx) => {
       // Supprimer le paiement
       await tx.paiement.delete({
         where: { id: paiementId }

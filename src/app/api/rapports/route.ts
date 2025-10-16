@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server"
 import { auth } from '@/lib/auth';
-import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
 
@@ -547,10 +546,10 @@ async function genererRapportStocks(boutiqueId: string) {
   ])
 
   const analyse = {
-    enRupture: stocks.filter((s: any) => s.quantite === 0),
-    stockFaible: stocks.filter((s: any) => s.quantite > 0 && s.quantite <= s.produit.seuilAlerte),
-    stockNormal: stocks.filter((s: any) => s.quantite > s.produit.seuilAlerte),
-    valeurTotale: stocks.reduce((total: number, s: any) => total + (s.quantite * s.produit.prixVente), 0)
+    enRupture: stocks.filter((s) => s.quantite === 0),
+    stockFaible: stocks.filter((s) => s.quantite > 0 && s.quantite <= s.produit.seuilAlerte),
+    stockNormal: stocks.filter((s) => s.quantite > s.produit.seuilAlerte),
+    valeurTotale: stocks.reduce((total: number, s) => total + (s.quantite * s.produit.prixVente), 0)
   }
 
   return {
@@ -563,21 +562,21 @@ async function genererRapportStocks(boutiqueId: string) {
       stockFaible: analyse.stockFaible.length
     },
     analyse: {
-      enRupture: analyse.enRupture.map((s: any) => ({
+      enRupture: analyse.enRupture.map((s) => ({
         produit: {
           nom: s.produit.nom,
           prixVente: s.produit.prixVente,
           seuilAlerte: s.produit.seuilAlerte
         }
       })),
-      stockFaible: analyse.stockFaible.map((s: any) => ({
+      stockFaible: analyse.stockFaible.map((s) => ({
         produit: {
           nom: s.produit.nom,
           prixVente: s.produit.prixVente,
           seuilAlerte: s.produit.seuilAlerte
         }
       })),
-      stockNormal: analyse.stockNormal.map((s: any) => ({
+      stockNormal: analyse.stockNormal.map((s) => ({
         produit: {
           nom: s.produit.nom,
           prixVente: s.produit.prixVente,
@@ -586,7 +585,7 @@ async function genererRapportStocks(boutiqueId: string) {
       })),
       valeurTotale: analyse.valeurTotale
     },
-    mouvementsRecents: mouvementsRecents.map((m: any) => ({
+    mouvementsRecents: mouvementsRecents.map((m) => ({
       id: m.id,
       type: m.type,
       quantite: m.quantite,
@@ -647,12 +646,12 @@ async function genererRapportFinancier(boutiqueId: string, dateDebut: Date, date
   })
 
   const recettes = transactionsParType
-    .filter((t: any) => t.type === 'RECETTE')
-    .reduce((sum: number, t: any) => sum + (t._sum.montant || 0), 0)
+    .filter((t) => t.type === 'RECETTE')
+    .reduce((sum: number, t) => sum + (t._sum.montant || 0), 0)
 
   const depensesTotales = Math.abs(transactionsParType
-    .filter((t: any) => t.type === 'DEPENSE')
-    .reduce((sum: number, t: any) => sum + (t._sum.montant || 0), 0))
+    .filter((t) => t.type === 'DEPENSE')
+    .reduce((sum: number, t) => sum + (t._sum.montant || 0), 0))
 
   // Calcul des dépenses par catégorie
   const depensesParCategorie = await prisma.transaction.groupBy({
@@ -667,19 +666,19 @@ async function genererRapportFinancier(boutiqueId: string, dateDebut: Date, date
   })
 
   const depensesMarchandises = Math.abs(depensesParCategorie
-    .filter((d: any) => d.categorieDepense === 'MARCHANDISES')
-    .reduce((sum: number, d: any) => sum + (d._sum.montant || 0), 0))
+    .filter((d) => d.categorieDepense === 'MARCHANDISES')
+    .reduce((sum: number, d) => sum + (d._sum.montant || 0), 0))
 
   const depensesExploitation = Math.abs(depensesParCategorie
-    .filter((d: any) => d.categorieDepense === 'EXPLOITATION')
-    .reduce((sum: number, d: any) => sum + (d._sum.montant || 0), 0))
+    .filter((d) => d.categorieDepense === 'EXPLOITATION')
+    .reduce((sum: number, d) => sum + (d._sum.montant || 0), 0))
 
   const autresDepenses = Math.abs(depensesParCategorie
-    .filter((d: any) => d.categorieDepense && d.categorieDepense !== 'MARCHANDISES' && d.categorieDepense !== 'EXPLOITATION')
-    .reduce((sum: number, d: any) => sum + (d._sum.montant || 0), 0))
+    .filter((d) => d.categorieDepense && d.categorieDepense !== 'MARCHANDISES' && d.categorieDepense !== 'EXPLOITATION')
+    .reduce((sum: number, d) => sum + (d._sum.montant || 0), 0))
 
   // Calcul des injections de capital
-  const totalInjections = capitalTransactions.reduce((sum: number, t: any) => sum + (t.montant || 0), 0)
+  const totalInjections = capitalTransactions.reduce((sum: number, t) => sum + (t.montant || 0), 0)
   
   // Calcul de la trésorerie (position de caisse)
   const capitalInitial = boutique?.capitalInitial || 0
@@ -709,7 +708,7 @@ async function genererRapportFinancier(boutiqueId: string, dateDebut: Date, date
       margeCommerciale,
       solde: tresorerie
     },
-    depensesParCategorie: depensesParCategorie.map((d: any) => ({
+    depensesParCategorie: depensesParCategorie.map((d) => ({
       categorie: d.categorieDepense || 'NON_CATEGORISE',
       montant: Math.abs(d._sum.montant || 0),
       nombre: d._count

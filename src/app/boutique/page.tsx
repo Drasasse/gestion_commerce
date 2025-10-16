@@ -15,9 +15,9 @@ import {
   LazyYAxis as YAxis,
   LazyCartesianGrid as CartesianGrid,
   LazyTooltip as Tooltip,
-  LazyLegend as Legend,
   LazyChartWrapper
 } from '@/components/charts/LazyCharts';
+import { Legend } from 'recharts';
 import { Package, ShoppingCart, Users, TrendingUp, AlertCircle, DollarSign, CreditCard, ArrowUpRight, ArrowDownRight, Calendar } from 'lucide-react';
 import { formatMontant, formatMontantCompact, formatDate } from '@/lib/utils';
 import { PageLoadingSkeleton } from '@/components/LoadingSkeleton';
@@ -350,7 +350,7 @@ export default function BoutiquePage() {
               <XAxis dataKey="date" />
               <YAxis />
               <Tooltip
-                formatter={(value: any, name: string) =>
+                formatter={(value: any, name: string | number) =>
                   name === 'montant' ? formatMontant(Number(value)) : value
                 }
                 contentStyle={{ background: '#fff', border: '1px solid #ddd', borderRadius: '8px' }}
@@ -385,7 +385,7 @@ export default function BoutiquePage() {
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(value: any, name: string, props: any) => [
+                  formatter={(value: any, name: string | number, props: any) => [
                     `${value} ventes (${formatMontant(props.payload?.montant || 0)})`,
                     name,
                   ]}

@@ -6,13 +6,13 @@ import { GripVertical } from 'lucide-react';
 export interface DragDropTableColumn {
   key: string;
   label: string;
-  render?: (value: any, row: Record<string, any>) => React.ReactNode;
+  render?: (value: unknown, row: Record<string, unknown>) => React.ReactNode;
 }
 
 export interface DragDropTableProps {
-  data: Record<string, any>[];
+  data: Record<string, unknown>[];
   columns: DragDropTableColumn[];
-  onReorder?: (newOrder: Record<string, any>[]) => void;
+  onReorder?: (newOrder: Record<string, unknown>[]) => void;
   idField?: string;
   className?: string;
   dragHandle?: boolean;
@@ -76,14 +76,14 @@ export default function DragDropTable({
     setDragOverItem(null);
   }, []);
 
-  const renderCell = (row: Record<string, any>, column: DragDropTableColumn) => {
+  const renderCell = (row: Record<string, unknown>, column: DragDropTableColumn): React.ReactNode => {
     const value = row[column.key];
     
     if (column.render) {
       return column.render(value, row);
     }
     
-    return value;
+    return String(value || '');
   };
 
   return (
@@ -108,7 +108,7 @@ export default function DragDropTable({
         </thead>
         <tbody>
           {data.map((row, index) => {
-            const rowId = row[idField];
+            const rowId = String(row[idField] || index);
             const isDragging = draggedItem === index;
             const isDragOver = dragOverItem === index;
             

@@ -4,7 +4,6 @@
  */
 
 import dynamic from 'next/dynamic';
-import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 
 // Skeleton spécifique pour les tables
 const TableSkeleton = () => (
@@ -48,39 +47,13 @@ const VirtualTableSkeleton = () => (
   </div>
 );
 
-// Table virtualisée avec lazy loading (pour de grandes quantités de données)
-export const LazyVirtualTable = dynamic(
-  () => import('@tanstack/react-virtual').then((mod) => 
-    import('@/components/tables/VirtualTable').then((tablemod) => ({ 
-      default: tablemod.default 
-    }))
-  ).catch(() => ({
-    default: () => <div className="p-4 text-center text-gray-500">Table virtualisée non disponible</div>
+// Table accessible avec lazy loading
+export const LazyAccessibleDataTable = dynamic(
+  () => import('@/components/tables/AccessibleDataTable').then((mod) => ({ default: mod.default })).catch(() => ({
+    default: () => <div className="p-4 text-center text-gray-500">Table accessible non disponible</div>
   })),
   {
     loading: () => <VirtualTableSkeleton />,
-    ssr: false,
-  }
-);
-
-// Data Grid avancé avec tri, filtrage, pagination
-export const LazyDataGrid = dynamic(
-  () => import('@/components/tables/DataGrid').then((mod) => ({ default: mod.default })).catch(() => ({
-    default: () => <TableSkeleton />
-  })),
-  {
-    loading: () => <TableSkeleton />,
-    ssr: false,
-  }
-);
-
-// Table avec export Excel/CSV
-export const LazyExportableTable = dynamic(
-  () => import('@/components/tables/ExportableTable').then((mod) => ({ default: mod.default })).catch(() => ({
-    default: () => <TableSkeleton />
-  })),
-  {
-    loading: () => <TableSkeleton />,
     ssr: false,
   }
 );
@@ -122,8 +95,7 @@ export const LazyTableWrapper: React.FC<LazyTableWrapperProps> = ({
   title, 
   className = "",
   loading = false,
-  error = null,
-  emptyMessage = "Aucune donnée disponible"
+  error = null
 }) => {
   if (loading) {
     return <TableSkeleton />;
@@ -154,23 +126,12 @@ export const LazyTableWrapper: React.FC<LazyTableWrapperProps> = ({
   );
 };
 
-// Hook pour la virtualisation de tables
-export const useLazyTableVirtualization = () => {
-  return dynamic(
-    () => import('@tanstack/react-virtual').then((mod) => ({ 
-      default: () => mod.useVirtualizer 
-    })),
-    { ssr: false }
-  );
-};
-
 // Export par défaut avec tous les composants
-export default {
-  VirtualTable: LazyVirtualTable,
-  DataGrid: LazyDataGrid,
-  ExportableTable: LazyExportableTable,
+const LazyTableComponents = {
+  AccessibleDataTable: LazyAccessibleDataTable,
   EditableTable: LazyEditableTable,
   DragDropTable: LazyDragDropTable,
   TableWrapper: LazyTableWrapper,
-  useVirtualization: useLazyTableVirtualization,
 };
+
+export default LazyTableComponents;
