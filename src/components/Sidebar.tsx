@@ -11,8 +11,6 @@ import {
   Store,
   BarChart3,
   LogOut,
-  Menu,
-  X,
   UserCog,
   TrendingUp,
   Archive,
@@ -22,8 +20,8 @@ import {
   CreditCard,
   Truck
 } from "lucide-react"
-import { useState } from "react"
 import ThemeToggle from "./ThemeToggle"
+import { MobileNavigation } from "./mobile"
 
 const adminLinks = [
   { href: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard },
@@ -50,12 +48,11 @@ const gestionnaireLinks = [
 export function Sidebar() {
   const { data: session } = useSession()
   const pathname = usePathname()
-  const [mobileOpen, setMobileOpen] = useState(false)
 
   const isAdmin = session?.user?.role === "ADMIN"
   const links = isAdmin ? adminLinks : gestionnaireLinks
 
-  const SidebarContent = () => (
+  const DesktopSidebarContent = () => (
     <>
       <div className="p-6 border-b border-border">
         <div className="flex items-start justify-between mb-3">
@@ -108,36 +105,12 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile menu button */}
-      <button
-        onClick={() => setMobileOpen(!mobileOpen)}
-        className="fixed top-4 left-4 z-50 p-2 bg-background text-foreground rounded-lg shadow-lg border md:hidden"
-      >
-        {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-      </button>
-
-      {/* Mobile overlay */}
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
-          onClick={() => setMobileOpen(false)}
-        />
-      )}
-
-      {/* Mobile sidebar */}
-      <div
-        className={`
-          fixed top-0 left-0 bottom-0 w-64 bg-background shadow-xl z-40 md:hidden
-          transform transition-transform duration-300 ease-in-out
-          ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}
-        `}
-      >
-        <SidebarContent />
-      </div>
+      {/* Navigation mobile améliorée */}
+      <MobileNavigation />
 
       {/* Desktop sidebar */}
       <div className="hidden md:flex w-64 bg-background border-r border-border h-screen sticky top-0 flex-col">
-        <SidebarContent />
+        <DesktopSidebarContent />
       </div>
     </>
   )

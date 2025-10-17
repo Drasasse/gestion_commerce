@@ -1,53 +1,55 @@
-# 🔐 Système de Sécurité
+# 🔐 Sécurité de l'Application
 
-Ce document décrit le système de sécurité implémenté dans l'application.
+Ce document décrit l'état actuel de la sécurité et les améliorations prévues.
 
-## 📋 Table des matières
+## 📊 État Actuel (Score: 7.0/10)
 
-1. [Rate Limiting](#rate-limiting)
-2. [Cache Redis](#cache-redis)
-3. [Protection CSRF](#protection-csrf)
-4. [Configuration](#configuration)
-5. [Utilisation](#utilisation)
+### ✅ Implémenté
+- **Authentification**: NextAuth avec JWT et sessions sécurisées
+- **Hachage des mots de passe**: bcryptjs avec salt
+- **Protection des routes**: Middleware pour les pages protégées
+- **Variables d'environnement**: Configuration sécurisée
+- **HTTPS**: Forcé en production via Vercel
 
----
+### ⚠️ À Améliorer
 
-## 🚦 Rate Limiting
+#### 🔴 Priorité Critique
+- **Rate Limiting**: Non implémenté (vulnérable aux attaques brute-force)
+- **Protection CSRF**: Tokens manquants
+- **Validation d'entrée**: Insuffisante côté client
+- **Logs de sécurité**: Système de monitoring manquant
 
-### Objectif
-Protéger l'application contre les abus et les attaques brute-force.
+#### 🟠 Priorité Importante
+- **Headers de sécurité**: CSP, HSTS manquants
+- **Gestion des sessions**: Révocation manuelle impossible
+- **Audit des accès**: Traçabilité limitée
 
-### Limites configurées
+## 🎯 Plan d'Amélioration
 
-| Endpoint | Limite | Période | Identifiant |
-|----------|--------|---------|-------------|
-| Login | 5 requêtes | 1 minute | IP |
-| APIs générales | 100 requêtes | 1 minute | IP |
-| APIs sensibles | 10 requêtes | 1 minute | IP |
-
-### Implémentation
-
+### Phase 1: Protection de Base
 ```typescript
-import { checkRateLimit, loginRateLimiter } from '@/lib/rate-limit';
-
-// Dans une route API
-export async function POST(request: NextRequest) {
-  // Vérifier le rate limit
-  const { success, response } = await checkRateLimit(
-    request,
-    loginRateLimiter
-  );
-
-  if (!success) {
-    return response; // 429 Too Many Requests
-  }
-
-  // Continuer le traitement
-  // ...
-}
+// Rate limiting à implémenter
+const rateLimiter = {
+  login: { limit: 5, window: '1m' },
+  api: { limit: 100, window: '1m' },
+  sensitive: { limit: 10, window: '1m' }
+};
 ```
 
-### Headers de réponse
+### Phase 2: Validation Renforcée
+```typescript
+// Validation côté client à ajouter
+const secureValidation = {
+  sanitization: true,
+  xssProtection: true,
+  sqlInjectionPrevention: true
+};
+```
+
+### Phase 3: Monitoring
+- Logs d'authentification
+- Alertes de sécurité
+- Audit trail complet
 
 Chaque réponse inclut des headers informatifs:
 - `X-RateLimit-Limit`: Nombre maximum de requêtes
