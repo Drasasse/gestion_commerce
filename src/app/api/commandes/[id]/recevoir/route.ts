@@ -98,7 +98,7 @@ export async function POST(
 
         // Mettre à jour le stock si quantité reçue > 0
         if (ligneRecue.quantiteRecue > 0) {
-          const stock = ligneCommande.produit.stocks[0];
+          let stock = ligneCommande.produit.stocks[0];
           if (stock) {
             await tx.stock.update({
               where: { id: stock.id },
