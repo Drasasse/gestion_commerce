@@ -85,6 +85,19 @@ export async function PUT(
         id,
         boutiqueId: session.user.boutiqueId,
       },
+      include: {
+        lignes: {
+          include: {
+            produit: {
+              include: {
+                stocks: {
+                  where: { boutiqueId: session.user.boutiqueId }
+                }
+              }
+            }
+          }
+        }
+      }
     });
 
     if (!commande) {
@@ -119,17 +132,65 @@ export async function PUT(
       updateData.montantRestant = commande.montantTotal - validatedData.montantPaye;
     }
 
-    const updated = await prisma.commande.update({
-      where: { id },
-      data: updateData,
-      include: {
-        fournisseur: true,
-        lignes: {
-          include: {
-            produit: true,
+    // Utiliser une transaction pour mettre à jour la commande et les stocks
+    const updated = await prisma.$transaction(async (tx: any) => {
+      // Mettre à jour la commande
+      const updatedCommande = await tx.commande.update({
+        where: { id },
+        data: updateData,
+        include: {
+          fournisseur: true,
+          lignes: {
+            include: {
+              produit: true,
+            },
           },
         },
-      },
+      });
+
+      // Si la commande est marquée comme reçue, mettre à jour les stocks
+      if (validatedData.statut === 'RECUE' && commande.statut !== 'RECUE') {
+        for (const ligne of commande.lignes) {
+          const stock = ligne.produit.stocks[0];
+          if (stock) {
+            // Mettre à jour le stock
+            await tx.stock.update({
+              where: { id: stock.id },
+              data: {
+                quantite: stock.quantite + ligne.quantite,
+                derniereEntree: new Date()
+              },
+            });
+
+            // Créer un mouvement de stock
+            await tx.mouvementStock.create({
+              data: {
+                stockId: stock.id,
+                type: 'ENTREE',
+                quantite: ligne.quantite,
+                motif: `Réception commande ${commande.numeroCommande}`,
+              },
+            });
+          }
+        }
+
+        // Créer une transaction financière pour l'achat si montant payé > 0
+        if (validatedData.montantPaye && validatedData.montantPaye > 0) {
+          await tx.transaction.create({
+            data: {
+              boutiqueId: session.user.boutiqueId!,
+              userId: session.user.id!,
+              type: 'ACHAT',
+              montant: validatedData.montantPaye,
+              description: `Paiement commande #${commande.numeroCommande}`,
+              categorieDepense: 'MARCHANDISES',
+              dateTransaction: new Date()
+            }
+          });
+        }
+      }
+
+      return updatedCommande;
     });
 
     return NextResponse.json(updated);

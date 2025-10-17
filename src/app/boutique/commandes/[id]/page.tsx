@@ -61,6 +61,8 @@ export default function CommandeDetailsPage({ params }: { params: Promise<{ id: 
   const [showRecevoirModal, setShowRecevoirModal] = useState(false);
   const [quantitesRecues, setQuantitesRecues] = useState<Record<string, number>>({});
   const [montantPaye, setMontantPaye] = useState<string>('');
+  const [annulerReste, setAnnulerReste] = useState(false);
+  const [notes, setNotes] = useState('');
 
   useEffect(() => {
     if (status !== 'loading' && !session) {
@@ -108,13 +110,28 @@ export default function CommandeDetailsPage({ params }: { params: Promise<{ id: 
           quantiteRecue,
         }));
 
-      const requestData: { lignesRecues: typeof lignesRecues; montantPaye?: number } = {
+      const requestData: { 
+        lignesRecues: typeof lignesRecues; 
+        montantPaye?: number;
+        notes?: string;
+        annulerReste?: boolean;
+      } = {
         lignesRecues,
       };
 
       // Ajouter le montant payé s'il est fourni
       if (montantPaye && parseFloat(montantPaye) > 0) {
         requestData.montantPaye = parseFloat(montantPaye);
+      }
+
+      // Ajouter les notes si fournies
+      if (notes.trim()) {
+        requestData.notes = notes.trim();
+      }
+
+      // Ajouter l'option d'annulation du reste
+      if (annulerReste) {
+        requestData.annulerReste = true;
       }
 
       const response = await fetch(`/api/commandes/${id}/recevoir`, {
@@ -124,9 +141,16 @@ export default function CommandeDetailsPage({ params }: { params: Promise<{ id: 
       });
 
       if (response.ok) {
-        toast.success('Commande réceptionnée avec succès!');
+        const result = await response.json();
+        toast.success(
+          annulerReste 
+            ? 'Commande finalisée avec succès! Le reste a été annulé.' 
+            : 'Commande réceptionnée avec succès!'
+        );
         setShowRecevoirModal(false);
         setMontantPaye('');
+        setNotes('');
+        setAnnulerReste(false);
         loadCommande();
       } else {
         const error = await response.json();
@@ -482,11 +506,52 @@ export default function CommandeDetailsPage({ params }: { params: Promise<{ id: 
               </div>
             </div>
 
+            {/* Notes et options avancées */}
+            <div className="px-6 pb-4 space-y-4">
+              {/* Notes */}
+              <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Notes (optionnel)
+                </label>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Ajoutez des notes sur cette réception..."
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white resize-none"
+                />
+              </div>
+
+              {/* Option d'annulation du reste */}
+              <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-yellow-50 dark:bg-yellow-900/20">
+                <div className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    id="annulerReste"
+                    checked={annulerReste}
+                    onChange={(e) => setAnnulerReste(e.target.checked)}
+                    className="mt-1 h-4 w-4 text-yellow-600 focus:ring-yellow-500 border-gray-300 rounded"
+                  />
+                  <div className="flex-1">
+                    <label htmlFor="annulerReste" className="text-sm font-medium text-gray-900 dark:text-white cursor-pointer">
+                      Annuler le reste de la commande
+                    </label>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                      Si coché, les quantités non reçues seront définitivement annulées et le montant total de la commande sera ajusté.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
               <button
                 onClick={() => {
                   setShowRecevoirModal(false);
                   setMontantPaye('');
+                  setNotes('');
+                  setAnnulerReste(false);
+                  setQuantitesRecues({});
                 }}
                 className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
               >

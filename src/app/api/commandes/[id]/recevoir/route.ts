@@ -2,24 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
-import type { PrismaClient } from '@prisma/client';
-// Interfaces TypeScript
-interface LigneCommande {
-  id: string;
-  produitId: string;
-  quantite: number;
-  quantiteRecue: number;
-  prixUnitaire: number;
-}
 
 const recevoirCommandeSchema = z.object({
   lignesRecues: z.array(
     z.object({
       ligneId: z.string(),
-      quantiteRecue: z.number().min(0),
+      quantiteRecue: z.number().min(0, 'La quantité reçue doit être positive'),
     })
   ),
-  montantPaye: z.number().min(0).optional(),
+  montantPaye: z.number().min(0, 'Le montant payé doit être positif').optional(),
+  notes: z.string().optional(),
+  annulerReste: z.boolean().optional().default(false),
 });
 
 export async function POST(
@@ -40,7 +33,7 @@ export async function POST(
     const body = await request.json();
     const validatedData = recevoirCommandeSchema.parse(body);
 
-    // Récupérer la commande
+    // Vérifier que la commande existe et appartient à la boutique
     const commande = await prisma.commande.findFirst({
       where: {
         id,
@@ -50,10 +43,16 @@ export async function POST(
         fournisseur: true,
         lignes: {
           include: {
-            produit: true,
-          },
-        },
-      },
+            produit: {
+              include: {
+                stocks: {
+                  where: { boutiqueId: session.user.boutiqueId }
+                }
+              }
+            }
+          }
+        }
+      }
     });
 
     if (!commande) {
@@ -63,123 +62,171 @@ export async function POST(
       );
     }
 
-    if (commande.statut === 'RECUE') {
+    if (commande.statut === 'RECUE' || commande.statut === 'ANNULEE') {
       return NextResponse.json(
-        { error: 'Cette commande a déjà été reçue' },
+        { error: 'Cette commande a déjà été traitée' },
         { status: 400 }
       );
     }
 
-    // Utiliser une transaction pour garantir la cohérence
-    const result = await prisma.$transaction(async (tx) => {
-      // Mettre à jour les lignes de commande et les stocks
-       for (const ligneRecue of validatedData.lignesRecues) {
-         const ligne = commande.lignes.find(l => l.id === ligneRecue.ligneId);
+    // Traiter la réception dans une transaction
+    const result = await prisma.$transaction(async (tx: any) => {
+      let montantTotalRecu = 0;
+      let toutesLignesRecues = true;
 
-        if (!ligne) {
+      // Traiter chaque ligne de réception
+      for (const ligneRecue of validatedData.lignesRecues) {
+        const ligneCommande = commande.lignes.find(l => l.id === ligneRecue.ligneId);
+        
+        if (!ligneCommande) {
           throw new Error(`Ligne de commande ${ligneRecue.ligneId} non trouvée`);
+        }
+
+        // Vérifier que la quantité reçue ne dépasse pas la quantité commandée
+        const nouvelleQuantiteRecue = ligneCommande.quantiteRecue + ligneRecue.quantiteRecue;
+        if (nouvelleQuantiteRecue > ligneCommande.quantite) {
+          throw new Error(`Quantité reçue (${nouvelleQuantiteRecue}) dépasse la quantité commandée (${ligneCommande.quantite}) pour le produit ${ligneCommande.produit.nom}`);
         }
 
         // Mettre à jour la ligne de commande
         await tx.ligneCommande.update({
           where: { id: ligneRecue.ligneId },
           data: {
-            quantiteRecue: ligneRecue.quantiteRecue,
-          },
+            quantiteRecue: nouvelleQuantiteRecue
+          }
         });
 
-        // Mettre à jour le stock
+        // Mettre à jour le stock si quantité reçue > 0
         if (ligneRecue.quantiteRecue > 0) {
-          const stock = await tx.stock.findFirst({
-            where: {
-              produitId: ligne.produitId,
-              boutiqueId: session.user.boutiqueId!,
-            },
-          });
-
+          const stock = ligneCommande.produit.stocks[0];
           if (stock) {
             await tx.stock.update({
               where: { id: stock.id },
               data: {
-                quantite: {
-                  increment: ligneRecue.quantiteRecue,
-                },
-                derniereEntree: new Date(),
+                quantite: stock.quantite + ligneRecue.quantiteRecue,
+                derniereEntree: new Date()
               },
             });
           } else {
-            await tx.stock.create({
+            // Créer un nouveau stock si n'existe pas
+            const newStock = await tx.stock.create({
               data: {
-                produitId: ligne.produitId,
+                produitId: ligneCommande.produitId,
                 boutiqueId: session.user.boutiqueId!,
                 quantite: ligneRecue.quantiteRecue,
                 derniereEntree: new Date(),
               },
             });
+            stock = newStock;
           }
 
           // Créer un mouvement de stock
           await tx.mouvementStock.create({
             data: {
-              stockId: stock ? stock.id : (await tx.stock.findFirst({
-                where: {
-                  produitId: ligne.produitId,
-                  boutiqueId: session.user.boutiqueId!,
-                },
-              }))!.id,
+              stockId: stock.id,
               type: 'ENTREE',
               quantite: ligneRecue.quantiteRecue,
-              motif: `Réception commande ${commande.numeroCommande}`,
+              motif: `Réception commande ${commande.numeroCommande} - ${ligneCommande.produit.nom}`,
             },
           });
+
+          // Calculer le montant pour cette ligne reçue
+          montantTotalRecu += ligneRecue.quantiteRecue * ligneCommande.prixUnitaire;
+        }
+
+        // Vérifier si cette ligne est complètement reçue
+        if (nouvelleQuantiteRecue < ligneCommande.quantite && !validatedData.annulerReste) {
+          toutesLignesRecues = false;
         }
       }
 
-      // Vérifier si toutes les lignes sont complètement reçues
-       const toutesLignesRecues = validatedData.lignesRecues.every(
-         (lr) => {
-           const ligne = commande.lignes.find(l => l.id === lr.ligneId);
-           return ligne && lr.quantiteRecue >= ligne.quantite;
-         }
-       );
+      // Si on annule le reste, ajuster les quantités et montants
+      if (validatedData.annulerReste) {
+        let nouveauMontantTotal = 0;
+        
+        for (const ligne of commande.lignes) {
+          const ligneRecue = validatedData.lignesRecues.find(l => l.ligneId === ligne.id);
+          const quantiteFinale = ligneRecue ? ligne.quantiteRecue + ligneRecue.quantiteRecue : ligne.quantiteRecue;
+          
+          // Mettre à jour le sous-total basé sur la quantité finalement reçue
+          await tx.ligneCommande.update({
+            where: { id: ligne.id },
+            data: {
+              quantite: quantiteFinale, // Ajuster la quantité commandée à la quantité reçue
+              sousTotal: quantiteFinale * ligne.prixUnitaire
+            }
+          });
 
-      // Créer une transaction de dépense si un montant est payé
-      if (validatedData.montantPaye !== undefined && validatedData.montantPaye > 0) {
-        await tx.transaction.create({
+          nouveauMontantTotal += quantiteFinale * ligne.prixUnitaire;
+        }
+
+        // Mettre à jour le montant total de la commande
+        await tx.commande.update({
+          where: { id },
           data: {
-            boutiqueId: session.user.boutiqueId!,
-            userId: session.user.id,
-            type: 'DEPENSE',
-            montant: validatedData.montantPaye,
-            description: `Paiement commande ${commande.numeroCommande} - ${commande.fournisseur.nom}`,
-            categorieDepense: 'MARCHANDISES', // Catégorisation automatique pour les achats de marchandises
-            dateTransaction: new Date(),
-          },
+            montantTotal: nouveauMontantTotal,
+            montantRestant: nouveauMontantTotal - (validatedData.montantPaye || 0)
+          }
         });
+
+        toutesLignesRecues = true; // Forcer le statut à "reçue" si on annule le reste
       }
 
+      // Déterminer le nouveau statut de la commande
+      let nouveauStatut: 'EN_ATTENTE' | 'EN_COURS' | 'RECUE' = 'EN_COURS';
+      if (toutesLignesRecues) {
+        nouveauStatut = 'RECUE';
+      }
+
+      // Calculer le montant payé et restant
+      const montantPaye = validatedData.montantPaye || 0;
+      const montantRestant = (validatedData.annulerReste ? 
+        await tx.commande.findUnique({ where: { id }, select: { montantTotal: true } }).then((c: any) => c.montantTotal) :
+        commande.montantTotal) - montantPaye;
+
       // Mettre à jour la commande
-      const updatedCommande = await tx.commande.update({
+      const commandeUpdated = await tx.commande.update({
         where: { id },
         data: {
-          statut: toutesLignesRecues ? 'RECUE' : 'EN_COURS',
+          statut: nouveauStatut,
           dateReception: toutesLignesRecues ? new Date() : null,
-          ...(validatedData.montantPaye !== undefined && {
-            montantPaye: validatedData.montantPaye,
-            montantRestant: commande.montantTotal - validatedData.montantPaye,
-          }),
+          notes: validatedData.notes || commande.notes,
+          montantPaye: montantPaye,
+          montantRestant: montantRestant,
         },
         include: {
           fournisseur: true,
           lignes: {
             include: {
-              produit: true,
-            },
-          },
-        },
+              produit: {
+                select: { nom: true }
+              }
+            }
+          }
+        }
       });
 
-      return updatedCommande;
+      // Créer une transaction financière si montant payé > 0
+      if (montantPaye > 0) {
+        await tx.transaction.create({
+          data: {
+            boutiqueId: session.user.boutiqueId!,
+            userId: session.user.id!,
+            type: 'ACHAT',
+            montant: montantPaye,
+            description: `Paiement ${validatedData.annulerReste ? 'final' : 'partiel'} commande #${commande.numeroCommande}`,
+            categorieDepense: 'MARCHANDISES',
+            dateTransaction: new Date()
+          }
+        });
+      }
+
+      return {
+        commande: commandeUpdated,
+        montantTotalRecu,
+        lignesTraitees: validatedData.lignesRecues.length,
+        statutFinal: nouveauStatut
+      };
     });
 
     return NextResponse.json(result);
