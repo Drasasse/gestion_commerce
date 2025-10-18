@@ -165,7 +165,7 @@ export function AdaptiveTable<T extends Record<string, any>>({
         <MobileList
           data={data}
           columns={mobileColumns}
-          onItemTap={onRowClick}
+          onItemTap={onRowClick ? (item: T) => onRowClick(item, data.indexOf(item)) : undefined}
           onItemEdit={onRowEdit}
           onItemDelete={onRowDelete}
           onSelectionChange={handleSelectionChange}

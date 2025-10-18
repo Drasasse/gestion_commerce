@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { Search, Filter, SortAsc, SortDesc, Grid, List } from 'lucide-react';
+import { Search, SortAsc, SortDesc, Grid, List } from 'lucide-react';
 import { MobileCard, MobileCardActions } from './MobileCard';
 
 interface MobileListColumn<T> {
@@ -11,7 +11,7 @@ interface MobileListColumn<T> {
   secondary?: boolean;
   badge?: boolean;
   icon?: React.ReactNode;
-  render?: (value: any, item: T) => React.ReactNode;
+  render?: (value: unknown, item: T) => React.ReactNode;
   sortable?: boolean;
 }
 
@@ -24,7 +24,6 @@ interface MobileListProps<T> {
   onItemDelete?: (item: T) => void;
   searchable?: boolean;
   searchPlaceholder?: string;
-  filterable?: boolean;
   sortable?: boolean;
   selectable?: boolean;
   onSelectionChange?: (selectedItems: T[]) => void;
@@ -46,7 +45,7 @@ interface MobileListProps<T> {
 
 type SortDirection = 'asc' | 'desc' | null;
 
-export function MobileList<T extends Record<string, any>>({
+export function MobileList<T extends Record<string, unknown>>({
   data,
   columns,
   onItemTap,
@@ -55,7 +54,6 @@ export function MobileList<T extends Record<string, any>>({
   onItemDelete,
   searchable = true,
   searchPlaceholder = "Rechercher...",
-  filterable = false,
   sortable = true,
   selectable = false,
   onSelectionChange,
@@ -63,7 +61,7 @@ export function MobileList<T extends Record<string, any>>({
   emptyIcon,
   loading = false,
   className = '',
-  getItemId = (item) => item.id || String(Math.random()),
+  getItemId = (item) => (item as any).id || String(Math.random()),
   getItemTitle,
   getItemSubtitle,
   getItemAvatar,
@@ -92,8 +90,8 @@ export function MobileList<T extends Record<string, any>>({
     // Tri
     if (sortColumn && sortDirection) {
       filtered = [...filtered].sort((a, b) => {
-        const aValue = a[sortColumn];
-        const bValue = b[sortColumn];
+        const aValue = String(a[sortColumn] || '');
+        const bValue = String(b[sortColumn] || '');
         
         if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
         if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
@@ -136,7 +134,7 @@ export function MobileList<T extends Record<string, any>>({
     }
   }, [selectedItems, data, getItemId, onSelectionChange]);
 
-  const renderCard = (item: T, index: number) => {
+  const renderCard = (item: T) => {
     const itemId = getItemId(item);
     const isSelected = selectedItems.has(itemId);
     
@@ -144,7 +142,7 @@ export function MobileList<T extends Record<string, any>>({
       label: column.label,
       value: column.render 
         ? column.render(item[column.key], item)
-        : item[column.key],
+        : String(item[column.key] || ''),
       primary: column.primary,
       secondary: column.secondary,
       badge: column.badge,
@@ -283,7 +281,11 @@ export function MobileList<T extends Record<string, any>>({
         </div>
       ) : (
         <div className={viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 gap-3' : 'space-y-3'}>
-          {processedData.map(renderCard)}
+          {processedData.map((item) => (
+            <div key={getItemId(item)}>
+              {renderCard(item)}
+            </div>
+          ))}
         </div>
       )}
     </div>

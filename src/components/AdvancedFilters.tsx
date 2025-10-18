@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, Filter, X, Calendar, DollarSign } from 'lucide-react';
+import { Search, X, Calendar, DollarSign } from 'lucide-react';
 
 interface AdvancedFiltersProps {
   searchTerm: string;
@@ -54,7 +54,7 @@ export default function AdvancedFilters({
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
       <div className="flex items-center gap-2 mb-4">
-        <Filter className="w-5 h-5 text-gray-500" />
+        <Search className="w-5 h-5 text-gray-500" />
         <h3 className="text-sm font-semibold text-gray-700">Filtres avancés</h3>
         {totalItems !== undefined && (
           <span className="ml-auto text-sm text-gray-500">

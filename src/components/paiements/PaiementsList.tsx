@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Paiement } from '@/types';
 
 interface PaiementsListProps {
@@ -12,9 +12,9 @@ export default function PaiementsList({ venteId, onPaiementDeleted }: PaiementsL
   const [paiements, setPaiements] = useState<Paiement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const fetchPaiements = async () => {
+  const fetchPaiements = useCallback(async () => {
     try {
       const response = await fetch(`/api/paiements?venteId=${venteId}`);
       if (!response.ok) {
@@ -28,13 +28,13 @@ export default function PaiementsList({ venteId, onPaiementDeleted }: PaiementsL
     } finally {
       setLoading(false);
     }
-  };
+  }, [venteId]);
 
   useEffect(() => {
     fetchPaiements();
-  }, [venteId]);
+  }, [venteId, fetchPaiements]);
 
-  const handleDelete = async (paiementId: number) => {
+  const handleDelete = async (paiementId: string) => {
     if (!confirm('Êtes-vous sûr de vouloir supprimer ce paiement ?')) {
       return;
     }
@@ -131,7 +131,7 @@ export default function PaiementsList({ venteId, onPaiementDeleted }: PaiementsL
                 
                 <div className="text-sm text-gray-600 space-y-1">
                   <div>
-                    Date: {new Date(paiement.datePaiement).toLocaleDateString('fr-FR', {
+                    Date: {new Date(paiement.dateCreation).toLocaleDateString('fr-FR', {
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric',

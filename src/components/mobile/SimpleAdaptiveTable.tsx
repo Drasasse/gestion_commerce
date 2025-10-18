@@ -9,8 +9,8 @@ interface SimpleColumn<T> {
   label: string;
   sortable?: boolean;
   hideOnMobile?: boolean;
-  render?: (value: any, item: T) => React.ReactNode;
-  mobileRender?: (value: any, item: T) => React.ReactNode;
+  render?: (value: T[keyof T], item: T) => React.ReactNode;
+  mobileRender?: (value: T[keyof T], item: T) => React.ReactNode;
 }
 
 interface SimpleAdaptiveTableProps<T> {

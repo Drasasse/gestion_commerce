@@ -3,19 +3,19 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Check, AlertCircle, X } from 'lucide-react';
 
-export interface FormStep {
+export interface FormStep<T extends Record<string, unknown> = Record<string, unknown>> {
   id: string;
   title: string;
   description?: string;
   icon?: React.ReactNode;
-  component: React.ComponentType<StepComponentProps>;
-  validation?: (data: any) => Promise<ValidationResult> | ValidationResult;
+  component: React.ComponentType<StepComponentProps<T>>;
+  validation?: (data: T) => Promise<ValidationResult> | ValidationResult;
   optional?: boolean;
 }
 
-export interface StepComponentProps {
-  data: any;
-  updateData: (updates: any) => void;
+export interface StepComponentProps<T extends Record<string, unknown> = Record<string, unknown>> {
+  data: T;
+  updateData: (updates: Partial<T>) => void;
   errors: Record<string, string>;
   isValid: boolean;
   onNext: () => void;
@@ -29,10 +29,10 @@ export interface ValidationResult {
   errors: Record<string, string>;
 }
 
-interface MobileFormWizardProps {
-  steps: FormStep[];
-  initialData?: any;
-  onComplete: (data: any) => Promise<void> | void;
+interface MobileFormWizardProps<T extends Record<string, unknown> = Record<string, unknown>> {
+  steps: FormStep<T>[];
+  initialData?: T;
+  onComplete: (data: T) => Promise<void> | void;
   onCancel?: () => void;
   className?: string;
   showProgress?: boolean;
@@ -41,9 +41,9 @@ interface MobileFormWizardProps {
   storageKey?: string;
 }
 
-export function MobileFormWizard({
+export function MobileFormWizard<T extends Record<string, unknown> = Record<string, unknown>>({
   steps,
-  initialData = {},
+  initialData,
   onComplete,
   onCancel,
   className = "",
@@ -51,9 +51,9 @@ export function MobileFormWizard({
   allowSkipOptional = true,
   persistData = false,
   storageKey = "mobile-form-wizard"
-}: MobileFormWizardProps) {
+}: MobileFormWizardProps<T>) {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const [formData, setFormData] = useState(initialData);
+  const [formData, setFormData] = useState<T>(initialData || {} as T);
   const [stepValidation, setStepValidation] = useState<Record<string, ValidationResult>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
@@ -84,7 +84,7 @@ export function MobileFormWizard({
   }, [formData, persistData, storageKey]);
 
   // Validation d'une étape
-  const validateStep = useCallback(async (stepIndex: number, data: any): Promise<ValidationResult> => {
+  const validateStep = useCallback(async (stepIndex: number, data: T): Promise<ValidationResult> => {
     const step = steps[stepIndex];
     if (!step.validation) {
       return { isValid: true, errors: {} };
@@ -93,7 +93,7 @@ export function MobileFormWizard({
     try {
       const result = await step.validation(data);
       return result;
-    } catch (error) {
+    } catch {
       return {
         isValid: false,
         errors: { general: 'Erreur de validation' }
@@ -102,9 +102,26 @@ export function MobileFormWizard({
   }, [steps]);
 
   // Mise à jour des données
-  const updateData = useCallback((updates: any) => {
+  const updateData = useCallback((updates: Partial<T>) => {
     setFormData(prev => ({ ...prev, ...updates }));
   }, []);
+
+  // Soumission finale
+  const handleSubmit = useCallback(async () => {
+    setIsSubmitting(true);
+    try {
+      await onComplete(formData);
+      
+      // Nettoyage des données persistées
+      if (persistData && storageKey) {
+        localStorage.removeItem(storageKey);
+      }
+    } catch (error) {
+      console.error('Erreur lors de la soumission:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [formData, onComplete, persistData, storageKey]);
 
   // Navigation vers l'étape suivante
   const goToNext = useCallback(async () => {
@@ -124,7 +141,7 @@ export function MobileFormWizard({
       setCompletedSteps(prev => new Set([...prev, currentStepIndex]));
       setCurrentStepIndex(prev => Math.min(prev + 1, steps.length - 1));
     }
-  }, [currentStepIndex, currentStep, formData, isLastStep, validateStep, allowSkipOptional]);
+  }, [currentStepIndex, currentStep, formData, isLastStep, validateStep, allowSkipOptional, steps.length, handleSubmit]);
 
   // Navigation vers l'étape précédente
   const goToPrevious = useCallback(() => {
@@ -137,23 +154,6 @@ export function MobileFormWizard({
       setCurrentStepIndex(stepIndex);
     }
   }, [steps.length]);
-
-  // Soumission finale
-  const handleSubmit = useCallback(async () => {
-    setIsSubmitting(true);
-    try {
-      await onComplete(formData);
-      
-      // Nettoyage des données persistées
-      if (persistData && storageKey) {
-        localStorage.removeItem(storageKey);
-      }
-    } catch (error) {
-      console.error('Erreur lors de la soumission:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [formData, onComplete, persistData, storageKey]);
 
   // Annulation
   const handleCancel = useCallback(() => {
