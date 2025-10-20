@@ -99,6 +99,14 @@ export const authOptions: NextAuthConfig = {
         session.user.boutique = token.boutique as { id: string; nom: string } | null
       }
       return session
+    },
+    async redirect({ url, baseUrl }: { url: string; baseUrl: string }): Promise<string> {
+      // Si l'URL est relative, la construire avec baseUrl
+      if (url.startsWith("/")) return `${baseUrl}${url}`
+      // Si l'URL appartient au même site, l'autoriser
+      else if (new URL(url).origin === baseUrl) return url
+      // Sinon, rediriger vers le dashboard par défaut
+      return `${baseUrl}/dashboard`
     }
   },
   pages: {

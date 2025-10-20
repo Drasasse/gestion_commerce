@@ -22,14 +22,15 @@ export default function LoginPage() {
       const result = await signIn("credentials", {
         email,
         password,
+        callbackUrl: "/dashboard",
         redirect: false,
       })
 
       if (result?.error) {
         setError("Email ou mot de passe incorrect")
-      } else {
-        router.push("/dashboard")
-        router.refresh()
+      } else if (result?.ok) {
+        // Redirection automatique via NextAuth
+        window.location.href = "/dashboard"
       }
     } catch {
       setError("Une erreur est survenue")
