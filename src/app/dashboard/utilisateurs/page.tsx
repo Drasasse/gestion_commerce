@@ -53,7 +53,7 @@ export default function UtilisateursPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    loadData();
+    loadUsers();
   }, []);
 
   if (status === 'loading') return <div>Chargement...</div>;
@@ -122,7 +122,7 @@ export default function UtilisateursPage() {
 
       if (response.ok) {
         toast.success(editingUser ? 'Utilisateur modifié' : 'Utilisateur créé');
-        await loadData();
+        await loadUsers();
         resetForm();
         setShowModal(false);
       } else {
@@ -153,7 +153,7 @@ export default function UtilisateursPage() {
       const response = await fetch(`/api/utilisateurs/${id}`, { method: 'DELETE' });
       if (response.ok) {
         toast.success('Utilisateur supprimé');
-        await loadData();
+        await loadUsers();
       } else {
         const errorData = await response.json();
         toast.error(errorData.error || 'Erreur');
