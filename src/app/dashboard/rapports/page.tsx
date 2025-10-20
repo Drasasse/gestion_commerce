@@ -39,7 +39,6 @@ export default function RapportsAdminPage() {
   }, []);
 
   if (status === 'loading') return <div>Chargement...</div>;
-  if (!session || session.user.role !== 'ADMIN') redirect('/');
 
   const loadData = async () => {
     try {

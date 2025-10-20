@@ -57,9 +57,8 @@ export default function UtilisateursPage() {
   }, []);
 
   if (status === 'loading') return <div>Chargement...</div>;
-  if (!session || session.user.role !== 'ADMIN') redirect('/');
 
-  const loadData = async () => {
+  const loadUsers = async () => {
     try {
       const [usersRes, boutiquesRes] = await Promise.all([
         fetch('/api/utilisateurs'),

@@ -51,7 +51,6 @@ export default function BoutiquesPage() {
   }, []);
 
   if (status === 'loading') return <div>Chargement...</div>;
-  if (!session || session.user.role !== 'ADMIN') redirect('/');
 
   const loadBoutiques = async () => {
     try {
