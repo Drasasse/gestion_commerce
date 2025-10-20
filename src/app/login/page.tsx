@@ -93,11 +93,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="mt-8 pt-6 border-t border-gray-200">
-          <p className="text-sm text-gray-600 text-center">
-            Compte de test : admin@demo.com / admin123
-          </p>
-        </div>
+
       </div>
     </div>
   )
