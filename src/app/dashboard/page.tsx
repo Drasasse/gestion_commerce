@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
-import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { 
   LazyLineChart as LineChart,
@@ -177,14 +176,10 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      redirect('/login');
+    if (status === 'authenticated') {
+      loadDashboardData();
     }
-    if (session?.user?.role !== 'ADMIN') {
-      redirect('/boutique');
-    }
-    loadDashboardData();
-  }, [session, status, loadDashboardData]);
+  }, [status, loadDashboardData]);
 
   const getlast7Days = () => {
     const days = [];

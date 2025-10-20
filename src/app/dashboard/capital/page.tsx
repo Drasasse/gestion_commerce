@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
-import { redirect } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { formatMontant, formatDate } from '@/lib/utils';
 import LoadingSkeleton from '@/components/LoadingSkeleton';
@@ -99,7 +98,6 @@ export default function CapitalPage() {
   }, [loadData]);
 
   if (status === 'loading') return <div>Chargement...</div>;
-  if (!session || session.user.role !== 'ADMIN') redirect('/');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { redirect } from 'next/navigation';
 import { formatMontant } from '@/lib/utils';
 import ExportButton from '@/components/ExportButton';
 import { exportRapportsToExcel, exportRapportsToCSV } from '@/lib/export';
