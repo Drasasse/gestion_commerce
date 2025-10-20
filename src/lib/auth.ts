@@ -102,9 +102,17 @@ export const authOptions: NextAuthConfig = {
     },
     async redirect({ url, baseUrl }: { url: string; baseUrl: string }): Promise<string> {
       // Si l'URL est relative, la construire avec baseUrl
-      if (url.startsWith("/")) return `${baseUrl}${url}`
+      if (url.startsWith("/")) {
+        // Éviter les boucles de redirection
+        if (url === "/login") return `${baseUrl}/dashboard`
+        return `${baseUrl}${url}`
+      }
       // Si l'URL appartient au même site, l'autoriser
-      else if (new URL(url).origin === baseUrl) return url
+      else if (new URL(url).origin === baseUrl) {
+        // Éviter les boucles de redirection vers login
+        if (new URL(url).pathname === "/login") return `${baseUrl}/dashboard`
+        return url
+      }
       // Sinon, rediriger vers le dashboard par défaut
       return `${baseUrl}/dashboard`
     }

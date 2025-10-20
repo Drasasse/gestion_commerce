@@ -28,13 +28,13 @@ export default function LoginPage() {
 
       if (result?.error) {
         setError("Email ou mot de passe incorrect")
+        setLoading(false)
       } else if (result?.ok) {
-        // Redirection automatique via NextAuth
-        window.location.href = "/dashboard"
+        // Utiliser router.push au lieu de window.location.href
+        router.push("/dashboard")
       }
     } catch {
       setError("Une erreur est survenue")
-    } finally {
       setLoading(false)
     }
   }

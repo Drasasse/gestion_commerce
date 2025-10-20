@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from "next/server"
 import { getToken } from "next-auth/jwt"
 
 export async function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl
+
+  // Éviter de traiter les routes d'authentification NextAuth
+  if (pathname.startsWith('/api/auth/')) {
+    return NextResponse.next()
+  }
+
   // Vérifier si l'utilisateur est authentifié
   const token = await getToken({ 
     req, 
@@ -10,10 +17,20 @@ export async function middleware(req: NextRequest) {
 
   // Si pas de token et que la route nécessite une authentification
   if (!token) {
+    // Éviter les boucles de redirection
+    if (pathname === '/login') {
+      return NextResponse.next()
+    }
+    
     // Rediriger vers la page de connexion
     const loginUrl = new URL('/login', req.url)
-    loginUrl.searchParams.set('callbackUrl', req.url)
+    loginUrl.searchParams.set('callbackUrl', encodeURIComponent(req.url))
     return NextResponse.redirect(loginUrl)
+  }
+
+  // Si l'utilisateur est connecté et essaie d'accéder à /login, rediriger vers dashboard
+  if (token && pathname === '/login') {
+    return NextResponse.redirect(new URL('/dashboard', req.url))
   }
 
   // Continuer avec la requête
@@ -22,6 +39,7 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
+    "/login",
     "/dashboard/:path*",
     "/admin/:path*", 
     "/boutique/:path*",
